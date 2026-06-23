@@ -576,3 +576,109 @@ textarea { padding: 18px; min-height: 130px; }
 }
 .footer p { margin: 5px 0; }
 .footer strong { color: var(--primary-gold); }
+/* ===== مودال عرض المقال كاملاً ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 22, 40, 0.8);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+.modal-overlay.show {
+    display: flex;
+}
+.modal-box {
+    background: #fff;
+    border-radius: 24px;
+    max-width: 750px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    border-top: 8px solid var(--primary-gold);
+    animation: modalFadeIn 0.4s ease;
+}
+@keyframes modalFadeIn {
+    0% { transform: scale(0.8) translateY(30px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 2px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--primary-dark);
+    border-radius: 24px 24px 0 0;
+}
+.modal-header h3 {
+    color: var(--primary-gold);
+    font-size: 1.4rem;
+    margin: 0;
+}
+.modal-header h3 i {
+    margin-left: 12px;
+}
+.modal-close {
+    font-size: 2.2rem;
+    cursor: pointer;
+    color: #fff;
+    transition: 0.3s;
+    line-height: 1;
+}
+.modal-close:hover {
+    color: var(--primary-gold);
+    transform: rotate(90deg);
+}
+.modal-body {
+    padding: 30px 35px;
+    line-height: 2;
+    font-size: 1.05rem;
+    color: var(--text-dark);
+}
+.modal-body p {
+    margin: 15px 0;
+}
+.modal-body .article-date {
+    display: block;
+    color: #9AABBA;
+    font-size: 0.85rem;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+.modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #eee;
+    text-align: left;
+    background: #F8FAFC;
+    border-radius: 0 0 24px 24px;
+}
+.btn-modal-close {
+    background: var(--primary-dark);
+    color: var(--primary-gold);
+    border: none;
+    padding: 10px 30px;
+    border-radius: 40px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    font-family: 'Cairo';
+}
+.btn-modal-close:hover {
+    background: var(--primary-gold);
+    color: var(--primary-dark);
+}
+
+@media (max-width: 600px) {
+    .modal-box { max-width: 100%; margin: 10px; }
+    .modal-body { padding: 20px; font-size: 0.95rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+}
