@@ -17,7 +17,7 @@ function startTasbih() {
     }
 }
 
-// ===== جلب وعرض المقالات =====
+// ===== جلب وعرض المقالات (مع إضافة حدث النقر) =====
 async function loadArticles() {
     try {
         const res = await fetch('/api/articles');
@@ -29,17 +29,64 @@ async function loadArticles() {
             return;
         }
         container.innerHTML = articles.map(article => `
-            <div class="article-card">
+            <div class="article-card" onclick="openArticle(${article.id})" style="cursor:pointer;">
                 <i class="${article.icon || 'fa-solid fa-book'} icon"></i>
                 <h3>${article.title}</h3>
                 <p>${article.summary || article.content.substring(0, 80) + '...'}</p>
                 <span class="date"><i class="far fa-calendar-alt"></i> ${article.date}</span>
+                <span style="display:block; margin-top:12px; color:var(--primary-gold); font-weight:600; font-size:0.85rem;">
+                    <i class="fas fa-arrow-left"></i> اضغط لقراءة المزيد
+                </span>
             </div>
         `).join('');
     } catch (e) {
         console.error('خطأ في تحميل المقالات', e);
     }
 }
+
+// ===== فتح المقال وعرض محتواه الكامل في المودال =====
+async function openArticle(articleId) {
+    try {
+        const res = await fetch('/api/articles');
+        const articles = await res.json();
+        const article = articles.find(a => a.id === articleId);
+        if (!article) {
+            showNotification('⚠️ المقال غير موجود', 'error');
+            return;
+        }
+
+        // تعبئة المودال
+        document.getElementById('modalArticleTitle').innerHTML = `<i class="fas fa-feather-alt"></i> ${article.title}`;
+        document.getElementById('modalArticleContent').innerHTML = `
+            ${article.content ? article.content.replace(/\n/g, '<br>') : '<p>لا يوجد محتوى مكتوب لهذا المقال بعد.</p>'}
+            <span class="article-date"><i class="far fa-calendar-alt"></i> نشر في: ${article.date}</span>
+        `;
+        document.getElementById('articleModal').classList.add('show');
+        document.body.style.overflow = 'hidden'; // منع التمرير خلف المودال
+    } catch (e) {
+        showNotification('⚠️ خطأ في تحميل المحتوى', 'error');
+    }
+}
+
+// ===== إغلاق المودال =====
+function closeArticleModal() {
+    document.getElementById('articleModal').classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// ===== إغلاق المودال عند النقر خارج المحتوى =====
+document.getElementById('articleModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeArticleModal();
+    }
+});
+
+// ===== إغلاق المودال عند الضغط على زر Escape =====
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeArticleModal();
+    }
+});
 
 // ===== جلب وعرض الشهادات =====
 async function loadTestimonials() {
