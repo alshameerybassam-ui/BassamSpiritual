@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مركز النور الرباني والنفس الرحماني | الشيخ بسام الشميري</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="notification" class="notification"></div>
+    
+    <!-- شريط الخدمات المتحرك -->
+    <div class="marquee-wrapper"><div class="marquee-wrapper">
+    <div class="marquee-content">
+        <span><i class="fas fa-star"></i> بسم الله الرحمن الرحيم</span>
+        <span><i class="fas fa-shield-alt"></i> { آية الكرسي } الله لا إله إلا هو الحي القيوم...</span>
+        <span><i class="fas fa-shield-alt"></i> { المعوذات } قل أعوذ برب الفلق... قل أعوذ برب الناس...</span>
+        <span><i class="fas fa-shield-alt"></i> { أذكار الصباح } أصبحنا وأصبح الملك لله...</span>
+        <span><i class="fas fa-star"></i> علاج العين بكل أنواعها (العاشقة، الحاسدة، الحاقدة)</span>
+        <span><i class="fas fa-star"></i> فك العقد المتراكمة وإزالة الرصد والطلاسم</span>
+        <span><i class="fas fa-star"></i> علاج المس والسحر بجميع أنواعه</span>
+        <span><i class="fas fa-star"></i> الإصلاح بين الزوجين وجلب الحبيب</span>
+        <span><i class="fas fa-star"></i> تفسير الرؤى والأحلام وكشف الدفائن</span>
+        <span><i class="fas fa-star"></i> جلسات نفسية باستخدام طاقة النور الرباني</span>
+    </div>
+</div>
+
+    <!-- مسبحة الذكر الرقمية الذهبية -->
+    <div class="tasbih-container" onclick="startTasbih()">
+        <i class="fas fa-praying-hands"></i>
+        <span id="tasbihCount">0</span>
+        <div class="pulse-ring"></div>
+    </div>
+
+    <div class="container">
+        <!-- ===== البطل الرئيسي (الهوية الجديدة) ===== -->
+        <div class="hero">
+            <div class="hero-glow"></div>
+            <div class="hero-badge"><i class="fas fa-certificate"></i> مركز معتمد للاستشفاء الروحي</div>
+            <h1>
+                مركز <span>النور الرباني</span> <br>و<span>النَفَس الرحماني</span>
+            </h1>
+            <p class="sub-title">﴿ لاستشفاء الروح والنفس والجسد ﴾</p>
+            <div class="supervisor">
+                <i class="fas fa-user-shield"></i> بإشراف الشيخ <strong>بسام محمد الشميري</strong>
+            </div>
+            <div class="expert-badges">
+                <span class="badge"><i class="fas fa-book-quran"></i> راقي شرعي</span>
+                <span class="badge"><i class="fas fa-hand-sparkles"></i> معالج روحاني</span>
+                <span class="badge"><i class="fas fa-brain"></i> مستشار نفسي</span>
+            </div>
+            <p class="hero-desc">
+                رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.
+            </p>
+        </div>
+
+        <!-- ===== بطاقة السرية والأمان (سياسة عامة للمركز - في الأعلى) ===== -->
+        <div class="trust-card">
+            <div class="trust-icon">
+                <i class="fas fa-shield-alt"></i>
+                <i class="fas fa-lock lock-overlay"></i>
+            </div>
+            <div class="trust-content">
+                <h3><i class="fas fa-check-circle"></i> عهد السرية التامة لجميع خدمات المركز</h3>
+                <p>
+                    نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن. 
+                    <strong>السرية التامة هي عهدنا المقدس مع <strong>الله</strong> لكل مستفيد</strong>، 
+                    في جميع استشاراتنا وخدماتنا الروحية والنفسية دون استثناء.
+                    لا يطلع على تفاصيلك <strong>سوى الله</strong> ثم الشيخ بسام، 
+                    ولا تتجاوز أسرارك جدران هذا المركز المبارك، مهما كان نوع الخدمة التي تختارها.
+                </p>
+                <p class="trust-assurance">
+                    <i class="fas fa-feather-alt"></i> 
+                    تحدث بكل راحة واطمئنان.. فأنت في ملاذٍ آمنٍ بإذن الله.
+                </p>
+                <div class="trust-seal">
+                    <i class="fas fa-certificate"></i> 
+                    <span>سياسة السرية تشمل: الاستشارات، تفسير الرؤى، العلاج، الجلسات، وإنهاء الخلافات الأسرية</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== عداد الثقة ===== -->
+        <div class="trust-counter">
+            <div class="counter-item">
+                <i class="fas fa-heart-circle-check"></i>
+                <span class="counter-number" data-target="150">0</span>
+                <p>حالة تم علاجها</p>
+            </div>
+            <div class="counter-item">
+                <i class="fas fa-star"></i>
+                <span class="counter-number" data-target="98">0</span>
+                <p>% نسبة الرضا</p>
+            </div>
+            <div class="counter-item">
+                <i class="fas fa-user-group"></i>
+                <span class="counter-number" data-target="210">0</span>
+                <p>عميل مستفيد</p>
+            </div>
+            <div class="counter-item">
+                <i class="fas fa-clock"></i>
+                <span class="counter-number" data-target="7">0</span>
+                <p>سنوات من الخبرة</p>
+            </div>
+        </div>
+
+        <!-- ===== قسم المقالات ===== -->
+        <section class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-feather-alt"></i> مقالات روحية</h2>
+                <span>كنوز من النور والمعرفة</span>
+            </div>
+            <div id="articlesContainer" class="articles-grid">
+                <!-- سيتم جلبها عبر JavaScript -->
+            </div>
+        </section>
+
+        <!-- ===== قسم الخدمات (بطاقات) ===== -->
+        <section class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-crown"></i> خدماتنا الروحية</h2>
+                <span>اختر ما يناسبك</span>
+            </div>
+            <div class="services-grid">
+                <div class="service-card"><i class="fas fa-hand-holding-heart"></i><h4>استشارة روحانية</h4><p>توجيه وعلاج بالطاقة الربانية</p><span class="price">50$</span></div>
+                <div class="service-card"><i class="fas fa-moon"></i><h4>تفسير رؤى</h4><p>كشف معاني الأحلام والرؤى</p><span class="price">10$</span></div>
+                <div class="service-card"><i class="fas fa-shield-halved"></i><h4>علاج السحر والعين</h4><p>تحصين ورقية شرعية</p><span class="price">50$</span></div>
+                <div class="service-card"><i class="fas fa-people-arrows"></i><h4>حل خلافات أسرية</h4><p>إصلاح ذات البين</p><span class="price">50$</span></div>
+                <div class="service-card gold-card"><i class="fas fa-headphones"></i><h4>جلسة صوتية</h4><p>جلسة مباشرة مع الشيخ</p><span class="price">200$</span></div>
+            </div>
+        </section>
+
+        <!-- ===== نموذج الطلب ===== -->
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;"><i class="fas fa-hand-holding-heart"></i> اطلب استشارتك الآن</h2>
+            <form id="requestForm">
+                <div class="form-group">
+                    <label>الاسم الرباعي <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-user"></i><input type="text" id="fullName" required></div>
+                </div>
+                <div class="form-group">
+                    <label>الدولة <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-globe"></i><input type="text" id="country" required></div>
+                </div>
+                <div class="form-group">
+                    <label>الجنس <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-venus-mars"></i>
+                        <select id="gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>المستفيد <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-users"></i>
+                        <select id="beneficiary"><option value="نفسي">لنفسي</option><option value="غيري">لشخص آخر</option></select>
+                    </div>
+                </div>
+                <div class="form-group hidden" id="relationDiv">
+                    <label>علاقتك بالمستفيد <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-heart"></i>
+                        <select id="relation"><option>زوج</option><option>زوجة</option><option>ابن</option><option>ابنة</option><option>أب</option><option>أم</option><option>صديق</option><option>صديقة</option><option>ابن عم</option><option>ابن خال</option><option>جار</option><option>أخرى</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>نوع الخدمة <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-crown"></i>
+                        <select id="serviceType">
+                            <option value="استشارة">استشارة نفسية روحانية (50$)</option>
+                            <option value="تفسير رؤيا">تفسير رؤيا/حلم (10$)</option>
+                            <option value="كشف دفائن">كشف دفائن (200$)</option>
+                            <option value="علاج">علاج (مس/سحر/عين) (50$)</option>
+                            <option value="إنهاء خلافات أسرية">إنهاء الخلافات الأسرية (50$)</option>
+                            <option value="جلسة صوتية">جلسة صوتية مباشرة (200$)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>وصف المشكلة <span class="required">*</span></label>
+                    <textarea id="description" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>طريقة الرد <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-comment-dots"></i>
+                        <select id="contactMethod"><option value="whatsapp">واتساب (نص/صوت)</option><option value="email">بريد إلكتروني</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف (واتساب) <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fab fa-whatsapp"></i><input type="text" id="phone" required></div>
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني <span class="required">*</span></label>
+                    <div class="input-wrapper"><i class="fas fa-envelope"></i><input type="email" id="email" required></div>
+                </div>
+                <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
+            </form>
+
+            <div id="bankDetails" style="display:none;">
+                <h3><i class="fas fa-coins"></i> بيانات التحويل</h3>
+                <div class="bank-box"><p><strong>البنك:</strong> <span id="bankName"></span></p>
+                <p><strong>المستفيد:</strong> <span id="bankAccountName"></span></p>
+                <p><strong>رقم الحساب:</strong> <span id="bankIban"></span></p></div>
+                <p style="text-align:center; font-weight:bold; color:var(--primary-gold);">المبلغ: <span id="amountDisplay" style="font-size:1.5rem;">50</span> دولار</p>
+                <div class="form-group"><label>رقم الحوالة (إجباري)</label><input type="text" id="transferCode" required></div>
+                <div class="form-group"><label>صورة الإيصال (اختياري)</label><div class="file-upload-wrapper"><input type="file" id="receipt" accept="image/*"></div></div>
+                <button onclick="confirmPayment()" class="btn-submit" style="background:#1B4D3D;">تأكيد التحويل</button>
+            </div>
+        </div>
+
+        <!-- ===== قسم آراء المستفيدين ===== -->
+        <section class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-quote-right"></i> آراء المستفيدين</h2>
+                <span>ما قالوه عن رحلة الشفاء</span>
+            </div>
+            <div id="testimonialsContainer" class="testimonials-grid">
+                <!-- سيتم جلبها عبر JavaScript -->
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

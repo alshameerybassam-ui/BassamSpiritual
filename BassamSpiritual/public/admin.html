@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المركز - النور الرباني</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>النور الرباني</span>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active"><i class="fas fa-tachometer-alt"></i> الإحصائيات</li>
+                    <li onclick="loadRequests()"><i class="fas fa-list-ul"></i> جميع الطلبات</li>
+                    <li><i class="fas fa-users"></i> العملاء</li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <i class="fas fa-lock"></i> إشراف: بسام الشميري
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <h1>لوحة تحكم المركز</h1>
+                <div class="header-actions">
+                    <span id="currentTime"></span>
+                    <a href="/" target="_blank" class="btn-view-site"><i class="fas fa-external-link-alt"></i> زيارة الموقع</a>
+                </div>
+            </header>
+
+            <!-- بطاقات الإحصائيات -->
+            <section class="stats-grid">
+                <div class="stat-card gold">
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalCount">0</h3>
+                        <p>إجمالي الطلبات</p>
+                    </div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-info">
+                        <h3 id="pendingCount">0</h3>
+                        <p>قيد الانتظار</p>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <h3 id="completedCount">0</h3>
+                        <p>مكتملة</p>
+                    </div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                    <div class="stat-info">
+                        <h3 id="rejectedCount">0</h3>
+                        <p>مرفوضة</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- جدول الطلبات -->
+            <section class="table-section">
+                <div class="table-header">
+                    <h2><i class="fas fa-list"></i> قائمة الطلبات</h2>
+                    <div class="table-controls">
+                        <input type="text" id="searchInput" placeholder="ابحث باسم أو بريد..." onkeyup="filterTable()">
+                        <button onclick="loadRequests()" class="btn-refresh"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="requestsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الاسم</th>
+                                <th>البريد</th>
+                                <th>الخدمة</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestsBody">
+                            <tr><td colspan="7" style="text-align:center; padding:30px; color:#888;">جاري تحميل الطلبات...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- نافذة التفاصيل المنبثقة (مودال) -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-alt"></i> تفاصيل الطلب</h3>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody" class="modal-body">
+                <!-- سيتم ملؤها بواسطة JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn-close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
