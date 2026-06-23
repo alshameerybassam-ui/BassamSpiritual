@@ -221,5 +221,21 @@
     </div>
 
     <script src="script.js"></script>
+        
+            <!-- ===== مودال عرض المقال كاملاً ===== -->
+    <div id="articleModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalArticleTitle"><i class="fas fa-feather-alt"></i> عنوان المقال</h3>
+                <span class="modal-close" onclick="closeArticleModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalArticleContent">
+                <p>جاري تحميل المحتوى...</p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeArticleModal()" class="btn-modal-close">إغلاق</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
