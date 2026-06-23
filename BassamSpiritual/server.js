@@ -145,7 +145,6 @@ app.post('/api/request',
 // ==============================================
 app.get('/api/requests', authenticate, (req, res) => {
     const data = readData();
-    // إرسال جميع الطلبات مع الترتيب من الأحدث
     res.json(data.requests.reverse());
 });
 
