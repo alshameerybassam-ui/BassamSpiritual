@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const bodyParser = require('body-parser');
 const fs = require('fs-extra');
 const path = require('path');
@@ -15,10 +16,13 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = './data.json';
 
 // ==============================================
-// 1. الإعدادات الأمنية الأساسية
+// 1. الإعدادات الأمنية والأداء الأساسية
 // ==============================================
 app.use(helmet());
 app.use(cors());
+app.use(compression()); // تفعيل ضغط الملفات (Gzip) لتسريع التحميل
+
+// تحديد معدل الطلبات
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -27,10 +31,24 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static('public'));
+
+// ===== تقديم الملفات الثابتة مع تفعيل التخزين المؤقت =====
+app.use(express.static('public', {
+    maxAge: '1d', // تخزين الملفات لمدة يوم في ذاكرة المتصفح
+    setHeaders: (res, filePath) => {
+        // ملفات HTML لا تخزن (للتأكد من حصول الزائر على أحدث التحديثات)
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+        // ملفات CSS و JS تخزن لمدة يوم
+        if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+    }
+}));
 
 // ==============================================
-// 2. إعداد البريد الإلكتروني (ناقل الإشعارات)
+// 2. إعداد البريد الإلكتروني
 // ==============================================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -47,6 +65,7 @@ fs.ensureFileSync(DATA_FILE);
 if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE).length === 0) {
     fs.writeFileSync(DATA_FILE, JSON.stringify({
         settings: {},
+        paymentMethods: [],
         requests: [],
         clients: [],
         testimonials: [],
@@ -58,7 +77,7 @@ const readData = () => JSON.parse(fs.readFileSync(DATA_FILE));
 const writeData = (data) => fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// 4. وظيفة المصادقة (للوحة التحكم)
+// 4. وظيفة المصادقة
 // ==============================================
 const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -87,7 +106,6 @@ app.get('/api/settings', (req, res) => res.json(readData().settings));
 app.get('/api/testimonials', (req, res) => res.json(readData().testimonials));
 app.get('/api/articles', (req, res) => res.json(readData().articles));
 
-// مسار إرسال الطلب (مع البريد الإلكتروني)
 app.post('/api/request',
     [
         body('fullName').notEmpty().trim().escape(),
@@ -118,7 +136,7 @@ app.post('/api/request',
         client.history.push(newReq.id);
         writeData(data);
 
-        // ===== إرسال بريد إلكتروني للمسؤول =====
+        // إشعار للمسؤول
         try {
             await transporter.sendMail({
                 from: `"مركز النور الرباني" <${process.env.EMAIL_USER}>`,
@@ -130,10 +148,10 @@ app.post('/api/request',
                        <p><strong>الهاتف:</strong> ${req.body.phone}</p>
                        <p><strong>الخدمة:</strong> ${req.body.serviceType}</p>
                        <p><strong>الوصف:</strong> ${req.body.description}</p>
-                       <p><a href="http://localhost:${PORT}/admin.html">اضغط هنا لإدارة الطلب</a></p>`
+                       <p><a href="https://bassam-spiritual-center.onrender.com/admin.html">اضغط هنا لإدارة الطلب</a></p>`
             });
         } catch (emailError) {
-            console.error('فشل إرسال البريد:', emailError.message);
+            console.error('فشل إرسال البريد للمسؤول:', emailError.message);
         }
 
         res.json({ success: true, id: newReq.id });
@@ -150,7 +168,6 @@ app.get('/api/requests', authenticate, (req, res) => {
 
 app.get('/api/clients', authenticate, (req, res) => res.json(readData().clients));
 
-// تحديث حالة الطلب (مع إرسال بريد للعميل عند الرد)
 app.patch('/api/request/:id', authenticate, async (req, res) => {
     let data = readData();
     const { id } = req.params;
@@ -163,26 +180,82 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
     if (adminReply !== undefined) data.requests[index].adminReply = adminReply;
     writeData(data);
 
-    // إرسال رد للعميل إذا كان الرد موجوداً
-    if (adminReply && data.requests[index].email) {
+    const reqData = data.requests[index];
+    const clientEmail = reqData.email;
+    const clientName = reqData.fullName;
+
+    if (clientEmail && adminReply) {
         try {
+            const settings = data.settings || {};
+            const standardPrice = settings.prices?.standard || 187.5;
+            const premiumPrice = settings.prices?.premium || 375;
+            const currencySymbol = settings.currencySymbol || 'ر.س';
+            const price = reqData.serviceType && reqData.serviceType.includes('100') ? premiumPrice : standardPrice;
+
+            let emailHtml = `
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 12px; border-right: 8px solid #D4AF37;">
+                    <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">النور الرباني</span></h2>
+                    <p style="font-size: 1.1rem;">السلام عليكم ورحمة الله وبركاته <strong>${clientName}</strong>،</p>
+                    <p>تم تحديث حالة طلبك في مركز النور الرباني إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
+                    <div style="background: #fff; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee;">
+                        <p><strong>✍️ رد الشيخ بسام:</strong></p>
+                        <p style="background: #f4f0eb; padding: 15px; border-radius: 10px;">${adminReply}</p>
+                    </div>
+            `;
+
+            if (status === 'completed') {
+                const paymentMethods = data.paymentMethods || [];
+                if (paymentMethods.length > 0) {
+                    emailHtml += `
+                        <hr style="border: 1px dashed #D4AF37; margin: 20px 0;">
+                        <h3 style="color: #0A1628; text-align: center;">💳 اختر طريقة الدفع المناسبة لك</h3>
+                        <p style="text-align: center; color: #555;">المبلغ المطلوب: <strong style="color: #D4AF37; font-size: 1.3rem;">${price} ${currencySymbol}</strong></p>
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin: 15px 0;">
+                    `;
+                    paymentMethods.forEach((method) => {
+                        const detailsHtml = method.details ? method.details.replace(/\n/g, '<br>') : 'لم يتم إدخال التفاصيل';
+                        emailHtml += `
+                            <div style="background: #fff; border-right: 6px solid #D4AF37; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <strong style="color: #0A1628; font-size: 1.1rem;">${method.name}</strong>
+                                <p style="margin: 8px 0; color: #333; line-height: 1.8; white-space: pre-wrap;">${detailsHtml}</p>
+                                ${method.note ? `<p style="color: #888; font-size: 0.9rem; margin: 5px 0 0 0;"><i class="fas fa-info-circle"></i> ${method.note}</p>` : ''}
+                            </div>
+                        `;
+                    });
+                    emailHtml += `
+                        </div>
+                        <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 10px;">
+                            <i class="fas fa-shield-alt"></i> بعد التحويل، يرجى إرسال صورة الإيصال عبر واتساب لتأكيد الحجز.
+                        </p>
+                    `;
+                }
+            } else if (status === 'rejected') {
+                emailHtml += `
+                    <hr style="border: 1px dashed #ccc; margin: 20px 0;">
+                    <p style="color: #888; font-size: 0.95rem; text-align: center;">نأسف لعدم تمكننا من قبول طلبك في هذا الوقت. نتمنى لك الشفاء والعافية.</p>
+                `;
+            }
+
+            emailHtml += `
+                    <p style="margin-top: 20px; text-align: center; color: #555;">نسأل الله لكم الشفاء والعافية.</p>
+                    <p style="text-align: center; color: #aaa; font-size: 0.8rem;">هذا البريد آلي، يرجى عدم الرد عليه.</p>
+                </div>
+            `;
+
             await transporter.sendMail({
                 from: `"مركز النور الرباني" <${process.env.EMAIL_USER}>`,
-                to: data.requests[index].email,
+                to: clientEmail,
                 subject: `تحديث حالة طلبك - مركز النور الرباني`,
-                html: `<h2>السلام عليكم ${data.requests[index].fullName}</h2>
-                       <p>تم تحديث حالة طلبك إلى: <strong>${status}</strong></p>
-                       <p><strong>رد الشيخ بسام:</strong></p>
-                       <p style="background:#f4f0eb; padding:15px; border-radius:10px;">${adminReply}</p>
-                       <p>نسأل الله لكم الشفاء والعافية.</p>`
+                html: emailHtml
             });
-        } catch (e) { console.error('فشل إرسال الرد للعميل'); }
+        } catch (e) {
+            console.error('فشل إرسال الرد للعميل:', e.message);
+        }
     }
 
     res.json({ success: true });
 });
 
-// حذف طلب
 app.delete('/api/request/:id', authenticate, (req, res) => {
     let data = readData();
     const { id } = req.params;
