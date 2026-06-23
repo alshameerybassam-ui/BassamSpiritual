@@ -1,11 +1,10 @@
 :root {
-    /* ===== الألوان الجديدة (ذهبي برتقالي + أزرق داكن) ===== */
-    --primary-dark: #0A1628;          /* أزرق نيلي عميق (خلفية الثقة) */
-    --primary-gold: #F5B041;          /* ذهبي برتقالي مشمس (الأساسي) */
-    --primary-gold-dark: #E67E22;     /* برتقالي ذهبي غامق (للخلفيات والتدرجات) */
-    --primary-gold-light: #F1C40F;    /* ذهبي فاقع (للتوهج والإضاءة) */
-    --primary-teal: #1B4D3D;          /* أخضر زمردي (لعناصر الشفاء) */
-    --secondary-bg: #FDFEFE;          /* أبيض ثلجي ناصع */
+    --primary-dark: #0A1628;
+    --primary-gold: #F5B041;
+    --primary-gold-dark: #E67E22;
+    --primary-gold-light: #F1C40F;
+    --primary-teal: #1B4D3D;
+    --secondary-bg: #FDFEFE;
     --white: #ffffff;
     --text-dark: #1A2835;
     --shadow: 0 20px 60px rgba(10, 22, 40, 0.15);
@@ -18,12 +17,10 @@ body {
     background: var(--secondary-bg);
     color: var(--text-dark);
     overflow-x: hidden;
-    /* توهج ذهبي برتقالي في الخلفية */
     background-image: radial-gradient(circle at 10% 0%, rgba(245, 176, 65, 0.08) 0%, transparent 60%),
                       radial-gradient(circle at 90% 100%, rgba(10, 22, 40, 0.03) 0%, transparent 50%);
 }
 
-/* ===== شريط الخدمات (الخلفية الزرقاء الداكنة) ===== */
 .marquee-wrapper {
     background: var(--primary-dark);
     color: var(--primary-gold);
@@ -45,47 +42,8 @@ body {
 }
 .marquee-content span i { margin-left: 10px; color: #fff; }
 
-/* ===== المسبحة الذهبية البرتقالية ===== */
-.tasbih-container {
-    position: fixed;
-    bottom: 25px;
-    left: 25px;
-    background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
-    width: 75px;
-    height: 75px;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: var(--primary-dark);
-    font-size: 28px;
-    box-shadow: 0 0 0 4px rgba(10, 22, 40, 0.2), 0 8px 35px rgba(245, 176, 65, 0.6);
-    cursor: pointer;
-    z-index: 999;
-    transition: 0.3s;
-    border: 2px solid #fff;
-}
-.tasbih-container:hover { transform: scale(1.08) rotate(8deg); }
-.tasbih-container span { font-size: 20px; font-weight: 900; margin-top: 2px; color: #0A1628; }
-.pulse-ring {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: var(--primary-gold);
-    opacity: 0.3;
-    animation: pulseAnim 2.2s ease-out infinite;
-    z-index: -1;
-}
-@keyframes pulseAnim {
-    0% { transform: scale(1); opacity: 0.5; }
-    100% { transform: scale(1.6); opacity: 0; }
-}
-
 .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
-/* ===== البطل (Hero) ===== */
 .hero {
     text-align: center;
     background: var(--white);
@@ -204,7 +162,6 @@ body {
     padding-top: 18px;
 }
 
-/* ===== بطاقة السرية (بحدود ذهبية برتقالية) ===== */
 .trust-card {
     background: linear-gradient(135deg, #FEF9F0, #FDF5E6);
     border-radius: var(--radius);
@@ -309,7 +266,6 @@ body {
 .trust-seal i { color: var(--primary-gold); margin-left: 8px; }
 .trust-seal span { font-weight: 600; }
 
-/* ===== عداد الثقة ===== */
 .trust-counter {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -326,7 +282,6 @@ body {
 .counter-item .counter-number { font-size: 2.5rem; font-weight: 900; color: var(--primary-gold-dark); display: block; }
 .counter-item p { color: #5A6A7A; font-weight: 600; margin-top: 4px; }
 
-/* ===== الأقسام ===== */
 .section { margin: 55px 0; }
 .section-header {
     display: flex;
@@ -353,7 +308,6 @@ body {
     border: 1px solid var(--primary-gold);
 }
 
-/* ===== بطاقات الخدمات ===== */
 .services-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -385,7 +339,6 @@ body {
 }
 .service-card.gold-card { border-bottom-color: var(--primary-gold); background: #FFFDF7; }
 
-/* ===== بطاقات المقالات ===== */
 .articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -415,7 +368,6 @@ body {
 .article-card p { color: #4A5A6A; font-size: 0.95rem; line-height: 1.8; }
 .article-card .date { color: #9AABBA; font-size: 0.8rem; margin-top: 12px; display: block; }
 
-/* ===== بطاقات الشهادات ===== */
 .testimonials-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -458,7 +410,6 @@ body {
     display: block;
 }
 
-/* ===== نموذج الطلب ===== */
 .form-card {
     background: var(--white);
     border-radius: var(--radius);
@@ -499,7 +450,6 @@ body {
 }
 textarea { padding: 18px; min-height: 130px; }
 
-/* ===== الزر الذهبي البرتقالي ===== */
 .btn-submit {
     width: 100%;
     padding: 18px;
@@ -521,7 +471,6 @@ textarea { padding: 18px; min-height: 130px; }
     color: #0A1628;
 }
 
-/* ===== بنك الدفع ===== */
 .bank-box {
     background: var(--secondary-bg);
     padding: 20px;
@@ -538,8 +487,6 @@ textarea { padding: 18px; min-height: 130px; }
     background: #fff;
     position: relative;
 }
-
-/* ===== الإشعارات ===== */
 .notification {
     position: fixed;
     top: 25px;
@@ -561,7 +508,6 @@ textarea { padding: 18px; min-height: 130px; }
 .notification.show { display: block; }
 .hidden { display: none !important; }
 
-/* ===== مودال عرض المقال كاملاً ===== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -656,7 +602,6 @@ textarea { padding: 18px; min-height: 130px; }
     color: var(--primary-dark);
 }
 
-/* ===== استجابة الجوال ===== */
 @media (max-width: 768px) {
     .hero h1 { font-size: 2.2rem; }
     .sub-title { font-size: 1.1rem; }
@@ -666,8 +611,6 @@ textarea { padding: 18px; min-height: 130px; }
     .form-card { padding: 20px 15px; }
     .articles-grid, .testimonials-grid { grid-template-columns: 1fr; }
     .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .tasbih-container { width: 60px; height: 60px; font-size: 22px; bottom: 15px; left: 15px; }
-    .tasbih-container span { font-size: 16px; }
     .trust-card { flex-direction: column; text-align: center; padding: 25px 20px; gap: 15px; }
     .trust-icon { font-size: 2.5rem; min-width: unset; }
     .trust-content h3 { justify-content: center; font-size: 1.1rem; }
