@@ -6,18 +6,7 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 5000);
 }
 
-// ===== المسبحة الرقمية =====
-let tasbihCount = 0;
-function startTasbih() {
-    tasbihCount++;
-    document.getElementById('tasbihCount').innerText = tasbihCount;
-    if (tasbihCount === 33) {
-        showNotification('سبحان الله! نور رباني على نفس رحمانية، نسأل الله الشفاء للجميع.', 'success');
-        tasbihCount = 0;
-    }
-}
-
-// ===== جلب وعرض المقالات (مع إضافة حدث النقر) =====
+// ===== جلب وعرض المقالات =====
 async function loadArticles() {
     try {
         const res = await fetch('/api/articles');
@@ -55,37 +44,28 @@ async function openArticle(articleId) {
             return;
         }
 
-        // تعبئة المودال
         document.getElementById('modalArticleTitle').innerHTML = `<i class="fas fa-feather-alt"></i> ${article.title}`;
         document.getElementById('modalArticleContent').innerHTML = `
             ${article.content ? article.content.replace(/\n/g, '<br>') : '<p>لا يوجد محتوى مكتوب لهذا المقال بعد.</p>'}
             <span class="article-date"><i class="far fa-calendar-alt"></i> نشر في: ${article.date}</span>
         `;
         document.getElementById('articleModal').classList.add('show');
-        document.body.style.overflow = 'hidden'; // منع التمرير خلف المودال
+        document.body.style.overflow = 'hidden';
     } catch (e) {
         showNotification('⚠️ خطأ في تحميل المحتوى', 'error');
     }
 }
 
-// ===== إغلاق المودال =====
 function closeArticleModal() {
     document.getElementById('articleModal').classList.remove('show');
     document.body.style.overflow = 'auto';
 }
 
-// ===== إغلاق المودال عند النقر خارج المحتوى =====
 document.getElementById('articleModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeArticleModal();
-    }
+    if (e.target === this) closeArticleModal();
 });
-
-// ===== إغلاق المودال عند الضغط على زر Escape =====
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeArticleModal();
-    }
+    if (e.key === 'Escape') closeArticleModal();
 });
 
 // ===== جلب وعرض الشهادات =====
@@ -143,18 +123,11 @@ document.getElementById('requestForm').onsubmit = async function (e) {
         });
         const json = await res.json();
         if (json.success) {
-            showNotification('✅ تم استلام طلبك بنجاح!');
-            setTimeout(() => {
-                const country = data.country;
-                document.getElementById('bankName').innerText = country.includes('اليمن') ? 'بنك الكريمي' : (country.includes('السعودية') ? 'الراجحي' : 'حوالة دولية');
-                document.getElementById('bankAccountName').innerText = 'بسام محمد هزاع الشميري';
-                document.getElementById('bankIban').innerText = 'يرجى التأكد من رقم الحساب مع الشيخ';
-                // تحديد السعر بناءً على الخدمة
-                const price = data.serviceType.includes('100') ? '100' : '50';
-                document.getElementById('amountDisplay').innerText = price;
-                document.getElementById('bankDetails').style.display = 'block';
-                document.getElementById('bankDetails').scrollIntoView({ behavior: 'smooth' });
-            }, 2000);
+            showNotification('✅ تم استلام طلبك بنجاح. سيتم إشعارك لاحقاً بالموافقة على طلبك أو الرفض.', 'success');
+            document.getElementById('requestForm').reset();
+            document.getElementById('bankDetails').style.display = 'none';
+            document.getElementById('relationDiv').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             showNotification('❌ خطأ في الإرسال', 'error');
         }
@@ -181,7 +154,7 @@ document.getElementById('beneficiary').addEventListener('change', function () {
     else div.classList.add('hidden');
 });
 
-// ===== تأثير عداد الثقة =====
+// ===== عداد الثقة =====
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
     counters.forEach(counter => {
@@ -201,7 +174,6 @@ function animateCounters() {
     });
 }
 
-// ===== تحميل البيانات عند فتح الصفحة (الحدث الرئيسي) =====
 document.addEventListener('DOMContentLoaded', () => {
     loadArticles();
     loadTestimonials();
