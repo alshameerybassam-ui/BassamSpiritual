@@ -72,7 +72,7 @@ function filterTable() {
     renderTable(filtered);
 }
 
-// ===== عرض التفاصيل (المودال) =====
+// ===== عرض التفاصيل (المودال) مع وصف بارز =====
 async function viewDetails(id) {
     selectedRequestId = id;
     const res = await fetch('/api/requests');
@@ -88,14 +88,21 @@ async function viewDetails(id) {
         <p><strong>🌍 الدولة:</strong> ${req.country || 'غير محدد'}</p>
         <p><strong>🧑‍🤝‍🧑 المستفيد:</strong> ${req.beneficiary || 'نفسي'}</p>
         <p><strong>🛠 الخدمة:</strong> ${req.serviceType}</p>
-        <p><strong>📝 الوصف:</strong><br>${req.description}</p>
+        
+        <!-- ===== صندوق الوصف البارز ===== -->
+        <div style="background: #FFFBF0; border-right: 6px solid #F5B041; padding: 15px 20px; border-radius: 12px; margin: 15px 0; box-shadow: 0 2px 10px rgba(245, 176, 65, 0.1);">
+            <strong style="color: #0A1628; font-size: 1.1rem; display: block; margin-bottom: 8px;">📝 وصف المشكلة:</strong>
+            <p style="margin: 0; line-height: 1.9; color: #1A2835; white-space: pre-wrap; font-size: 1.05rem;">
+                ${req.description || '⚠️ لم يكتب المستفيد أي وصف للمشكلة.'}
+            </p>
+        </div>
         <hr>
         <label for="statusSelect">تغيير الحالة:</label>
         <select id="statusSelect">
-            <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
-            <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>قيد المعالجة</option>
-            <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>مكتمل</option>
-            <option value="rejected" ${req.status === 'rejected' ? 'selected' : ''}>مرفوض</option>
+            <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+            <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>⚙️ قيد المعالجة</option>
+            <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>✅ مكتمل</option>
+            <option value="rejected" ${req.status === 'rejected' ? 'selected' : ''}>❌ مرفوض</option>
         </select>
         <label for="replyText">الرد على العميل (سيُرسل بريداً إلكترونياً):</label>
         <textarea id="replyText" rows="4" placeholder="اكتب ردك للعميل هنا...">${req.adminReply || ''}</textarea>
