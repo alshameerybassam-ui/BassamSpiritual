@@ -203,10 +203,7 @@ function animateCounters() {
 
 // ===== تحميل البيانات عند فتح الصفحة (الحدث الرئيسي) =====
 document.addEventListener('DOMContentLoaded', () => {
-    // جلب المقالات والشهادات من الخادم
     loadArticles();
     loadTestimonials();
-    
-    // تشغيل عداد الثقة بعد نصف ثانية من تحميل الصفحة (لضمان ظهور الأرقام بشكل سلس)
     setTimeout(animateCounters, 500);
 });
