@@ -16,9 +16,22 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = './data.json';
 
 // ==============================================
-// 1. الإعدادات الأمنية والأداء
+// 1. الإعدادات الأمنية والأداء الأساسية (مع تعديل CSP)
 // ==============================================
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            // السماح بتنفيذ الأكواد المضمنة (لأجل onclick في HTML)
+            "script-src-attr": ["'unsafe-inline'"],
+            "script-src": ["'self'", "'unsafe-inline'"],
+            // السماح بتحميل الخطوط والأيقونات من أي مصدر
+            "font-src": ["'self'", "https:", "data:"],
+            "style-src": ["'self'", "'unsafe-inline'", "https:"],
+            "img-src": ["'self'", "data:", "https:"],
+        },
+    },
+}));
+
 app.use(cors());
 app.use(compression());
 
@@ -55,7 +68,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // ==============================================
-// 3. قاعدة البيانات
+// 3. قاعدة البيانات (JSON)
 // ==============================================
 fs.ensureFileSync(DATA_FILE);
 if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE).length === 0) {
@@ -73,7 +86,7 @@ const readData = () => JSON.parse(fs.readFileSync(DATA_FILE));
 const writeData = (data) => fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// 4. المصادقة
+// 4. وظيفة المصادقة
 // ==============================================
 const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -100,10 +113,7 @@ const authenticate = (req, res, next) => {
 // ==============================================
 app.get('/api/settings', (req, res) => res.json(readData().settings));
 app.get('/api/testimonials', (req, res) => res.json(readData().testimonials));
-app.get('/api/articles', (req, res) => {
-    const data = readData();
-    res.json(data.articles || []);
-});
+app.get('/api/articles', (req, res) => res.json(readData().articles));
 
 app.post('/api/request',
     [
@@ -157,7 +167,7 @@ app.post('/api/request',
 );
 
 // ==============================================
-// 6. مسارات لوحة التحكم
+// 6. مسارات لوحة التحكم (محمية)
 // ==============================================
 app.get('/api/requests', authenticate, (req, res) => {
     const data = readData();
@@ -201,7 +211,7 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 12px; border-right: 8px solid #D4AF37;">
                     <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">النور الرباني والنفس الرحماني</span></h2>
                     <p style="font-size: 1.1rem;">السلام عليكم ورحمة الله وبركاته <strong>${clientName}</strong>،</p>
-                    <p>تم تحديث حالة طلبك في مركز النور الرباني والنفس الرحماني إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
+                    <p>تم تحديث حالة طلبك إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
                     <div style="background: #fff; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee;">
                         <p><strong>✍️ رد الشيخ بسام:</strong></p>
                         <p style="background: #f4f0eb; padding: 15px; border-radius: 10px;">${adminReply}</p>
@@ -213,8 +223,8 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
                 if (paymentMethods.length > 0) {
                     emailHtml += `
                         <hr style="border: 1px dashed #D4AF37; margin: 20px 0;">
-                        <h3 style="color: #0A1628; text-align: center;">💳 اختر طريقة الدفع المناسبة لك</h3>
-                        <p style="text-align: center; color: #555;">المبلغ المطلوب: <strong style="color: #D4AF37; font-size: 1.3rem;">${price} ${currencySymbol}</strong></p>
+                        <h3 style="color: #0A1628; text-align: center;">💳 اختر طريقة الدفع</h3>
+                        <p style="text-align: center; color: #555;">المبلغ: <strong style="color: #D4AF37; font-size: 1.3rem;">${price} ${currencySymbol}</strong></p>
                         <div style="display: flex; flex-direction: column; gap: 12px; margin: 15px 0;">
                     `;
                     paymentMethods.forEach((method) => {
@@ -223,27 +233,24 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
                             <div style="background: #fff; border-right: 6px solid #D4AF37; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                                 <strong style="color: #0A1628; font-size: 1.1rem;">${method.name}</strong>
                                 <p style="margin: 8px 0; color: #333; line-height: 1.8; white-space: pre-wrap;">${detailsHtml}</p>
-                                ${method.note ? `<p style="color: #888; font-size: 0.9rem; margin: 5px 0 0 0;"><i class="fas fa-info-circle"></i> ${method.note}</p>` : ''}
+                                ${method.note ? `<p style="color: #888; font-size: 0.9rem; margin: 5px 0 0 0;">${method.note}</p>` : ''}
                             </div>
                         `;
                     });
                     emailHtml += `
                         </div>
-                        <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 10px;">
-                            <i class="fas fa-shield-alt"></i> بعد التحويل، يرجى إرسال صورة الإيصال عبر واتساب لتأكيد الحجز.
-                        </p>
+                        <p style="text-align: center; color: #888; font-size: 0.9rem;">بعد التحويل، يرجى إرسال الإيصال عبر واتساب.</p>
                     `;
                 }
             } else if (status === 'completed' && price === 0) {
                 emailHtml += `
                     <hr style="border: 1px dashed #D4AF37; margin: 20px 0;">
-                    <p style="text-align: center; color: #0A1628; font-weight: bold;">✅ خدمتك مجانية بالكامل. لا توجد أي رسوم مالية.</p>
-                    <p style="text-align: center; color: #555;">سيتم التواصل معك قريباً لإتمام الاستشارة.</p>
+                    <p style="text-align: center; color: #0A1628; font-weight: bold;">✅ خدمتك مجانية بالكامل.</p>
                 `;
             } else if (status === 'rejected') {
                 emailHtml += `
                     <hr style="border: 1px dashed #ccc; margin: 20px 0;">
-                    <p style="color: #888; font-size: 0.95rem; text-align: center;">نأسف لعدم تمكننا من قبول طلبك في هذا الوقت. نتمنى لك الشفاء والعافية.</p>
+                    <p style="color: #888; text-align: center;">نأسف لعدم تمكننا من قبول طلبك في هذا الوقت.</p>
                 `;
             }
 
