@@ -20,9 +20,8 @@ const DATA_FILE = './data.json';
 // ==============================================
 app.use(helmet());
 app.use(cors());
-app.use(compression()); // تفعيل ضغط الملفات (Gzip) لتسريع التحميل
+app.use(compression());
 
-// تحديد معدل الطلبات
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -32,15 +31,12 @@ app.use('/api/', limiter);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// ===== تقديم الملفات الثابتة مع تفعيل التخزين المؤقت =====
 app.use(express.static('public', {
-    maxAge: '1d', // تخزين الملفات لمدة يوم في ذاكرة المتصفح
+    maxAge: '1d',
     setHeaders: (res, filePath) => {
-        // ملفات HTML لا تخزن (للتأكد من حصول الزائر على أحدث التحديثات)
         if (filePath.endsWith('.html')) {
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         }
-        // ملفات CSS و JS تخزن لمدة يوم
         if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
             res.setHeader('Cache-Control', 'public, max-age=86400');
         }
@@ -139,7 +135,7 @@ app.post('/api/request',
         // إشعار للمسؤول
         try {
             await transporter.sendMail({
-                from: `"مركز النور الرباني" <${process.env.EMAIL_USER}>`,
+                from: `"مركز كهيعص" <${process.env.EMAIL_USER}>`,
                 to: process.env.EMAIL_USER,
                 subject: `طلب جديد من ${req.body.fullName}`,
                 html: `<h2>طلب استشارة جديد</h2>
@@ -187,23 +183,33 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
     if (clientEmail && adminReply) {
         try {
             const settings = data.settings || {};
-            const standardPrice = settings.prices?.standard || 187.5;
-            const premiumPrice = settings.prices?.premium || 375;
+            const freePrice = settings.prices?.free || 0;
+            const standardPrice = settings.prices?.standard || 200;
+            const premiumPrice = settings.prices?.premium || 500;
             const currencySymbol = settings.currencySymbol || 'ر.س';
-            const price = reqData.serviceType && reqData.serviceType.includes('100') ? premiumPrice : standardPrice;
+            
+            // تحديد السعر حسب الخدمة
+            let price = standardPrice;
+            if (reqData.serviceType && reqData.serviceType.includes('500')) {
+                price = premiumPrice;
+            } else if (reqData.serviceType && reqData.serviceType.includes('مجاناً')) {
+                price = freePrice;
+            } else {
+                price = standardPrice;
+            }
 
             let emailHtml = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 12px; border-right: 8px solid #D4AF37;">
-                    <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">النور الرباني</span></h2>
+                    <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">كهيعص</span></h2>
                     <p style="font-size: 1.1rem;">السلام عليكم ورحمة الله وبركاته <strong>${clientName}</strong>،</p>
-                    <p>تم تحديث حالة طلبك في مركز النور الرباني إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
+                    <p>تم تحديث حالة طلبك في مركز كهيعص إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
                     <div style="background: #fff; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee;">
                         <p><strong>✍️ رد الشيخ بسام:</strong></p>
                         <p style="background: #f4f0eb; padding: 15px; border-radius: 10px;">${adminReply}</p>
                     </div>
             `;
 
-            if (status === 'completed') {
+            if (status === 'completed' && price > 0) {
                 const paymentMethods = data.paymentMethods || [];
                 if (paymentMethods.length > 0) {
                     emailHtml += `
@@ -229,6 +235,12 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
                         </p>
                     `;
                 }
+            } else if (status === 'completed' && price === 0) {
+                emailHtml += `
+                    <hr style="border: 1px dashed #D4AF37; margin: 20px 0;">
+                    <p style="text-align: center; color: #0A1628; font-weight: bold;">✅ خدمتك مجانية بالكامل. لا توجد أي رسوم مالية.</p>
+                    <p style="text-align: center; color: #555;">سيتم التواصل معك قريباً لإتمام الاستشارة.</p>
+                `;
             } else if (status === 'rejected') {
                 emailHtml += `
                     <hr style="border: 1px dashed #ccc; margin: 20px 0;">
@@ -243,9 +255,9 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
             `;
 
             await transporter.sendMail({
-                from: `"مركز النور الرباني" <${process.env.EMAIL_USER}>`,
+                from: `"مركز كهيعص" <${process.env.EMAIL_USER}>`,
                 to: clientEmail,
-                subject: `تحديث حالة طلبك - مركز النور الرباني`,
+                subject: `تحديث حالة طلبك - مركز كهيعص`,
                 html: emailHtml
             });
         } catch (e) {
@@ -268,6 +280,6 @@ app.delete('/api/request/:id', authenticate, (req, res) => {
 // 7. تشغيل الخادم
 // ==============================================
 app.listen(PORT, () => {
-    console.log(`🔒 مركز النور الرباني الاحترافي يعمل على http://localhost:${PORT}`);
+    console.log(`🔒 مركز كهيعص يعمل على http://localhost:${PORT}`);
     console.log(`📊 لوحة التحكم: http://localhost:${PORT}/admin.html`);
 });
