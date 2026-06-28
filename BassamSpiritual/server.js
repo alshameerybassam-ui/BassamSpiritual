@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = './data.json';
 
 // ==============================================
-// 1. الإعدادات الأمنية والأداء الأساسية
+// 1. الإعدادات الأمنية والأداء
 // ==============================================
 app.use(helmet());
 app.use(cors());
@@ -55,7 +55,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // ==============================================
-// 3. قاعدة البيانات (JSON)
+// 3. قاعدة البيانات
 // ==============================================
 fs.ensureFileSync(DATA_FILE);
 if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE).length === 0) {
@@ -73,7 +73,7 @@ const readData = () => JSON.parse(fs.readFileSync(DATA_FILE));
 const writeData = (data) => fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// 4. وظيفة المصادقة
+// 4. المصادقة
 // ==============================================
 const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -100,7 +100,10 @@ const authenticate = (req, res, next) => {
 // ==============================================
 app.get('/api/settings', (req, res) => res.json(readData().settings));
 app.get('/api/testimonials', (req, res) => res.json(readData().testimonials));
-app.get('/api/articles', (req, res) => res.json(readData().articles));
+app.get('/api/articles', (req, res) => {
+    const data = readData();
+    res.json(data.articles || []);
+});
 
 app.post('/api/request',
     [
@@ -132,7 +135,6 @@ app.post('/api/request',
         client.history.push(newReq.id);
         writeData(data);
 
-        // إشعار للمسؤول - الاسم المصحح
         try {
             await transporter.sendMail({
                 from: `"مركز النور الرباني والنفس الرحماني" <${process.env.EMAIL_USER}>`,
@@ -155,7 +157,7 @@ app.post('/api/request',
 );
 
 // ==============================================
-// 6. مسارات لوحة التحكم (محمية)
+// 6. مسارات لوحة التحكم
 // ==============================================
 app.get('/api/requests', authenticate, (req, res) => {
     const data = readData();
@@ -188,17 +190,13 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
             const premiumPrice = settings.prices?.premium || 500;
             const currencySymbol = settings.currencySymbol || 'ر.س';
             
-            // تحديد السعر حسب الخدمة
             let price = standardPrice;
             if (reqData.serviceType && reqData.serviceType.includes('500')) {
                 price = premiumPrice;
             } else if (reqData.serviceType && reqData.serviceType.includes('مجاناً')) {
                 price = freePrice;
-            } else {
-                price = standardPrice;
             }
 
-            // ===== البريد الإلكتروني للعميل - الاسم المصحح =====
             let emailHtml = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 12px; border-right: 8px solid #D4AF37;">
                     <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">النور الرباني والنفس الرحماني</span></h2>
