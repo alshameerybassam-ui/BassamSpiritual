@@ -132,10 +132,10 @@ app.post('/api/request',
         client.history.push(newReq.id);
         writeData(data);
 
-        // إشعار للمسؤول
+        // إشعار للمسؤول - الاسم المصحح
         try {
             await transporter.sendMail({
-                from: `"مركز كهيعص" <${process.env.EMAIL_USER}>`,
+                from: `"مركز النور الرباني والنفس الرحماني" <${process.env.EMAIL_USER}>`,
                 to: process.env.EMAIL_USER,
                 subject: `طلب جديد من ${req.body.fullName}`,
                 html: `<h2>طلب استشارة جديد</h2>
@@ -198,11 +198,12 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
                 price = standardPrice;
             }
 
+            // ===== البريد الإلكتروني للعميل - الاسم المصحح =====
             let emailHtml = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 12px; border-right: 8px solid #D4AF37;">
-                    <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">كهيعص</span></h2>
+                    <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">النور الرباني والنفس الرحماني</span></h2>
                     <p style="font-size: 1.1rem;">السلام عليكم ورحمة الله وبركاته <strong>${clientName}</strong>،</p>
-                    <p>تم تحديث حالة طلبك في مركز كهيعص إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
+                    <p>تم تحديث حالة طلبك في مركز النور الرباني والنفس الرحماني إلى: <strong style="color: #D4AF37;">${status === 'completed' ? '✅ تمت الموافقة' : status === 'rejected' ? '❌ مرفوض' : '🔄 قيد المعالجة'}</strong></p>
                     <div style="background: #fff; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee;">
                         <p><strong>✍️ رد الشيخ بسام:</strong></p>
                         <p style="background: #f4f0eb; padding: 15px; border-radius: 10px;">${adminReply}</p>
@@ -255,9 +256,9 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
             `;
 
             await transporter.sendMail({
-                from: `"مركز كهيعص" <${process.env.EMAIL_USER}>`,
+                from: `"مركز النور الرباني والنفس الرحماني" <${process.env.EMAIL_USER}>`,
                 to: clientEmail,
-                subject: `تحديث حالة طلبك - مركز كهيعص`,
+                subject: `تحديث حالة طلبك - مركز النور الرباني والنفس الرحماني`,
                 html: emailHtml
             });
         } catch (e) {
@@ -280,6 +281,6 @@ app.delete('/api/request/:id', authenticate, (req, res) => {
 // 7. تشغيل الخادم
 // ==============================================
 app.listen(PORT, () => {
-    console.log(`🔒 مركز كهيعص يعمل على http://localhost:${PORT}`);
+    console.log(`🔒 مركز النور الرباني والنفس الرحماني يعمل على http://localhost:${PORT}`);
     console.log(`📊 لوحة التحكم: http://localhost:${PORT}/admin.html`);
 });
