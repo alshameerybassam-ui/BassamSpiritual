@@ -242,5 +242,35 @@
     </div>
 
     <script src="script.js"></script>
+    <!-- ===== نافذة الذكاء الاصطناعي الروحاني ===== -->
+    <!-- أيقونة الدردشة العائمة -->
+    <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
+        <i class="fas fa-robot"></i>
+        <span class="chat-badge">1</span>
+    </div>
+
+    <!-- نافذة الدردشة -->
+    <div id="chatWindow" class="chat-window">
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <i class="fas fa-robot" style="color:#F5B041;"></i>
+                <span>المستشار الروحاني الذكي</span>
+            </div>
+            <button onclick="toggleChat()" class="chat-close">&times;</button>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message bot">
+                <div class="message-content">
+                    السلام عليكم ورحمة الله وبركاته 🌙<br>
+                    أنا المستشار الروحاني الذكي، هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.<br>
+                    <strong>هل يمكنك إخباري بما تمر به؟</strong>
+                </div>
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
 </body>
 </html>
