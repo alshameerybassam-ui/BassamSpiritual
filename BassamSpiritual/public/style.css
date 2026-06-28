@@ -1026,4 +1026,68 @@ textarea {
         font-size: 0.7rem;
         padding: 4px 12px;
     }
+/* ===== حل مشكلة عرض الجوال (امتلاء الشاشة بالكامل) ===== */
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+/* تحسين تنسيق بطاقات الخدمات للجوال */
+@media (max-width: 768px) {
+    .services-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .service-card {
+        padding: 18px 10px;
+    }
+    .service-card i {
+        font-size: 1.8rem;
+    }
+    .service-card h4 {
+        font-size: 0.9rem;
+    }
+    .service-card p {
+        font-size: 0.75rem;
+    }
+    .service-card .price {
+        font-size: 0.75rem;
+        padding: 3px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+    .hero {
+        padding: 25px 15px;
+    }
+    .trust-card {
+        padding: 15px;
+        margin: 15px 0;
+    }
+    .trust-icon {
+        font-size: 2rem;
+        min-width: 50px;
+    }
+    .trust-content p {
+        font-size: 0.9rem;
+        line-height: 1.7;
+    }
+    .counter-item .counter-number {
+        font-size: 1.8rem;
+    }
+}
 }
