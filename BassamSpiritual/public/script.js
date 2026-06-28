@@ -7,22 +7,19 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 5000);
 }
 
-// ===== جلب وعرض المقالات (نسخة محسنة وقوية) =====
+// ===== جلب وعرض المقالات (نسخة قوية مع تصحيح الأخطاء) =====
 async function loadArticles() {
     try {
         console.log('🔄 جاري تحميل المقالات...');
         const res = await fetch('/api/articles');
-        
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         
         const articles = await res.json();
         console.log('✅ تم جلب المقالات:', articles.length);
         
         const container = document.getElementById('articlesContainer');
         if (!container) {
-            console.error('❌ العنصر articlesContainer غير موجود في الصفحة!');
+            console.error('❌ articlesContainer غير موجود!');
             return;
         }
 
@@ -31,9 +28,8 @@ async function loadArticles() {
             return;
         }
 
-        // عرض المقالات مع إضافة حدث النقر
+        // عرض المقالات
         container.innerHTML = articles.map(article => {
-            // قص الملخص إلى 80 حرفاً
             const summary = article.summary || (article.content ? article.content.substring(0, 80) + '...' : '');
             return `
                 <div class="article-card" data-id="${article.id}" style="cursor:pointer;">
@@ -41,21 +37,19 @@ async function loadArticles() {
                     <h3>${article.title}</h3>
                     <p>${summary}</p>
                     <span class="date"><i class="far fa-calendar-alt"></i> ${article.date || 'تاريخ غير محدد'}</span>
-                    <span style="display:block; margin-top:12px; color:var(--primary-gold); font-weight:600; font-size:0.85rem;">
+                    <span style="display:block; margin-top:12px; color:#F5B041; font-weight:600; font-size:0.85rem;">
                         <i class="fas fa-arrow-left"></i> اضغط لقراءة المزيد
                     </span>
                 </div>
             `;
         }).join('');
 
-        // ===== إضافة حدث النقر لكل بطاقة باستخدام delegation =====
+        // ===== إضافة حدث النقر =====
         container.querySelectorAll('.article-card').forEach(card => {
-            card.addEventListener('click', function() {
+            card.addEventListener('click', function(e) {
                 const id = parseInt(this.getAttribute('data-id'));
-                if (id) {
-                    console.log('🖱️ تم النقر على المقال رقم:', id);
-                    openArticle(id);
-                }
+                console.log('🖱️ تم النقر على المقال رقم:', id);
+                if (id) openArticle(id);
             });
         });
 
@@ -68,7 +62,7 @@ async function loadArticles() {
     }
 }
 
-// ===== فتح المقال وعرض محتواه الكامل في المودال =====
+// ===== فتح المقال وعرض محتواه الكامل =====
 async function openArticle(articleId) {
     console.log('📖 فتح المقال رقم:', articleId);
     try {
@@ -77,28 +71,23 @@ async function openArticle(articleId) {
         
         const articles = await res.json();
         const article = articles.find(a => a.id === articleId);
-        
         if (!article) {
             showNotification('⚠️ المقال غير موجود', 'error');
             return;
         }
 
-        // تعبئة المودال
         const modalTitle = document.getElementById('modalArticleTitle');
         const modalContent = document.getElementById('modalArticleContent');
         const modal = document.getElementById('articleModal');
 
         if (!modalTitle || !modalContent || !modal) {
-            console.error('❌ عناصر المودال غير موجودة في الصفحة!');
+            console.error('❌ عناصر المودال غير موجودة!');
             return;
         }
 
         modalTitle.innerHTML = `<i class="fas fa-feather-alt"></i> ${article.title}`;
-        
-        // عرض المحتوى مع الحفاظ على الفقرات
         let contentHtml = article.content ? article.content.replace(/\n/g, '<br>') : '<p>لا يوجد محتوى مكتوب لهذا المقال بعد.</p>';
         contentHtml += `<span class="article-date"><i class="far fa-calendar-alt"></i> نشر في: ${article.date || 'تاريخ غير محدد'}</span>`;
-        
         modalContent.innerHTML = contentHtml;
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -136,16 +125,13 @@ async function loadTestimonials() {
     try {
         const res = await fetch('/api/testimonials');
         if (!res.ok) throw new Error('فشل جلب الشهادات');
-        
         const testimonials = await res.json();
         const container = document.getElementById('testimonialsContainer');
         if (!container) return;
-
         if (testimonials.length === 0) {
             container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">لا توجد آراء بعد، كن أنت الأول!</p>';
             return;
         }
-
         container.innerHTML = testimonials.map(t => {
             const stars = '★'.repeat(Math.min(t.rating || 5, 5)) + '☆'.repeat(Math.max(5 - (t.rating || 5), 0));
             return `
@@ -166,15 +152,12 @@ async function loadTestimonials() {
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('requestForm');
     if (!form) return;
-
     form.onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.querySelector('.btn-submit');
         if (!btn) return;
-
         btn.classList.add('loading');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-
         const data = {
             fullName: document.getElementById('fullName').value,
             country: document.getElementById('country').value,
@@ -187,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
             phone: document.getElementById('phone').value,
             email: document.getElementById('email').value
         };
-
         try {
             const res = await fetch('/api/request', {
                 method: 'POST',
@@ -233,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ===== تأثير عداد الثقة =====
+// ===== عداد الثقة =====
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
     counters.forEach(counter => {
