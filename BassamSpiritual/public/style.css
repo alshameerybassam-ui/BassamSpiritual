@@ -601,7 +601,15 @@ textarea { padding: 18px; min-height: 130px; }
     background: var(--primary-gold);
     color: var(--primary-dark);
 }
-
+/* ===== تنسيق الخدمات الجديدة ===== */
+.service-card .price.free {
+    background: var(--primary-teal);
+    color: #fff;
+}
+.service-card.gold-card {
+    border-bottom-color: var(--primary-gold);
+    background: #FFFDF7;
+}
 @media (max-width: 768px) {
     .hero h1 { font-size: 2.2rem; }
     .sub-title { font-size: 1.1rem; }
