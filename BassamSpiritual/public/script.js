@@ -350,4 +350,75 @@ function resetChat() {
 // ===== بدء المحادثة تلقائياً عند فتح الصفحة (اختياري) =====
 // يمكن تفعيل هذا السطر لعرض نافذة الدردشة تلقائياً بعد 3 ثواني من تحميل الصفحة
 // setTimeout(() => { toggleChat(); }, 3000);
+// ===== فتح الدردشة تلقائياً بعد 3 ثوانٍ (مرة واحدة فقط لكل جلسة) =====
+let hasAutoOpened = false;
+
+function autoOpenChat() {
+    // التحقق من أن المستخدم لم يغلق النافذة يدوياً من قبل في هذه الجلسة
+    const manualClosed = sessionStorage.getItem('chat_manual_closed');
+    if (manualClosed === 'true') return;
+    if (hasAutoOpened) return;
+
+    hasAutoOpened = true;
+    setTimeout(() => {
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow && !chatWindow.classList.contains('show')) {
+            // فتح النافذة
+            chatWindow.classList.add('show');
+            // التركيز على حقل الإدخال
+            document.getElementById('chatInput').focus();
+            // إخفاء الإشعار
+            const badge = document.querySelector('.chat-badge');
+            if (badge) badge.style.display = 'none';
+        }
+    }, 3000); // 3 ثواني
+}
+
+// ===== تعديل دالة toggleChat لتسجيل إغلاق المستخدم يدوياً =====
+const originalToggleChat = window.toggleChat;
+window.toggleChat = function() {
+    const window = document.getElementById('chatWindow');
+    const isShowing = window.classList.contains('show');
+    
+    if (!isShowing) {
+        // إذا كان يفتح، أزل علامة الإغلاق اليدوي
+        sessionStorage.removeItem('chat_manual_closed');
+    } else {
+        // إذا كان يغلق، سجل أنه أغلقها يدوياً
+        sessionStorage.setItem('chat_manual_closed', 'true');
+    }
+    
+    originalToggleChat();
+};
+
+// ===== إعادة تعريف دالة الإغلاق لتسجيل الإغلاق اليدوي =====
+const originalCloseArticleModal = window.closeArticleModal || function(){};
+window.closeArticleModal = function() {
+    // فقط للمقالات، لا تؤثر على الدردشة
+    if (typeof originalCloseArticleModal === 'function') {
+        originalCloseArticleModal();
+    }
+};
+
+// ===== تحديث دالة resetChat لتصحيح المؤشر =====
+const originalResetChat = window.resetChat || function(){};
+window.resetChat = function() {
+    // إعادة ضبط المحادثة مع الاحتفاظ بحالة الفتح التلقائي
+    if (typeof originalResetChat === 'function') {
+        originalResetChat();
+    }
+    // إعادة ضبط علامة الفتح التلقائي للجلسة الحالية
+    sessionStorage.removeItem('chat_manual_closed');
+    hasAutoOpened = false;
+    // نعيد فتحها تلقائياً بعد 5 ثوانٍ من إعادة الضبط
+    setTimeout(autoOpenChat, 5000);
+};
+
+// ===== تفعيل الفتح التلقائي عند تحميل الصفحة =====
+document.addEventListener('DOMContentLoaded', function() {
+    // ... (الكود الموجود سابقاً) ...
+    
+    // تفعيل الفتح التلقائي بعد 2 ثانية من تحميل الصفحة
+    setTimeout(autoOpenChat, 2000);
+});
 }
