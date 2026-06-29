@@ -5,7 +5,7 @@ async function loadRequests() {
     try {
         const res = await fetch('/api/requests');
         if (res.status === 401) {
-            document.getElementById('requestsBody').innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:red;">❌ غير مصرح لك بالدخول.</td></tr>';
+            document.getElementById('requestsBody').innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:red;">❌ غير مصرح لك بالدخول.</td></tr>';
             return;
         }
         currentRequests = await res.json();
@@ -13,14 +13,14 @@ async function loadRequests() {
         updateStats(currentRequests);
     } catch (e) {
         console.error(e);
-        document.getElementById('requestsBody').innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:red;">⚠️ خطأ في تحميل البيانات</td></tr>';
+        document.getElementById('requestsBody').innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:red;">⚠️ خطأ في تحميل البيانات</td></tr>';
     }
 }
 
 function renderTable(requests) {
     const tbody = document.getElementById('requestsBody');
     if (!requests || requests.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:#888;">📭 لا توجد طلبات حتى الآن</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">📭 لا توجد طلبات حتى الآن</td></tr>';
         return;
     }
     tbody.innerHTML = requests.map((req, index) => {
