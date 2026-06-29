@@ -1,82 +1,295 @@
-// ==========================================
-//   المستشار الروحاني الذكي (نسخة معدلة بالكامل)
-// ==========================================
+// ===== الإشعارات =====
+function showNotification(msg, type = 'success') {
+    const n = document.getElementById('notification');
+    if (!n) return;
+    n.textContent = msg;
+    n.className = `notification show ${type}`;
+    setTimeout(() => n.classList.remove('show'), 5000);
+}
 
-// ===== حالة المحادثة =====
+// ===== جلب وعرض المقالات =====
+async function loadArticles() {
+    try {
+        console.log('🔄 جاري تحميل المقالات...');
+        const res = await fetch('/api/articles');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
+        const articles = await res.json();
+        console.log('✅ تم جلب المقالات:', articles.length);
+        
+        const container = document.getElementById('articlesContainer');
+        if (!container) {
+            console.error('❌ articlesContainer غير موجود!');
+            return;
+        }
+
+        if (!articles || articles.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">📚 سيتم إضافة مقالات قريباً...</p>';
+            return;
+        }
+
+        container.innerHTML = articles.map(article => {
+            const summary = article.summary || (article.content ? article.content.substring(0, 80) + '...' : '');
+            return `
+                <div class="article-card" data-id="${article.id}" style="cursor:pointer;">
+                    <i class="${article.icon || 'fa-solid fa-book'} icon"></i>
+                    <h3>${article.title}</h3>
+                    <p>${summary}</p>
+                    <span class="date"><i class="far fa-calendar-alt"></i> ${article.date || 'تاريخ غير محدد'}</span>
+                    <span style="display:block; margin-top:12px; color:#F5B041; font-weight:600; font-size:0.85rem;">
+                        <i class="fas fa-arrow-left"></i> اضغط لقراءة المزيد
+                    </span>
+                </div>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.article-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const id = parseInt(this.getAttribute('data-id'));
+                console.log('🖱️ تم النقر على المقال رقم:', id);
+                if (id) openArticle(id);
+            });
+        });
+
+    } catch (e) {
+        console.error('❌ خطأ في تحميل المقالات:', e.message);
+        const container = document.getElementById('articlesContainer');
+        if (container) {
+            container.innerHTML = `<p style="text-align:center; color:#e74c3c; padding:30px;">⚠️ حدث خطأ في تحميل المقالات: ${e.message}</p>`;
+        }
+    }
+}
+
+// ===== فتح المقال =====
+async function openArticle(articleId) {
+    console.log('📖 فتح المقال رقم:', articleId);
+    try {
+        const res = await fetch('/api/articles');
+        if (!res.ok) throw new Error('فشل جلب المقالات');
+        
+        const articles = await res.json();
+        const article = articles.find(a => a.id === articleId);
+        if (!article) {
+            showNotification('⚠️ المقال غير موجود', 'error');
+            return;
+        }
+
+        const modalTitle = document.getElementById('modalArticleTitle');
+        const modalContent = document.getElementById('modalArticleContent');
+        const modal = document.getElementById('articleModal');
+
+        if (!modalTitle || !modalContent || !modal) {
+            console.error('❌ عناصر المودال غير موجودة!');
+            return;
+        }
+
+        modalTitle.innerHTML = `<i class="fas fa-feather-alt"></i> ${article.title}`;
+        let contentHtml = article.content ? article.content.replace(/\n/g, '<br>') : '<p>لا يوجد محتوى مكتوب لهذا المقال بعد.</p>';
+        contentHtml += `<span class="article-date"><i class="far fa-calendar-alt"></i> نشر في: ${article.date || 'تاريخ غير محدد'}</span>`;
+        modalContent.innerHTML = contentHtml;
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+    } catch (e) {
+        console.error('❌ خطأ في فتح المقال:', e);
+        showNotification('⚠️ خطأ في تحميل المحتوى', 'error');
+    }
+}
+
+// ===== إغلاق المقال =====
+function closeArticleModal() {
+    const modal = document.getElementById('articleModal');
+    if (modal) modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// ===== إغلاق المقال عند النقر خارجها أو ESC =====
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('articleModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) closeArticleModal();
+        });
+    }
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeArticleModal();
+});
+
+// ===== جلب وعرض الشهادات =====
+async function loadTestimonials() {
+    try {
+        const res = await fetch('/api/testimonials');
+        if (!res.ok) throw new Error('فشل جلب الشهادات');
+        const testimonials = await res.json();
+        const container = document.getElementById('testimonialsContainer');
+        if (!container) return;
+        if (testimonials.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">لا توجد آراء بعد، كن أنت الأول!</p>';
+            return;
+        }
+        container.innerHTML = testimonials.map(t => {
+            const stars = '★'.repeat(Math.min(t.rating || 5, 5)) + '☆'.repeat(Math.max(5 - (t.rating || 5), 0));
+            return `
+                <div class="testimonial-card">
+                    <div class="stars">${stars}</div>
+                    <p class="content">"${t.content}"</p>
+                    <div class="name">- ${t.name}</div>
+                    <span class="date">${t.date || ''}</span>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('❌ خطأ في تحميل الشهادات:', e);
+    }
+}
+
+// ===== نموذج الطلب =====
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('requestForm');
+    if (!form) return;
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        const btn = document.querySelector('.btn-submit');
+        if (!btn) return;
+        btn.classList.add('loading');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+        const data = {
+            fullName: document.getElementById('fullName').value,
+            country: document.getElementById('country').value,
+            gender: document.getElementById('gender').value,
+            beneficiary: document.getElementById('beneficiary').value,
+            relation: document.getElementById('relation').value,
+            serviceType: document.getElementById('serviceType').value,
+            description: document.getElementById('description').value,
+            contactMethod: document.getElementById('contactMethod').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value
+        };
+        try {
+            const res = await fetch('/api/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            if (json.success) {
+                showNotification('✅ تم استلام طلبك بنجاح. سيتم إشعارك لاحقاً بالموافقة على طلبك أو الرفض.', 'success');
+                form.reset();
+                document.getElementById('bankDetails').style.display = 'none';
+                document.getElementById('relationDiv').classList.add('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showNotification('❌ خطأ في الإرسال', 'error');
+            }
+        } catch (e) {
+            showNotification('⚠️ خطأ في الاتصال بالخادم', 'error');
+        }
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
+    };
+});
+
+// ===== تأكيد الدفع =====
+async function confirmPayment() {
+    const code = document.getElementById('transferCode').value;
+    if (!code.trim()) return showNotification('رقم الحوالة إجباري!', 'error');
+    showNotification('✅ تم تأكيد التحويل. سيتم التحقق من قبل الشيخ.', 'success');
+    document.getElementById('bankDetails').style.display = 'none';
+    document.getElementById('requestForm').reset();
+}
+
+// ===== إظهار/إخفاء حقل العلاقة =====
+document.addEventListener('DOMContentLoaded', function() {
+    const beneficiary = document.getElementById('beneficiary');
+    if (beneficiary) {
+        beneficiary.addEventListener('change', function() {
+            const div = document.getElementById('relationDiv');
+            if (this.value === 'غيري') div.classList.remove('hidden');
+            else div.classList.add('hidden');
+        });
+    }
+});
+
+// ===== عداد الثقة =====
+function animateCounters() {
+    const counters = document.querySelectorAll('.counter-number');
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        if (!target) return;
+        let current = 0;
+        const increment = target / 80;
+        const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+                counter.innerText = Math.ceil(current);
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.innerText = target + (target > 100 ? '+' : '');
+            }
+        };
+        updateCounter();
+    });
+}
+
+// =============================================
+// ===== الذكاء الاصطناعي الروحاني =====
+// =============================================
 let chatState = {
-    step: 'intro',
+    step: 'intro', // intro, problem, duration, previous, summary
     userData: {
         problem: '',
         duration: '',
         previous: ''
-    },
-    isOpen: false
+    }
 };
+let hasAutoOpened = false;
 
-// ===== فتح/إغلاق نافذة الدردشة =====
+// ===== فتح/إغلاق الدردشة =====
 function toggleChat() {
     const window = document.getElementById('chatWindow');
     if (!window) return;
-    
     const isShowing = window.classList.contains('show');
-    if (isShowing) {
-        window.classList.remove('show');
-        chatState.isOpen = false;
-        // تسجيل أن المستخدم أغلق النافذة يدوياً
-        sessionStorage.setItem('chat_manual_closed', 'true');
-    } else {
-        window.classList.add('show');
-        chatState.isOpen = true;
+    
+    if (!isShowing) {
         sessionStorage.removeItem('chat_manual_closed');
-        // التركيز على حقل الإدخال بعد فتح النافذة
-        setTimeout(() => {
-            const input = document.getElementById('chatInput');
-            if (input) input.focus();
-        }, 300);
+    } else {
+        sessionStorage.setItem('chat_manual_closed', 'true');
+    }
+    
+    window.classList.toggle('show');
+    if (window.classList.contains('show')) {
+        document.getElementById('chatInput')?.focus();
+        document.querySelector('.chat-badge')?.style.display('none');
     }
 }
 
 // ===== إرسال رسالة =====
 function sendMessage() {
     const input = document.getElementById('chatInput');
-    if (!input) return;
-    
     const text = input.value.trim();
     if (!text) return;
 
-    // إضافة رسالة المستخدم
     addMessage(text, 'user');
     input.value = '';
 
-    // معالجة الرد
     setTimeout(() => {
         processResponse(text);
     }, 600);
 }
 
-// ===== إضافة رسالة إلى واجهة الدردشة =====
+// ===== إضافة رسالة =====
 function addMessage(text, sender) {
     const body = document.getElementById('chatBody');
     if (!body) return;
-    
     const div = document.createElement('div');
     div.className = `chat-message ${sender}`;
-    
-    // تنسيق النص (تحويل الأسطر إلى <br>)
-    const formattedText = text.replace(/\n/g, '<br>');
-    div.innerHTML = `<div class="message-content">${formattedText}</div>`;
+    div.innerHTML = `<div class="message-content">${text}</div>`;
     body.appendChild(div);
-    
-    // التمرير إلى الأسفل
     body.scrollTop = body.scrollHeight;
 }
 
-// ===== إضافة رسالة من البوت =====
-function addBotMessage(text) {
-    addMessage(text, 'bot');
-}
-
-// ===== معالجة ردود البوت بناءً على حالة المحادثة =====
+// ===== معالجة رد البوت =====
 function processResponse(text) {
     const step = chatState.step;
     const data = chatState.userData;
@@ -85,36 +298,31 @@ function processResponse(text) {
         case 'intro':
             data.problem = text;
             chatState.step = 'duration';
-            addBotMessage('🙏 شكراً لك على المشاركة.<br><br>منذ متى وأنت تعاني من هذه المشكلة؟<br><small>مثال: أشهر، سنوات، منذ الطفولة</small>');
+            addBotMessage('🙏 شكراً لك على المشاركة.<br>منذ متى وأنت تعاني من هذه المشكلة؟ (مثل: أشهر، سنوات، منذ الطفولة)');
             break;
 
         case 'duration':
             data.duration = text;
             chatState.step = 'previous';
-            addBotMessage('📖 هل حاولت علاج هذه المشكلة سابقاً؟<br><small>مثال: رقية، استشارة نفسية، طبيب، لا شيء</small>');
+            addBotMessage('📖 هل حاولت علاج هذه المشكلة سابقاً؟ (مثل: رقية، استشارة نفسية، طبيب)');
             break;
 
         case 'previous':
             data.previous = text;
             chatState.step = 'summary';
-            
-            // تحليل البيانات وتقديم التوصية
             const recommendation = analyzeProblem(data);
-            addBotMessage(`✨ شكراً لك على مشاركتك.<br><br>بناءً على ما أخبرتني به، إليك توصيتي:<br><br>${recommendation}`);
-            
-            // عرض أزرار الإجراء بعد قليل
+            addBotMessage(`✨ شكراً لك على المعلومات.<br><br>بناءً على ما شاركتني به، إليك توصيتي:<br><br>${recommendation}<br><br>هل ترغب في نقل هذه المعلومات إلى نموذج الطلب مباشرة؟`);
             setTimeout(() => {
                 const body = document.getElementById('chatBody');
                 if (!body) return;
-                
                 const div = document.createElement('div');
                 div.className = 'chat-message bot';
                 div.innerHTML = `
-                    <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041; padding:15px;">
-                        <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:12px 20px; border-radius:12px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%; font-size:1rem; transition:0.3s;">
+                    <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041;">
+                        <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%; margin-bottom:8px;">
                             <i class="fas fa-arrow-left"></i> نقل البيانات إلى نموذج الطلب
                         </button>
-                        <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; margin-top:8px; width:100%; font-size:0.95rem; transition:0.3s;">
+                        <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:8px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; width:100%;">
                             <i class="fas fa-undo"></i> بدء محادثة جديدة
                         </button>
                     </div>
@@ -131,18 +339,23 @@ function processResponse(text) {
     }
 }
 
-// ===== تحليل المشكلة وتقديم التوصية =====
+function addBotMessage(text) {
+    addMessage(text, 'bot');
+}
+
+// ===== تحليل المشكلة =====
 function analyzeProblem(data) {
     const text = (data.problem + ' ' + data.previous).toLowerCase();
+    let recommendation = '';
+
+    const keywords = {
+        'مجاني': ['رؤيا', 'حلم', 'استشارة', 'توجيه', 'نصيحة', 'خوف', 'قلق'],
+        'علاج': ['سحر', 'عين', 'حسد', 'مس', 'رصد', 'صدمة', 'اكتئاب', 'وسواس', 'ألم', 'مرض'],
+        'صوتي': ['صوتي', 'مباشر', 'جلسة', 'مكالمة', 'اتصال', 'سماع']
+    };
+
     let service = 'استشارة مجانية';
     let confidence = 0;
-
-    // الكلمات المفتاحية
-    const keywords = {
-        'استشارة مجانية': ['رؤيا', 'حلم', 'استشارة', 'توجيه', 'نصيحة', 'حيرة', 'تردد', 'خوف'],
-        'علاج': ['سحر', 'عين', 'حسد', 'مس', 'رصد', 'صدمة', 'خوف', 'قلق', 'اكتئاب', 'وسواس', 'ضيق', 'نوبات'],
-        'صوتي': ['صوتي', 'مباشر', 'جلسة', 'مكالمة', 'اتصال', 'تحدث', 'كلام']
-    };
 
     for (const [key, words] of Object.entries(keywords)) {
         let count = 0;
@@ -151,26 +364,32 @@ function analyzeProblem(data) {
         }
         if (count > confidence) {
             confidence = count;
-            service = key;
+            if (key === 'علاج') service = 'علاج العين والحسد والأسحار (200 ر.س)';
+            else if (key === 'صوتي') service = 'جلسة صوتية مباشرة (500 ر.س)';
+            else service = 'استشارة روحانية ونفسية (مجاناً)';
         }
     }
 
-    // بناء التوصية
-    let recommendation = '';
-    if (service === 'استشارة مجانية') {
+    if (service === 'استشارة روحانية ونفسية (مجاناً)') {
         recommendation = `
             <strong>🕊️ الخدمة الموصى بها:</strong> الاستشارة الروحانية والنفسية (مجاناً)<br><br>
-            يبدو أنك بحاجة إلى توجيه روحاني ونفسي. هذه الاستشارة ستساعدك في توضيح رؤيتك وتقديم النصائح المناسبة لحالتك.
+            بناءً على كلامك، يبدو أنك بحاجة إلى توجيه روحاني ونفسي. هذه الاستشارة ستساعدك في توضيح رؤيتك وتقديم النصائح المناسبة لحالتك.<br>
+            <strong>المدة:</strong> جلسة واحدة مجانية<br>
+            <strong>طريقة التواصل:</strong> نصي أو صوتي عبر واتساب
         `;
-    } else if (service === 'علاج') {
+    } else if (service === 'علاج العين والحسد والأسحار (200 ر.س)') {
         recommendation = `
             <strong>🛡️ الخدمة الموصى بها:</strong> علاج العين والحسد والأسحار والرصد (200 ر.س)<br><br>
-            الأعراض التي ذكرتها قد تكون مرتبطة بالعين أو الحسد أو السحر. نوصي بجلسة علاجية شاملة تشمل الرقية الشرعية والتحصين.
+            يبدو أنك تعاني من أعراض قد تكون مرتبطة بالعين أو الحسد أو السحر. نوصي بجلسة علاجية شاملة تشمل الرقية الشرعية والتحصين.<br>
+            <strong>المدة:</strong> جلسة واحدة (قابلة للتمديد حسب الحالة)<br>
+            <strong>طريقة التواصل:</strong> عبر واتساب (نصي/صوتي)
         `;
-    } else if (service === 'صوتي') {
+    } else if (service === 'جلسة صوتية مباشرة (500 ر.س)') {
         recommendation = `
             <strong>🎧 الخدمة الموصى بها:</strong> جلسة صوتية مباشرة مع الشيخ بسام (500 ر.س)<br><br>
-            حالتك تتطلب تواصلاً مباشراً مع الشيخ بسام عبر مكالمة صوتية. هذه الجلسة ستتيح لك فرصة لمناقشة تفاصيلك بشكل أعمق.
+            حالتك تتطلب تواصلاً مباشراً مع الشيخ بسام عبر مكالمة صوتية. هذه الجلسة ستتيح لك فرصة لمناقشة تفاصيلك بشكل أعمق والحصول على توجيه فوري.<br>
+            <strong>المدة:</strong> جلسة صوتية مباشرة (30-45 دقيقة)<br>
+            <strong>طريقة التواصل:</strong> مكالمة صوتية عبر واتساب أو تطبيق آخر
         `;
     }
 
@@ -180,14 +399,10 @@ function analyzeProblem(data) {
 // ===== نقل البيانات إلى نموذج الطلب =====
 function transferToForm() {
     const data = chatState.userData;
-    
-    // بناء وصف المشكلة
     const description = `[تم إنشاء هذا الطلب عبر المستشار الروحاني الذكي]\n\nالمشكلة: ${data.problem}\nالمدة: ${data.duration}\nالمحاولات السابقة: ${data.previous}`;
     
-    const descField = document.getElementById('description');
-    if (descField) descField.value = description;
+    document.getElementById('description').value = description;
     
-    // اختيار الخدمة المناسبة تلقائياً
     const text = (data.problem + ' ' + data.previous).toLowerCase();
     let serviceValue = 'استشارة مجانية';
     if (text.includes('سحر') || text.includes('عين') || text.includes('حسد') || text.includes('مس')) {
@@ -206,17 +421,9 @@ function transferToForm() {
         }
     }
     
-    // إغلاق نافذة الدردشة
     toggleChat();
-    
-    // التمرير إلى النموذج
-    const formCard = document.querySelector('.form-card');
-    if (formCard) formCard.scrollIntoView({ behavior: 'smooth' });
-    
-    // إشعار
+    document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
     showNotification('✅ تم نقل بياناتك إلى نموذج الطلب! راجع التفاصيل وأكمل الإرسال.', 'success');
-    
-    // إعادة ضبط المحادثة
     resetChat();
 }
 
@@ -224,70 +431,47 @@ function transferToForm() {
 function resetChat() {
     chatState = {
         step: 'intro',
-        userData: { problem: '', duration: '', previous: '' },
-        isOpen: false
+        userData: { problem: '', duration: '', previous: '' }
     };
     
     const body = document.getElementById('chatBody');
-    if (!body) return;
-    
-    body.innerHTML = `
-        <div class="chat-message bot">
-            <div class="message-content">
-                السلام عليكم ورحمة الله وبركاته 🌙<br><br>
-                أنا المستشار الروحاني الذكي، هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.<br><br>
-                <strong>هل يمكنك إخباري بما تمر به؟</strong>
+    if (body) {
+        body.innerHTML = `
+            <div class="chat-message bot">
+                <div class="message-content">
+                    السلام عليكم ورحمة الله وبركاته 🌙<br>
+                    أنا المستشار الروحاني الذكي، هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.<br>
+                    <strong>هل يمكنك إخباري بما تمر به؟</strong>
+                </div>
             </div>
-        </div>
-    `;
-    
-    // إعادة تعيين علامة الفتح التلقائي
+        `;
+    }
     sessionStorage.removeItem('chat_manual_closed');
     hasAutoOpened = false;
 }
 
-// ===== الفتح التلقائي (مرة واحدة لكل جلسة) =====
-let hasAutoOpened = false;
-
+// ===== فتح الدردشة تلقائياً (مرة واحدة) =====
 function autoOpenChat() {
-    const manualClosed = sessionStorage.getItem('chat_manual_closed');
-    if (manualClosed === 'true') return;
+    if (sessionStorage.getItem('chat_manual_closed') === 'true') return;
     if (hasAutoOpened) return;
-    if (chatState.isOpen) return;
-
     hasAutoOpened = true;
+    
     setTimeout(() => {
         const chatWindow = document.getElementById('chatWindow');
         if (chatWindow && !chatWindow.classList.contains('show')) {
             chatWindow.classList.add('show');
-            chatState.isOpen = true;
-            const input = document.getElementById('chatInput');
-            if (input) setTimeout(() => input.focus(), 300);
+            document.getElementById('chatInput')?.focus();
             const badge = document.querySelector('.chat-badge');
             if (badge) badge.style.display = 'none';
         }
-    }, 3500);
+    }, 3000);
 }
 
-// ===== تحميل الصفحة وتفعيل الفتح التلقائي =====
+// ===== تحميل الصفحة =====
 document.addEventListener('DOMContentLoaded', function() {
-    // الفتح التلقائي بعد 3 ثوانٍ
-    setTimeout(autoOpenChat, 3000);
-});
-
-// ===== إغلاق النافذة عند النقر خارج المحتوى (للدردشة) =====
-document.addEventListener('click', function(e) {
-    const chatWindow = document.getElementById('chatWindow');
-    const chatIcon = document.getElementById('chatIcon');
-    if (!chatWindow || !chatIcon) return;
-    
-    if (chatWindow.classList.contains('show')) {
-        const isClickInside = chatWindow.contains(e.target) || chatIcon.contains(e.target);
-        if (!isClickInside) {
-            // إغلاق النافذة إذا نقر المستخدم خارجها
-            chatWindow.classList.remove('show');
-            chatState.isOpen = false;
-            sessionStorage.setItem('chat_manual_closed', 'true');
-        }
-    }
+    console.log('🚀 تم تحميل الصفحة بالكامل، جاري تهيئة الموقع...');
+    loadArticles();
+    loadTestimonials();
+    setTimeout(animateCounters, 600);
+    setTimeout(autoOpenChat, 2000);
 });
