@@ -21,7 +21,6 @@ body {
                       radial-gradient(circle at 90% 100%, rgba(10, 22, 40, 0.03) 0%, transparent 50%);
 }
 
-/* ===== شريط الخدمات ===== */
 .marquee-wrapper {
     background: var(--primary-dark);
     color: var(--primary-gold);
@@ -45,7 +44,6 @@ body {
 
 .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
-/* ===== البطل (Hero) ===== */
 .hero {
     text-align: center;
     background: var(--white);
@@ -164,7 +162,6 @@ body {
     padding-top: 18px;
 }
 
-/* ===== زر البطل للمستشار الذكي ===== */
 .hero-cta {
     margin-top: 25px;
     position: relative;
@@ -172,7 +169,7 @@ body {
 }
 .btn-hero-chat {
     background: linear-gradient(135deg, #F5B041, #E67E22);
-    color: #FFFFFF;
+    color: #0A1628;
     border: none;
     padding: 16px 40px;
     border-radius: 60px;
@@ -219,7 +216,6 @@ body {
     color: #F5B041;
 }
 
-/* ===== بطاقة السرية ===== */
 .trust-card {
     background: linear-gradient(135deg, #FEF9F0, #FDF5E6);
     border-radius: var(--radius);
@@ -324,7 +320,6 @@ body {
 .trust-seal i { color: var(--primary-gold); margin-left: 8px; }
 .trust-seal span { font-weight: 600; }
 
-/* ===== عداد الثقة ===== */
 .trust-counter {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -341,7 +336,6 @@ body {
 .counter-item .counter-number { font-size: 2.5rem; font-weight: 900; color: var(--primary-gold-dark); display: block; }
 .counter-item p { color: #5A6A7A; font-weight: 600; margin-top: 4px; }
 
-/* ===== الأقسام العامة ===== */
 .section { margin: 55px 0; }
 .section-header {
     display: flex;
@@ -368,7 +362,6 @@ body {
     border: 1px solid var(--primary-gold);
 }
 
-/* ===== بطاقات الخدمات ===== */
 .services-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -400,7 +393,6 @@ body {
 }
 .service-card.gold-card { border-bottom-color: var(--primary-gold); background: #FFFDF7; }
 
-/* ===== بطاقات المقالات ===== */
 .articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -430,7 +422,6 @@ body {
 .article-card p { color: #4A5A6A; font-size: 0.95rem; line-height: 1.8; }
 .article-card .date { color: #9AABBA; font-size: 0.8rem; margin-top: 12px; display: block; }
 
-/* ===== بطاقات الشهادات ===== */
 .testimonials-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -473,7 +464,6 @@ body {
     display: block;
 }
 
-/* ===== نموذج الطلب ===== */
 .form-card {
     background: var(--white);
     border-radius: var(--radius);
@@ -514,7 +504,6 @@ body {
 }
 textarea { padding: 18px; min-height: 130px; }
 
-/* ===== الأزرار ===== */
 .btn-submit {
     width: 100%;
     padding: 18px;
@@ -536,7 +525,6 @@ textarea { padding: 18px; min-height: 130px; }
     color: #0A1628;
 }
 
-/* ===== بنك الدفع ===== */
 .bank-box {
     background: var(--secondary-bg);
     padding: 20px;
@@ -574,7 +562,6 @@ textarea { padding: 18px; min-height: 130px; }
 .notification.show { display: block; }
 .hidden { display: none !important; }
 
-/* ===== مودال المقالات ===== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -669,7 +656,6 @@ textarea { padding: 18px; min-height: 130px; }
     color: var(--primary-dark);
 }
 
-/* ===== نافذة الذكاء الاصطناعي ===== */
 .chat-icon {
     position: fixed;
     bottom: 25px;
@@ -864,7 +850,6 @@ textarea { padding: 18px; min-height: 130px; }
     box-shadow: 0 4px 15px rgba(245, 176, 65, 0.4);
 }
 
-/* ===== استجابة الجوال ===== */
 @media (max-width: 768px) {
     .hero h1 { font-size: 2.2rem; }
     .sub-title { font-size: 1.1rem; }
@@ -938,7 +923,6 @@ textarea { padding: 18px; min-height: 130px; }
     .services-grid { grid-template-columns: 1fr; }
 }
 
-/* ===== حل مشكلة عرض الجوال (امتلاء الشاشة بالكامل) ===== */
 html, body {
     width: 100%;
     overflow-x: hidden;
