@@ -172,7 +172,7 @@ body {
 }
 .btn-hero-chat {
     background: linear-gradient(135deg, #F5B041, #E67E22);
-    color: #0A1628;
+    color: #FFFFFF;
     border: none;
     padding: 16px 40px;
     border-radius: 60px;
@@ -678,7 +678,7 @@ textarea { padding: 18px; min-height: 130px; }
     height: 70px;
     border-radius: 50%;
     background: linear-gradient(135deg, #F5B041, #E67E22);
-    color: #0A1628;
+    color: #FFFFFF;
     display: flex;
     justify-content: center;
     align-items: center;
