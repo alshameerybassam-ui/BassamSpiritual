@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم المركز - النور الرباني</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -36,7 +36,6 @@
                 </div>
             </header>
 
-            <!-- بطاقات الإحصائيات -->
             <section class="stats-grid">
                 <div class="stat-card gold">
                     <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
@@ -68,7 +67,6 @@
                 </div>
             </section>
 
-            <!-- جدول الطلبات -->
             <section class="table-section">
                 <div class="table-header">
                     <h2><i class="fas fa-list"></i> قائمة الطلبات</h2>
@@ -86,12 +84,14 @@
                                 <th>البريد</th>
                                 <th>الخدمة</th>
                                 <th>الحالة</th>
+                                <th>الدفع</th>
+                                <th>الوصف</th>
                                 <th>التاريخ</th>
                                 <th>الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="requestsBody">
-                            <tr><td colspan="7" style="text-align:center; padding:30px; color:#888;">جاري تحميل الطلبات...</td></tr>
+                            <tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">جاري تحميل الطلبات...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -99,7 +99,6 @@
         </main>
     </div>
 
-    <!-- نافذة التفاصيل المنبثقة (مودال) -->
     <div id="detailsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
