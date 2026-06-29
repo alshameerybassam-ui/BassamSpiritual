@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مركز النور الرباني والنفس الرحماني | الشيخ بسام الشميري</title>
     
-    <!-- تحميل مسبق لخطوط Google لتسريع الظهور -->
+    <!-- تحميل مسبق لخطوط Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -46,8 +46,8 @@
                 <span class="badge"><i class="fas fa-hand-sparkles"></i> معالج روحاني</span>
                 <span class="badge"><i class="fas fa-brain"></i> مستشار نفسي</span>
             </div>
-            <p class="hero-desc">
-                            <!-- ===== زر المستشار الروحاني الذكي (بارز جداً) ===== -->
+            
+            <!-- ===== زر المستشار الروحاني الذكي (بارز جداً) ===== -->
             <div class="hero-cta">
                 <button onclick="toggleChat()" class="btn-hero-chat">
                     <i class="fas fa-robot"></i>
@@ -59,6 +59,8 @@
                     محادثة آمنة وسرية تامة
                 </p>
             </div>
+            
+            <p class="hero-desc">
                 رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.
             </p>
         </div>
@@ -113,7 +115,7 @@
             </div>
         </div>
 
-       <!-- ===== قسم المقالات ===== -->
+        <!-- ===== قسم المقالات ===== -->
         <section class="section">
             <div class="section-header">
                 <h2><i class="fas fa-feather-alt"></i> مقالات روحية</h2>
@@ -124,7 +126,7 @@
             </div>
         </section>
 
-        <!-- ===== قسم الخدمات (ثلاث نوافذ فقط) ===== -->
+        <!-- ===== قسم الخدمات ===== -->
         <section class="section">
             <div class="section-header">
                 <h2><i class="fas fa-crown"></i> خدماتنا الروحية</h2>
@@ -253,9 +255,8 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
-        <!-- ===== نافذة الذكاء الاصطناعي الروحاني ===== -->
-    <!-- أيقونة الدردشة العائمة (محسّنة) -->
+    <!-- ===== نافذة الذكاء الاصطناعي الروحاني ===== -->
+    <!-- أيقونة الدردشة العائمة -->
     <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
         <i class="fas fa-robot"></i>
         <span class="chat-badge">💬</span>
@@ -285,5 +286,7 @@
             <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
