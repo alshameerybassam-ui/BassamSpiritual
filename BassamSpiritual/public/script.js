@@ -1,4 +1,3 @@
-// ===== الإشعارات =====
 function showNotification(msg, type = 'success') {
     const n = document.getElementById('notification');
     if (!n) return;
@@ -7,7 +6,6 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 5000);
 }
 
-// ===== جلب وعرض المقالات =====
 async function loadArticles() {
     try {
         console.log('🔄 جاري تحميل المقالات...');
@@ -54,7 +52,6 @@ async function loadArticles() {
     }
 }
 
-// ===== فتح المقال =====
 async function openArticle(articleId) {
     console.log('📖 فتح المقال رقم:', articleId);
     try {
@@ -85,7 +82,6 @@ async function openArticle(articleId) {
     }
 }
 
-// ===== إغلاق المودال =====
 function closeArticleModal() {
     const modal = document.getElementById('articleModal');
     if (modal) modal.classList.remove('show');
@@ -104,7 +100,6 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeArticleModal();
 });
 
-// ===== جلب وعرض الشهادات =====
 async function loadTestimonials() {
     try {
         const res = await fetch('/api/testimonials');
@@ -132,16 +127,34 @@ async function loadTestimonials() {
     }
 }
 
-// ===== إرسال نموذج الطلب =====
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('requestForm');
     if (!form) return;
+
+    const beneficiary = document.getElementById('beneficiary');
+    if (beneficiary) {
+        beneficiary.addEventListener('change', function() {
+            const div = document.getElementById('relationDiv');
+            if (this.value === 'غيري') div.classList.remove('hidden');
+            else div.classList.add('hidden');
+        });
+    }
+
     form.onsubmit = async function(e) {
         e.preventDefault();
+
+        const contactMethod = document.getElementById('contactMethod').value;
+        const phone = document.getElementById('phone').value.trim();
+        if (contactMethod === 'whatsapp' && !phone) {
+            showNotification('⚠️ إذا اخترت التواصل عبر واتساب، يرجى إدخال رقم هاتفك.', 'error');
+            return;
+        }
+
         const btn = document.querySelector('.btn-submit');
         if (!btn) return;
         btn.classList.add('loading');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+
         const data = {
             fullName: document.getElementById('fullName').value,
             country: document.getElementById('country').value,
@@ -151,9 +164,10 @@ document.addEventListener('DOMContentLoaded', function() {
             serviceType: document.getElementById('serviceType').value,
             description: document.getElementById('description').value,
             contactMethod: document.getElementById('contactMethod').value,
-            phone: document.getElementById('phone').value,
+            phone: phone,
             email: document.getElementById('email').value
         };
+
         try {
             const res = await fetch('/api/request', {
                 method: 'POST',
@@ -162,44 +176,21 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const json = await res.json();
             if (json.success) {
-                showNotification('✅ تم استلام طلبك بنجاح. سيتم إشعارك لاحقاً.', 'success');
+                showNotification('✅ تم استلام طلبك بنجاح. سنقوم بمراجعته وإشعارك عبر وسيلة التواصل التي اخترتها.', 'success');
                 form.reset();
-                document.getElementById('bankDetails').style.display = 'none';
                 document.getElementById('relationDiv').classList.add('hidden');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                showNotification('❌ خطأ في الإرسال', 'error');
+                showNotification('❌ حدث خطأ في الإرسال. يرجى المحاولة مرة أخرى.', 'error');
             }
         } catch (e) {
-            showNotification('⚠️ خطأ في الاتصال بالخادم', 'error');
+            showNotification('⚠️ خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.', 'error');
         }
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
     };
 });
 
-// ===== تأكيد الدفع =====
-async function confirmPayment() {
-    const code = document.getElementById('transferCode').value;
-    if (!code.trim()) return showNotification('رقم الحوالة إجباري!', 'error');
-    showNotification('✅ تم تأكيد التحويل. سيتم التحقق من قبل الشيخ.', 'success');
-    document.getElementById('bankDetails').style.display = 'none';
-    document.getElementById('requestForm').reset();
-}
-
-// ===== إظهار/إخفاء حقل العلاقة =====
-document.addEventListener('DOMContentLoaded', function() {
-    const beneficiary = document.getElementById('beneficiary');
-    if (beneficiary) {
-        beneficiary.addEventListener('change', function() {
-            const div = document.getElementById('relationDiv');
-            if (this.value === 'غيري') div.classList.remove('hidden');
-            else div.classList.add('hidden');
-        });
-    }
-});
-
-// ===== عداد الثقة =====
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
     counters.forEach(counter => {
@@ -220,17 +211,12 @@ function animateCounters() {
     });
 }
 
-// ==============================================
-// ===== الذكاء الاصطناعي الروحاني (محاكاة) =====
-// ==============================================
-
 let chatState = {
     step: 'intro',
     userData: { problem: '', duration: '', previous: '' }
 };
 let hasAutoOpened = false;
 
-// ===== فتح/إغلاق نافذة الدردشة =====
 function toggleChat() {
     const window = document.getElementById('chatWindow');
     const isShowing = window.classList.contains('show');
@@ -249,7 +235,6 @@ function toggleChat() {
     }
 }
 
-// ===== إرسال رسالة =====
 function sendMessage() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
@@ -259,7 +244,6 @@ function sendMessage() {
     setTimeout(() => { processResponse(text); }, 500);
 }
 
-// ===== إضافة رسالة =====
 function addMessage(text, sender) {
     const body = document.getElementById('chatBody');
     const div = document.createElement('div');
@@ -273,7 +257,6 @@ function addBotMessage(text) {
     addMessage(text, 'bot');
 }
 
-// ===== معالجة استجابة البوت =====
 function processResponse(text) {
     const step = chatState.step;
     const data = chatState.userData;
@@ -322,7 +305,6 @@ function processResponse(text) {
     }
 }
 
-// ===== تحليل المشكلة =====
 function analyzeProblem(data) {
     const text = (data.problem + ' ' + data.previous).toLowerCase();
     let service = 'استشارة مجانية';
@@ -372,7 +354,6 @@ function analyzeProblem(data) {
     return '';
 }
 
-// ===== نقل البيانات إلى النموذج =====
 function transferToForm() {
     const data = chatState.userData;
     const description = `[تم إنشاء هذا الطلب عبر المستشار الروحاني الذكي]\n\nالمشكلة: ${data.problem}\nالمدة: ${data.duration}\nالمحاولات السابقة: ${data.previous}`;
@@ -399,7 +380,6 @@ function transferToForm() {
     resetChat();
 }
 
-// ===== إعادة ضبط المحادثة =====
 function resetChat() {
     chatState = { step: 'intro', userData: { problem: '', duration: '', previous: '' } };
     const body = document.getElementById('chatBody');
@@ -417,7 +397,6 @@ function resetChat() {
     setTimeout(autoOpenChat, 5000);
 }
 
-// ===== فتح الدردشة تلقائياً =====
 function autoOpenChat() {
     const manualClosed = sessionStorage.getItem('chat_manual_closed');
     if (manualClosed === 'true') return;
@@ -434,9 +413,6 @@ function autoOpenChat() {
     }, 3000);
 }
 
-// ==============================================
-// ===== تحميل الصفحة =====
-// ==============================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تم تحميل الصفحة بالكامل، جاري تهيئة الموقع...');
     loadArticles();
