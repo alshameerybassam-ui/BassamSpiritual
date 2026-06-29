@@ -12,19 +12,20 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const DATA_FILE = './data.json';
 
 // ==============================================
-// 1. الإعدادات الأمنية والأداء الأساسية (مع تعديل CSP)
+// 1. إعداد الـ Proxy (لـ Render) - حل الخطأ
+// ==============================================
+app.set('trust proxy', 1); // هذا السطر يحل مشكلة X-Forwarded-For
+
+// ==============================================
+// 2. الإعدادات الأمنية والأداء الأساسية
 // ==============================================
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            // السماح بتنفيذ الأكواد المضمنة (لأجل onclick في HTML)
             "script-src-attr": ["'unsafe-inline'"],
             "script-src": ["'self'", "'unsafe-inline'"],
-            // السماح بتحميل الخطوط والأيقونات من أي مصدر
             "font-src": ["'self'", "https:", "data:"],
             "style-src": ["'self'", "'unsafe-inline'", "https:"],
             "img-src": ["'self'", "data:", "https:"],
@@ -35,12 +36,17 @@ app.use(helmet({
 app.use(cors());
 app.use(compression());
 
+// ==============================================
+// 3. تحديد معدل الطلبات (مع إصلاح الـ Proxy)
+// ==============================================
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: { error: 'تم تجاوز عدد الطلبات المسموح بها.' }
+    message: { error: 'تم تجاوز عدد الطلبات المسموح بها.' },
+    trustProxy: true, // هذا السطر يحل المشكلة بشكل مباشر
 });
 app.use('/api/', limiter);
+
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -57,7 +63,7 @@ app.use(express.static('public', {
 }));
 
 // ==============================================
-// 2. إعداد البريد الإلكتروني
+// 4. إعداد البريد الإلكتروني
 // ==============================================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -68,8 +74,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // ==============================================
-// 3. قاعدة البيانات (JSON)
+// 5. قاعدة البيانات (JSON)
 // ==============================================
+const DATA_FILE = './data.json';
 fs.ensureFileSync(DATA_FILE);
 if (!fs.existsSync(DATA_FILE) || fs.readFileSync(DATA_FILE).length === 0) {
     fs.writeFileSync(DATA_FILE, JSON.stringify({
@@ -86,7 +93,7 @@ const readData = () => JSON.parse(fs.readFileSync(DATA_FILE));
 const writeData = (data) => fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// 4. وظيفة المصادقة
+// 6. وظيفة المصادقة
 // ==============================================
 const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -109,7 +116,7 @@ const authenticate = (req, res, next) => {
 };
 
 // ==============================================
-// 5. المسارات العامة
+// 7. المسارات العامة
 // ==============================================
 app.get('/api/settings', (req, res) => res.json(readData().settings));
 app.get('/api/testimonials', (req, res) => res.json(readData().testimonials));
@@ -167,7 +174,7 @@ app.post('/api/request',
 );
 
 // ==============================================
-// 6. مسارات لوحة التحكم (محمية)
+// 8. مسارات لوحة التحكم (محمية)
 // ==============================================
 app.get('/api/requests', authenticate, (req, res) => {
     const data = readData();
@@ -283,8 +290,9 @@ app.delete('/api/request/:id', authenticate, (req, res) => {
 });
 
 // ==============================================
-// 7. تشغيل الخادم
+// 9. تشغيل الخادم
 // ==============================================
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🔒 مركز النور الرباني والنفس الرحماني يعمل على http://localhost:${PORT}`);
     console.log(`📊 لوحة التحكم: http://localhost:${PORT}/admin.html`);
