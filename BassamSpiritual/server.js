@@ -117,7 +117,7 @@ app.get('/api/settings', (req, res) => res.json(readData().settings));
 app.get('/api/testimonials', (req, res) => res.json(readData().testimonials));
 app.get('/api/articles', (req, res) => res.json(readData().articles));
 
-// إرسال الطلب
+// ===== إرسال الطلب (مع إشعار فوري للعميل) =====
 app.post('/api/request',
     [
         body('fullName').notEmpty().trim().escape(),
@@ -154,6 +154,44 @@ app.post('/api/request',
         client.history.push(newReq.id);
         writeData(data);
 
+        // ===== إرسال إشعار فوري للعميل =====
+        const clientEmail = req.body.email;
+        const clientName = req.body.fullName;
+        const contactMethod = req.body.contactMethod || 'email';
+        const clientPhone = req.body.phone || '';
+
+        if (clientEmail) {
+            try {
+                let emailHtml = `
+                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 12px; border-right: 8px solid #D4AF37;">
+                        <h2 style="color: #0A1628; text-align: center;">مركز <span style="color: #D4AF37;">النور الرباني والنفس الرحماني</span></h2>
+                        <p style="font-size: 1.1rem;">السلام عليكم ورحمة الله وبركاته <strong>${clientName}</strong>،</p>
+                        <div style="background: #fff; padding: 20px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee; line-height: 2;">
+                            <p>✅ تم استلام طلبك بنجاح.</p>
+                            <p>📩 سيتم الرد على طلبك عبر <strong>${contactMethod === 'whatsapp' ? 'واتساب' : 'البريد الإلكتروني'}</strong> خلال 24 ساعة.</p>
+                            <hr>
+                            <p><strong>📋 ملخص طلبك:</strong></p>
+                            <p><strong>الخدمة:</strong> ${req.body.serviceType}</p>
+                            <p><strong>الوصف:</strong> ${req.body.description}</p>
+                        </div>
+                        <p style="margin-top: 20px; text-align: center; color: #555;">نسأل الله لكم الشفاء والعافية.</p>
+                        <p style="text-align: center; color: #aaa; font-size: 0.8rem;">هذا البريد آلي، يرجى عدم الرد عليه.</p>
+                    </div>
+                `;
+
+                await transporter.sendMail({
+                    from: `"مركز النور الرباني والنفس الرحماني" <${process.env.EMAIL_USER}>`,
+                    to: clientEmail,
+                    subject: `✅ تم استلام طلبك - مركز النور الرباني والنفس الرحماني`,
+                    html: emailHtml
+                });
+                console.log(`📧 تم إرسال إشعار فوري للعميل ${clientName} عبر البريد الإلكتروني.`);
+            } catch (emailError) {
+                console.error('فشل إرسال الإشعار الفوري للعميل:', emailError.message);
+            }
+        }
+
+        // إرسال إشعار للمسؤول
         try {
             await transporter.sendMail({
                 from: `"مركز النور الرباني والنفس الرحماني" <${process.env.EMAIL_USER}>`,
@@ -174,7 +212,6 @@ app.post('/api/request',
         res.json({ success: true, id: newReq.id });
     }
 );
-
 // ==============================================
 // تأكيد الدفع من العميل (إرسال رقم الحوالة)
 // ==============================================
