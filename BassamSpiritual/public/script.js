@@ -127,6 +127,7 @@ async function loadTestimonials() {
     }
 }
 
+// ===== إرسال نموذج الطلب (مع رسالة النجاح الفورية) =====
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('requestForm');
     if (!form) return;
@@ -175,8 +176,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(data)
             });
             const json = await res.json();
+            
+            btn.classList.remove('loading');
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
+            
             if (json.success) {
-                showNotification('✅ تم استلام طلبك بنجاح. سنقوم بمراجعته وإشعارك عبر وسيلة التواصل التي اخترتها.', 'success');
+                // ===== رسالة النجاح الفورية =====
+                showNotification('✅ تم استلام طلبك بنجاح. سيتم الرد عليك عبر وسيلة التواصل التي اخترتها.', 'success');
+                
                 form.reset();
                 document.getElementById('relationDiv').classList.add('hidden');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -184,10 +191,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('❌ حدث خطأ في الإرسال. يرجى المحاولة مرة أخرى.', 'error');
             }
         } catch (e) {
+            btn.classList.remove('loading');
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
             showNotification('⚠️ خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.', 'error');
         }
-        btn.classList.remove('loading');
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
     };
 });
 
