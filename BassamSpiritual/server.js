@@ -394,11 +394,11 @@ app.get('/payment/:token', (req, res) => {
     }
 
     const settings = data.settings || {};
-    const standardPrice = settings.prices?.standard || 200;
-    const premiumPrice = settings.prices?.premium || 500;
+    const standardPrice = settings.prices?.standard || 100;
+    const premiumPrice = settings.prices?.premium || 200;
     const currencySymbol = settings.currencySymbol || 'ر.س';
     let price = standardPrice;
-    if (request.serviceType && request.serviceType.includes('500')) {
+    if (request.serviceType && request.serviceType.includes('200')) {
         price = premiumPrice;
     } else if (request.serviceType && request.serviceType.includes('مجاناً')) {
         price = 0;
@@ -598,7 +598,7 @@ app.patch('/api/request/:id', authenticate, async (req, res) => {
     const clientName = reqData.fullName;
     const paymentToken = reqData.paymentToken;
     const paymentLink = paymentToken ? `https://bassam-spiritual-center.onrender.com/payment/${paymentToken}` : null;
-    const price = reqData.serviceType?.includes('500') ? 500 : (reqData.serviceType?.includes('مجاناً') ? 0 : 200);
+    const price = reqData.serviceType?.includes('200') ? 200 : (reqData.serviceType?.includes('مجاناً') ? 0 : 100);
     const currencySymbol = data.settings?.currencySymbol || 'ر.س';
 
     if (clientEmail && adminReply && status === 'completed') {
