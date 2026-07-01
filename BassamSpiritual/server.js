@@ -56,7 +56,10 @@ app.use(express.static('public', {
         }
     }
 }));
-
+// ===== صفحة النسب الشريف =====
+app.get('/about-sheikh.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'about-sheikh.html'));
+});
 // ==============================================
 // إعداد البريد الإلكتروني
 // ==============================================
