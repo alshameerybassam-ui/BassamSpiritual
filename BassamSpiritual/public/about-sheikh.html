@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>النسب الشريف لآل الكدهي | الشيخ بسام الشميري</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ===== تنسيق صفحة النسب ===== */
+        .lineage-page {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .lineage-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 45px;
+            box-shadow: 0 20px 60px rgba(10, 22, 40, 0.12);
+            border-top: 8px solid #F5B041;
+        }
+        
+        /* ===== رأس الصفحة (صورة + عنوان) ===== */
+        .lineage-header {
+            display: flex;
+            align-items: center;
+            gap: 35px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid rgba(245, 176, 65, 0.15);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .lineage-image {
+            flex-shrink: 0;
+            width: 160px;
+            height: 190px;
+            border-radius: 50% 20% 50% 20% / 20% 50% 20% 50%;
+            overflow: hidden;
+            border: 4px solid #F5B041;
+            box-shadow: 0 8px 30px rgba(245, 176, 65, 0.2);
+            background: #F8FAFC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lineage-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .lineage-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #B0B8C8;
+            font-size: 0.8rem;
+            background: linear-gradient(135deg, #F8FAFC, #E8ECF0);
+        }
+        .lineage-image-placeholder i {
+            font-size: 3.5rem;
+            color: #C9D0D8;
+            margin-bottom: 5px;
+        }
+        .lineage-title-area {
+            flex: 1;
+        }
+        .lineage-title-area h1 {
+            color: #0A1628;
+            font-size: 2.2rem;
+            margin: 0 0 5px 0;
+        }
+        .lineage-title-area h1 span {
+            color: #F5B041;
+        }
+        .lineage-title-area .sheikh-name {
+            font-size: 1.2rem;
+            color: #1B4D3D;
+            font-weight: 600;
+            margin: 0;
+        }
+        .lineage-title-area .sheikh-name i {
+            color: #F5B041;
+            margin-left: 8px;
+        }
+        .lineage-title-area .lineage-sub {
+            color: #6A7A8A;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+        
+        /* ===== النسب الشريف ===== */
+        .lineage-tree {
+            background: #F8FAFC;
+            border-radius: 16px;
+            padding: 30px 35px;
+            margin: 25px 0;
+            border-right: 6px solid #F5B041;
+            line-height: 2.4;
+            font-size: 1.05rem;
+        }
+        .lineage-tree .highlight {
+            color: #F5B041;
+            font-weight: 700;
+        }
+        .lineage-tree .prophet {
+            color: #1B4D3D;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .lineage-tree .tree-icon {
+            color: #F5B041;
+            margin-left: 6px;
+        }
+        
+        /* ===== الأقسام ===== */
+        .lineage-section {
+            margin: 25px 0;
+            padding: 25px 30px;
+            background: #FFFBF0;
+            border-radius: 16px;
+            border-right: 4px solid #F5B041;
+        }
+        .lineage-section h3 {
+            color: #0A1628;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+        .lineage-section h3 i {
+            color: #F5B041;
+            margin-left: 10px;
+        }
+        .lineage-section p {
+            line-height: 2;
+            color: #1A2835;
+            margin-bottom: 8px;
+        }
+        .lineage-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .lineage-section ul li {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(245, 176, 65, 0.08);
+            line-height: 1.8;
+        }
+        .lineage-section ul li:last-child {
+            border-bottom: none;
+        }
+        .lineage-section ul li i {
+            color: #F5B041;
+            margin-left: 8px;
+        }
+        
+        /* ===== التوقيع ===== */
+        .lineage-signature {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid rgba(245, 176, 65, 0.15);
+        }
+        .lineage-signature .sig-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0A1628;
+        }
+        .lineage-signature .sig-details {
+            color: #6A7A8A;
+            font-size: 0.95rem;
+            margin: 5px 0;
+        }
+        .lineage-signature .sig-details i {
+            color: #F5B041;
+            margin-left: 8px;
+        }
+        
+        /* ===== أزرار ===== */
+        .btn-back {
+            display: inline-block;
+            background: #0A1628;
+            color: #F5B041;
+            padding: 10px 28px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+        .btn-back:hover {
+            background: #F5B041;
+            color: #0A1628;
+            transform: translateY(-2px);
+        }
+        
+        /* ===== استجابة الجوال ===== */
+        @media (max-width: 768px) {
+            .lineage-card { padding: 25px 20px; }
+            .lineage-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            .lineage-image {
+                width: 130px;
+                height: 155px;
+            }
+            .lineage-title-area h1 { font-size: 1.7rem; }
+            .lineage-tree { padding: 20px; font-size: 0.95rem; line-height: 2.2; }
+            .lineage-section { padding: 18px 20px; }
+        }
+        @media (max-width: 480px) {
+            .lineage-card { padding: 15px; }
+            .lineage-image {
+                width: 110px;
+                height: 130px;
+            }
+            .lineage-title-area h1 { font-size: 1.4rem; }
+            .lineage-tree { font-size: 0.85rem; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== شريط الخدمات المتحرك ===== -->
+    <div class="marquee-wrapper">
+        <div class="marquee-content">
+            <span><i class="fas fa-star"></i> بسم الله الرحمن الرحيم</span>
+            <span><i class="fas fa-shield-alt"></i> { آية الكرسي } الله لا إله إلا هو الحي القيوم...</span>
+            <span><i class="fas fa-shield-alt"></i> { المعوذات } قل أعوذ برب الفلق... قل أعوذ برب الناس...</span>
+            <span><i class="fas fa-shield-alt"></i> { أذكار الصباح } أصبحنا وأصبح الملك لله...</span>
+            <span><i class="fas fa-star"></i> علاج العين والحسد والسحر والرصد وجميع الحالات المستعصية</span>
+            <span><i class="fas fa-star"></i> استشارات روحانية ونفسية وتفسير رؤى (مجاناً)</span>
+            <span><i class="fas fa-star"></i> اتصال صوتي مباشر مع الشيخ بسام الشميري</span>
+        </div>
+    </div>
+
+    <!-- ===== محتوى الصفحة ===== -->
+    <div class="lineage-page">
+        <div class="lineage-card">
+
+            <!-- ===== زر العودة ===== -->
+            <div style="margin-bottom:20px;">
+                <a href="/" class="btn-back"><i class="fas fa-arrow-right"></i> العودة إلى الرئيسية</a>
+            </div>
+
+            <!-- ===== رأس الصفحة ===== -->
+            <div class="lineage-header">
+                <div class="lineage-image">
+                    <!-- صورة placeholder (بيضاوية) - استبدل src بصورتك لاحقاً -->
+                    <div class="lineage-image-placeholder" id="sheikhImagePlaceholder">
+                        <i class="fas fa-user-circle"></i>
+                        <span>صورة الشيخ</span>
+                        <span style="font-size:0.6rem; color:#D0D8E0;">(سيتم إضافتها)</span>
+                    </div>
+                    <!-- عند إضافة الصورة، استخدم هذا الكود بدلاً من الـ placeholder:
+                    <img src="path/to/your-image.jpg" alt="الشيخ بسام الشميري">
+                    -->
+                </div>
+                <div class="lineage-title-area">
+                    <h1>مركز <span>النور الرباني</span></h1>
+                    <p class="sheikh-name"><i class="fas fa-crown"></i> )الخليدي الكدهي) الشيخ بسام بن محمد بن هزاع الشميري</p>
+                    <p class="lineage-sub">📜 النسب الشريف لآل الكدهي — المتصل إلى رسول الله ﷺ</p>
+                </div>
+            </div>
+
+            <!-- ===== المقدمة ===== -->
+            <div style="background:#F8FAFC; padding:20px 25px; border-radius:12px; margin-bottom:25px; line-height:1.9; color:#1A2835;">
+                <p style="margin:0;">
+                    <strong>بسم الله الرحمن الرحيم</strong><br>
+                    الحمد لله الذي جعلنا من ذرية نبيّه المصطفى ﷺ، وشرّفنا بالانتساب إليه، وجعل شرف النسب مقرونًا بلزوم التقوى والعمل الصالح. والصلاة والسلام على سيدنا محمد، النبي الأمي، وعلى آله الطيبين الطاهرين، وصحبه الغر الميامين، ومن تبعهم بإحسان إلى يوم الدين.
+                </p>
+                <p style="margin-top:10px;">
+                    فإن النسب الشريف المحفوظ والمتصل للشيخ بسام بن محمد بن هزاع الشميري، والمُثبَت في مشجرات الأسرة وكتب الأنساب المعتمدة، هو على هذا الوجه:
+                </p>
+            </div>
+
+            <!-- ===== النسب الشريف ===== -->
+            <div class="lineage-tree">
+                <strong style="font-size:1.1rem; display:block; margin-bottom:12px;">
+                    <i class="fas fa-tree tree-icon"></i> سلسلة النسب الشريف
+                </strong>
+                <span class="highlight">بسام</span> بن <span class="highlight">محمد</span> بن <span class="highlight">هزاع</span> بن <span class="highlight">محمد</span> بن <span class="highlight">قائد</span> بن <span class="highlight">ثابت</span> بن <span class="highlight">حسن</span> بن <span class="highlight">عثمان</span> بن <span class="highlight">سعيد</span> بن <span class="highlight">بدر الدين</span> بن <span class="highlight">الفقيه عبيد الله</span><br>
+                بن <span class="highlight">السيد برهان الدين إبراهيم</span> بن <span class="highlight">بدر الدين حسن</span> بن <span class="highlight">شمس الدين علي</span> بن <span class="highlight">أحمد</span> بن <span class="highlight">علي (صاحب كده)</span><br>
+                بن <span class="highlight">محمد الفقيه المقدم</span> بن <span class="highlight">علي (أبي الحسن)</span> بن <span class="highlight">محمد صاحب مرباط</span> بن <span class="highlight">علي خالع قسم</span> بن <span class="highlight">علوي (عم الفقيه)</span><br>
+                بن <span class="highlight">محمد</span> بن <span class="highlight">علوي (أول داخل حضرموت)</span> بن <span class="highlight">عبيد الله</span> بن <span class="highlight">أحمد المهاجر</span> بن <span class="highlight">عيسى النقيب</span> بن <span class="highlight">محمد النقيب</span> بن <span class="highlight">علي العريضي</span><br>
+                بن <span class="highlight">جعفر الصادق</span> بن <span class="highlight">محمد الباقر</span> بن <span class="highlight">علي زين العابدين</span> بن <span class="highlight">الحسين السبط</span> بن <span class="highlight">علي بن أبي طالب</span> و <span class="prophet">فاطمة الزهراء</span> بنت <span class="prophet">محمد رسول الله ﷺ</span>
+            </div>
+
+            <!-- ===== بيان الألقاب وأصل النسب ===== -->
+            <div class="lineage-section">
+                <h3><i class="fas fa-book-open"></i> بيان الألقاب وأصل النسب</h3>
+                <p>
+                    ينحدر الشيخ بسام بن محمد بن هزاع الشميري من دوحة السادة <strong>آل الكدهي</strong>، وهم فرع علوي شريف من أفنان السادة آل أبي علوي، يرتفعون بنسبهم إلى الإمام علي بن محمد الفقيه المقدم.
+                </p>
+                <p>
+                    هذا الإمام الجليل هو أول من انتقل من حضرموت إلى تعز، واستوطن منطقة عُرفت بـ <strong>الكدهية</strong>، فاشتهر بين الناس بلقب "صاحب الكده"، وبه عُرف هو وعقبه من بعده. ومن صلبه تفرع السادة آل الكدهي الذين أقاموا في تعز قروناً متطاولة، وكان لهم شأن في العلم والصلاح.
+                </p>
+                <p>
+                    ثم في حقبة لاحقة، انتقل فرع من ذرية هؤلاء الأعلام من تعز إلى نواحي مخلاف شمير، فاستقر هناك. وبحكم هذا الانتقال الجديد، تعددت الألقاب المكانية الطارئة بين أبناء الجد الواحد من هذه الذرية؛ فمنهم من غلب عليه لقب <strong>"الشميري"</strong> نسبة إلى المخلاف الأشم، ومنهم من عُرف بـ <strong>"الخليدي"</strong> نسبة إلى موضع سكناه. وهذا التعدد في الألقاب المكانية لا يعني تفرعاً في النسب، بل هو دليل ساطع على أن الأصل العلوي الكدهي واحد، وأن النسب الشريف هو الجامع.
+                </p>
+            </div>
+
+            <!-- ===== مستند التوثيق ===== -->
+            <div class="lineage-section">
+                <h3><i class="fas fa-certificate"></i> مستند التوثيق</h3>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> <strong>الجزء من بسام إلى الفقيه عبيد الله:</strong> (ثابت ومحفوظ في المشجرات والوثائق العائلية المتوارثة لدى أسرة الخليدي (آل الكدهي.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>الجزء من السيد برهان الدين إبراهيم إلى الإمام علي صاحب كده:</strong> ثابت بكتاب "المشرع الروي في مناقب السادة بني علوي" لمحمد بن أبي بكر الشلّي.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>الجزء من محمد الفقيه المقدم إلى أحمد المهاجر:</strong> ثابت في "المشرع الروي" و"الدرر البهية في أنساب السادة العلوية".</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>الجزء من أحمد المهاجر إلى رسول الله ﷺ:</strong> هو العمود العلوي المتفق عليه لدى جهابذة الأنساب.</li>
+                </ul>
+            </div>
+
+            <!-- ===== التوقيع ===== -->
+            <div class="lineage-signature">
+                <p class="sig-name">الشيخ بسام بن محمد بن هزاع الشميري</p>
+                <p class="sig-details"><i class="fas fa-envelope"></i> alshameerybassam@gmail.com</p>
+                <p class="sig-details"><i class="fas fa-globe"></i> bassam-spiritual-center.onrender.com</p>
+            </div>
+
+            <!-- ===== زر العودة ===== -->
+            <div style="text-align:center; margin-top:25px;">
+                <a href="/" class="btn-back"><i class="fas fa-arrow-right"></i> العودة إلى الرئيسية</a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== التذييل ===== -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4><i class="fas fa-shield-alt"></i> مركز النور الرباني والنفس الرحماني</h4>
+                <p>رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
+            </div>
+            <div class="footer-section">
+                <h4>روابط سريعة</h4>
+                <ul>
+                    <li><a href="/">الرئيسية</a></li>
+                    <li><a href="/about-sheikh.html">النسب الشريف لآل الكدهي</a></li>
+                    <li><a href="/admin.html">لوحة التحكم</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>معلومات الاتصال</h4>
+                <p><i class="fas fa-phone"></i> 777941366</p>
+                <p><i class="fas fa-envelope"></i> alshameerybassam@gmail.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 مركز النور الرباني والنفس الرحماني. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <!-- ===== JavaScript لتطبيق الصورة البيضاوية عند إضافتها لاحقاً ===== -->
+    <script>
+        // عندما تضيف الصورة، قم بتعيين src للصورة وإخفاء الـ placeholder
+        // مثال:
+        // document.getElementById('sheikhImagePlaceholder').style.display = 'none';
+        // const img = document.createElement('img');
+        // img.src = 'path/to/your-image.jpg';
+        // img.alt = 'الشيخ بسام الشميري';
+        // document.querySelector('.lineage-image').appendChild(img);
+    </script>
+
+</body>
+</html>
