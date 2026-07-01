@@ -935,3 +935,63 @@ html, body {
     padding: 0 15px;
     box-sizing: border-box;
 }
+/* ===== الترويسة الجديدة (بإدارة الشيخ) ===== */
+.management-line {
+    font-size: 1.2rem;
+    color: #0A1628;
+    margin: 8px 0 15px 0;
+    position: relative;
+    z-index: 2;
+}
+.management-line i {
+    color: #F5B041;
+    margin-left: 8px;
+}
+.management-line .lineage-tag {
+    color: #F5B041;
+    font-weight: 700;
+    font-size: 0.95rem;
+    background: rgba(245, 176, 65, 0.08);
+    padding: 2px 12px;
+    border-radius: 40px;
+    border: 1px solid rgba(245, 176, 65, 0.15);
+    margin-right: 6px;
+}
+
+/* ===== رابط النسب الشريف (الكلاسيكي) ===== */
+.lineage-link {
+    margin: 18px 0 8px 0;
+    position: relative;
+    z-index: 2;
+}
+.btn-lineage-classic {
+    display: inline-block;
+    color: #F5B041;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 4px;
+    font-family: 'Cairo', sans-serif;
+    transition: 0.3s;
+    letter-spacing: 0.5px;
+}
+.btn-lineage-classic i {
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+.lineage-underline {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 0;
+    height: 2px;
+    background: #F5B041;
+    transition: width 0.4s ease;
+}
+.btn-lineage-classic:hover {
+    color: #E67E22;
+}
+.btn-lineage-classic:hover .lineage-underline {
+    width: 100%;
+}
