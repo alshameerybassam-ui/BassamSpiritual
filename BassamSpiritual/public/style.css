@@ -1055,3 +1055,320 @@ html, body {
         padding: 6px 14px;
     }
 }
+/* ===== أزرار الرأس ===== */
+.header-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px;
+    background: #0A1628;
+    border-bottom: 1px solid rgba(245, 176, 65, 0.1);
+}
+.header-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.btn-header {
+    padding: 8px 20px;
+    border-radius: 40px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    font-family: 'Cairo', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-register {
+    background: linear-gradient(135deg, #F5B041, #E67E22);
+    color: #0A1628;
+}
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 176, 65, 0.4);
+}
+.btn-login {
+    background: transparent;
+    color: #F5B041;
+    border: 2px solid #F5B041;
+}
+.btn-login:hover {
+    background: #F5B041;
+    color: #0A1628;
+}
+.btn-dashboard {
+    background: #1B4D3D;
+    color: #fff;
+}
+.btn-dashboard:hover {
+    background: #2A6A55;
+    transform: translateY(-2px);
+}
+.btn-request {
+    background: #D4AF37;
+    color: #0A1628;
+    border: 2px solid #D4AF37;
+}
+.btn-request:hover {
+    background: transparent;
+    color: #D4AF37;
+    transform: translateY(-2px);
+}
+@media (max-width: 600px) {
+    .header-buttons {
+        justify-content: center;
+        width: 100%;
+    }
+    .btn-header {
+        font-size: 0.75rem;
+        padding: 6px 14px;
+    }
+}
+
+/* ===== الترويسة الجديدة (بإدارة الشيخ) ===== */
+.management-line {
+    font-size: 1.2rem;
+    color: #0A1628;
+    margin: 8px 0 15px 0;
+    position: relative;
+    z-index: 2;
+}
+.management-line i {
+    color: #F5B041;
+    margin-left: 8px;
+}
+.management-line .lineage-tag {
+    color: #F5B041;
+    font-weight: 700;
+    font-size: 0.95rem;
+    background: rgba(245, 176, 65, 0.08);
+    padding: 2px 12px;
+    border-radius: 40px;
+    border: 1px solid rgba(245, 176, 65, 0.15);
+    margin-right: 6px;
+}
+
+/* ===== رابط النسب الشريف (الكلاسيكي) ===== */
+.lineage-link {
+    margin: 18px 0 8px 0;
+    position: relative;
+    z-index: 2;
+}
+.btn-lineage-classic {
+    display: inline-block;
+    color: #F5B041;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 4px;
+    font-family: 'Cairo', sans-serif;
+    transition: 0.3s;
+    letter-spacing: 0.5px;
+}
+.btn-lineage-classic i {
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+.lineage-underline {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 0;
+    height: 2px;
+    background: #F5B041;
+    transition: width 0.4s ease;
+}
+.btn-lineage-classic:hover {
+    color: #E67E22;
+}
+.btn-lineage-classic:hover .lineage-underline {
+    width: 100%;
+}
+
+/* ===== أزرار الرأس ===== */
+.header-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px;
+    background: #0A1628;
+    border-bottom: 1px solid rgba(245, 176, 65, 0.1);
+}
+.header-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.btn-header {
+    padding: 8px 20px;
+    border-radius: 40px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    font-family: 'Cairo', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-register {
+    background: linear-gradient(135deg, #F5B041, #E67E22);
+    color: #0A1628;
+}
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 176, 65, 0.4);
+}
+.btn-login {
+    background: transparent;
+    color: #F5B041;
+    border: 2px solid #F5B041;
+}
+.btn-login:hover {
+    background: #F5B041;
+    color: #0A1628;
+}
+.btn-dashboard {
+    background: #1B4D3D;
+    color: #fff;
+}
+.btn-dashboard:hover {
+    background: #2A6A55;
+    transform: translateY(-2px);
+}
+/* ===== زر "قدم طلبك الآن" - معدّل ليتناسب مع الألوان ===== */
+.btn-request {
+    background: transparent;
+    color: #F5B041;
+    border: 2px solid #F5B041;
+}
+.btn-request:hover {
+    background: #F5B041;
+    color: #0A1628;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+    .header-buttons {
+        justify-content: center;
+        width: 100%;
+    }
+    .btn-header {
+        font-size: 0.75rem;
+        padding: 6px 14px;
+    }
+}
+
+/* ===== التذييل الاحترافي ===== */
+.footer {
+    background: #0A1628;
+    color: #AABBCA;
+    padding: 50px 20px 20px;
+    margin-top: 50px;
+    border-top: 3px solid #F5B041;
+}
+.footer-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+}
+.footer-section h4 {
+    color: #F5B041;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.footer-section p {
+    line-height: 1.8;
+    font-size: 0.95rem;
+    color: #AABBCA;
+}
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.footer-section ul li {
+    margin-bottom: 8px;
+}
+.footer-section ul li a {
+    color: #AABBCA;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 0.95rem;
+}
+.footer-section ul li a:hover {
+    color: #F5B041;
+    padding-right: 5px;
+}
+.footer-section .contact-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.footer-section .contact-list li i {
+    color: #F5B041;
+    width: 20px;
+    text-align: center;
+}
+.footer-section .contact-list li a {
+    color: #AABBCA;
+    text-decoration: none;
+    transition: 0.3s;
+}
+.footer-section .contact-list li a:hover {
+    color: #F5B041;
+}
+.footer-social {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+.footer-social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(245, 176, 65, 0.1);
+    color: #F5B041;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 1.1rem;
+}
+.footer-social a:hover {
+    background: #F5B041;
+    color: #0A1628;
+    transform: translateY(-3px);
+}
+.footer-bottom {
+    text-align: center;
+    padding-top: 25px;
+    margin-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.85rem;
+    color: #6A7A8A;
+}
+.footer-bottom p {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 25px;
+    }
+    .footer-social {
+        justify-content: center;
+    }
+    .footer-section .contact-list li {
+        justify-content: center;
+    }
+}

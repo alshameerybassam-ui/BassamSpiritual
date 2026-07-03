@@ -11,6 +11,7 @@ body { background: var(--bg-main); }
 
 .admin-wrapper { display: flex; min-height: 100vh; }
 
+/* ===== القائمة الجانبية ===== */
 .sidebar {
     width: 250px;
     background: var(--sidebar-bg);
@@ -62,6 +63,7 @@ body { background: var(--bg-main); }
     border-top: 1px solid rgba(255,255,255,0.05);
 }
 
+/* ===== المحتوى الرئيسي ===== */
 .main-content {
     margin-right: 250px;
     padding: 30px;
@@ -87,6 +89,7 @@ header h1 { font-size: 1.8rem; color: var(--sidebar-bg); }
 }
 .btn-view-site:hover { background: #E8C872; transform: scale(1.02); }
 
+/* ===== بطاقات الإحصائيات ===== */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -114,6 +117,7 @@ header h1 { font-size: 1.8rem; color: var(--sidebar-bg); }
 .stat-card.green { border-color: #22C55E; }
 .stat-card.red { border-color: #EF4444; }
 
+/* ===== الجدول ===== */
 .table-section {
     background: #fff;
     border-radius: 16px;
@@ -165,6 +169,7 @@ td {
 }
 tr:hover { background: #FAFAFA; }
 
+/* حالة الطلب */
 .status-badge {
     padding: 5px 14px;
     border-radius: 40px;
@@ -177,6 +182,7 @@ tr:hover { background: #FAFAFA; }
 .status-completed { background: #D1FAE5; color: #065F46; }
 .status-rejected { background: #FEE2E2; color: #991B1B; }
 
+/* أزرار الإجراءات */
 .action-btn {
     border: none;
     padding: 6px 12px;
@@ -190,9 +196,12 @@ tr:hover { background: #FAFAFA; }
 }
 .action-btn.view { background: #3B82F6; }
 .action-btn.view:hover { background: #2563EB; }
+.action-btn.edit { background: var(--gold); color: #0A1628; }
+.action-btn.edit:hover { background: #E8C872; }
 .action-btn.delete { background: #EF4444; }
 .action-btn.delete:hover { background: #DC2626; }
 
+/* ===== المودال (النافذة المنبثقة) ===== */
 .modal {
     display: none;
     position: fixed;
@@ -207,7 +216,7 @@ tr:hover { background: #FAFAFA; }
 .modal-content {
     background: #fff;
     border-radius: 20px;
-    max-width: 800px;
+    max-width: 700px;
     width: 90%;
     max-height: 85vh;
     overflow-y: auto;

@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs-extra');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator'); // ✅ هذا هو التصحيح
 
 const USERS_FILE = path.join(__dirname, '../data/users.json');
 const REQUESTS_FILE = path.join(__dirname, '../data/requests.json');
@@ -52,10 +53,7 @@ const authenticate = (req, res, next) => {
 router.get('/me', authenticate, (req, res) => {
     const user = req.user;
     const requests = readRequests().filter(r => r.userId === user.id);
-    
-    // ترتيب الطلبات من الأحدث
     requests.sort((a, b) => b.createdAt - a.createdAt);
-    
     res.json({
         success: true,
         user: {
@@ -74,7 +72,11 @@ router.get('/me', authenticate, (req, res) => {
             message: r.message || null,
             diagnosis: r.diagnosis || null,
             treatment: r.treatment || null,
-            treatmentDetails: r.treatmentDetails || null
+            treatmentDetails: r.treatmentDetails || null,
+            appointmentTime: r.appointmentTime || null,
+            meetingLink: r.meetingLink || null,
+            adminReplies: r.adminReplies || [],
+            description: r.description || ''
         })),
         notifications: user.spiritualProfile?.notifications || [],
         articles: user.spiritualProfile?.articles || [],
@@ -89,9 +91,9 @@ router.get('/me', authenticate, (req, res) => {
 router.post('/request',
     authenticate,
     [
-        express.body('serviceType').notEmpty(),
-        express.body('description').notEmpty().isLength({ min: 5 }),
-        express.body('contactMethod').notEmpty()
+        body('serviceType').notEmpty().withMessage('نوع الخدمة مطلوب'),
+        body('description').notEmpty().isLength({ min: 5 }).withMessage('الوصف قصير جداً'),
+        body('contactMethod').notEmpty().withMessage('طريقة التواصل مطلوبة')
     ],
     async (req, res) => {
         const errors = validationResult(req);
@@ -113,24 +115,27 @@ router.post('/request',
             description,
             contactMethod,
             voiceNote: voiceNote || null,
-            status: 'pending', // pending, processing, completed, rejected
-            paymentStatus: 'pending', // pending, paid, verified
+            status: 'pending',
+            paymentStatus: 'pending',
             paymentHistory: [],
             createdAt: new Date().toISOString(),
             diagnosis: null,
             treatment: null,
             treatmentDetails: null,
             adminReplies: [],
+            messages: [],
+            appointmentTime: null,
+            meetingLink: null,
             completedAt: null
         };
 
         requests.push(newRequest);
         writeRequests(requests);
 
-        // إضافة الطلب إلى ملف المستخدم
         const users = readUsers();
         const userIndex = users.findIndex(u => u.id === user.id);
         if (userIndex !== -1) {
+            if (!users[userIndex].requests) users[userIndex].requests = [];
             users[userIndex].requests.push(newRequest.id);
             writeUsers(users);
         }
@@ -150,15 +155,12 @@ router.get('/request/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const requests = readRequests();
     const request = requests.find(r => r.id == id);
-    
     if (!request) {
         return res.status(404).json({ error: 'الطلب غير موجود' });
     }
-    
     if (request.userId !== req.user.id) {
         return res.status(403).json({ error: 'غير مصرح' });
     }
-    
     res.json({ success: true, request });
 });
 
@@ -168,24 +170,19 @@ router.get('/request/:id', authenticate, (req, res) => {
 router.post('/payment/confirm/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const { transferCode, paymentMethod } = req.body;
-    
     if (!transferCode) {
         return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
     }
-    
     const requests = readRequests();
     const index = requests.findIndex(r => r.id == id);
-    
     if (index === -1) {
         return res.status(404).json({ error: 'الطلب غير موجود' });
     }
-    
     if (requests[index].userId !== req.user.id) {
         return res.status(403).json({ error: 'غير مصرح' });
     }
-    
-    // تحديث حالة الدفع
     requests[index].paymentStatus = 'paid';
+    if (!requests[index].paymentHistory) requests[index].paymentHistory = [];
     requests[index].paymentHistory.push({
         amount: 100,
         currency: 'SAR',
@@ -194,9 +191,7 @@ router.post('/payment/confirm/:id', authenticate, async (req, res) => {
         date: new Date().toISOString(),
         stage: 'diagnosis'
     });
-    
     writeRequests(requests);
-    
     res.json({
         success: true,
         message: '✅ تم استلام طلب الدفع بنجاح. سيتم التحقق من قبل الشيخ وإشعارك قريباً.'
@@ -204,25 +199,20 @@ router.post('/payment/confirm/:id', authenticate, async (req, res) => {
 });
 
 // ==============================================
-// 5. الموافقة على العلاج (المرحلة الثانية)
+// 5. الموافقة على العلاج (المرحلة الثانية - الجلسة الصوتية)
 // ==============================================
 router.post('/treatment/agree/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const { agree, paymentMethod, transferCode } = req.body;
-    
     const requests = readRequests();
     const index = requests.findIndex(r => r.id == id);
-    
     if (index === -1) {
         return res.status(404).json({ error: 'الطلب غير موجود' });
     }
-    
     if (requests[index].userId !== req.user.id) {
         return res.status(403).json({ error: 'غير مصرح' });
     }
-    
     if (agree === false) {
-        // المستفيد رفض العلاج
         requests[index].status = 'rejected';
         writeRequests(requests);
         return res.json({
@@ -230,13 +220,10 @@ router.post('/treatment/agree/:id', authenticate, (req, res) => {
             message: 'تم رفض العلاج. سيتم إشعار الشيخ بذلك.'
         });
     }
-    
-    // المستفيد وافق على العلاج (الجلسة الصوتية)
     if (!transferCode) {
         return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
     }
-    
-    // تسجيل الدفع للجلسة الصوتية (350 ريال)
+    if (!requests[index].paymentHistory) requests[index].paymentHistory = [];
     requests[index].paymentHistory.push({
         amount: 350,
         currency: 'SAR',
@@ -246,9 +233,7 @@ router.post('/treatment/agree/:id', authenticate, (req, res) => {
         stage: 'voice_session'
     });
     requests[index].paymentStatus = 'paid_voice';
-    
     writeRequests(requests);
-    
     res.json({
         success: true,
         message: '✅ تم استلام طلب الجلسة الصوتية. سيتم التواصل معك لتحديد الموعد.'
@@ -261,39 +246,28 @@ router.post('/treatment/agree/:id', authenticate, (req, res) => {
 router.post('/message/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const { message } = req.body;
-    
     if (!message || message.trim().length < 3) {
         return res.status(400).json({ error: 'الرسالة قصيرة جداً' });
     }
-    
     const requests = readRequests();
     const index = requests.findIndex(r => r.id == id);
-    
     if (index === -1) {
         return res.status(404).json({ error: 'الطلب غير موجود' });
     }
-    
     if (requests[index].userId !== req.user.id) {
         return res.status(403).json({ error: 'غير مصرح' });
     }
-    
     if (requests[index].status !== 'completed') {
         return res.status(400).json({ error: 'لا يمكن إرسال رسالة إلا بعد اكتمال العلاج' });
     }
-    
-    if (!requests[index].messages) {
-        requests[index].messages = [];
-    }
-    
+    if (!requests[index].messages) requests[index].messages = [];
     requests[index].messages.push({
         from: 'user',
         text: message.trim(),
         date: new Date().toISOString(),
         read: false
     });
-    
     writeRequests(requests);
-    
     res.json({
         success: true,
         message: '✅ تم إرسال رسالتك. سيتم الرد عليها قريباً.'
