@@ -998,7 +998,7 @@ html, body {
 /* ===== أزرار الرأس ===== */
 .header-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     padding: 10px 20px;
     background: #0A1628;
     border-bottom: 1px solid rgba(245, 176, 65, 0.1);
