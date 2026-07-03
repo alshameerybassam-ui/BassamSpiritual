@@ -59,13 +59,13 @@ router.post('/send', authenticate, async (req, res) => {
     const userHistory = history.filter(h => h.userId === userId);
     const freeMessagesCount = userHistory.length;
 
-    // 20 رسالة مجانية فقط
-    if (freeMessagesCount >= 20) {
+    // 100 رسالة مجانية فقط
+    if (freeMessagesCount >= 100) {
         return res.status(403).json({
-            error: 'لقد استهلكت جميع رسائلك المجانية (20 رسالة). يرجى دفع 10$ للاستمرار في المحادثة.',
+            error: 'لقد استهلكت جميع رسائلك المجانية (100 رسالة). يرجى دفع 10$ للاستمرار في المحادثة.',
             requiresPayment: true,
             freeMessagesUsed: freeMessagesCount,
-            freeMessagesLimit: 20
+            freeMessagesLimit: 100
         });
     }
 
@@ -122,7 +122,7 @@ router.post('/send', authenticate, async (req, res) => {
             success: true,
             reply: reply,
             freeMessagesUsed: freeMessagesCount + 1,
-            freeMessagesLimit: 20
+            freeMessagesLimit: 100
         });
 
     } catch (error) {
@@ -152,7 +152,7 @@ router.post('/send', authenticate, async (req, res) => {
             success: true,
             reply: fallbackReply,
             freeMessagesUsed: freeMessagesCount + 1,
-            freeMessagesLimit: 20,
+            freeMessagesLimit: 100,
             isFallback: true
         });
     }
@@ -169,8 +169,8 @@ router.get('/history', authenticate, (req, res) => {
         success: true,
         history: userHistory,
         count: userHistory.length,
-        freeMessagesLimit: 20,
-        remaining: Math.max(0, 20 - userHistory.length)
+        freeMessagesLimit: 100,
+        remaining: Math.max(0, 100 - userHistory.length)
     });
 });
 
@@ -206,14 +206,14 @@ router.post('/pay', authenticate, async (req, res) => {
         purpose: 'chat_continuation'
     });
     
-    // إعادة تعيين عداد الرسائل المجانية (بإضافة 50 رسالة إضافية)
+    // إعادة تعيين عداد الرسائل المجانية (بإضافة 500 رسالة إضافية)
     // سنقوم بتخزين ذلك في ملف المستخدم
-    users[userIndex].chatCredits = (users[userIndex].chatCredits || 0) + 50;
+    users[userIndex].chatCredits = (users[userIndex].chatCredits || 0) + 500;
     writeUsers(users);
     
     res.json({
         success: true,
-        message: '✅ تم تأكيد الدفع بنجاح. تم إضافة 50 رسالة إضافية إلى رصيدك.'
+        message: '✅ تم تأكيد الدفع بنجاح. تم إضافة 500 رسالة إضافية إلى رصيدك.'
     });
 });
 
@@ -230,7 +230,7 @@ router.get('/credits', authenticate, (req, res) => {
     const usedMessages = userHistory.length;
     
     const chatCredits = user?.chatCredits || 0;
-    const freeLimit = 20;
+    const freeLimit = 100;
     
     const totalAvailable = freeLimit + chatCredits;
     const remaining = Math.max(0, totalAvailable - usedMessages);
