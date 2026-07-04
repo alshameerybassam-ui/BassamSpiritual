@@ -1382,3 +1382,27 @@ html, body {
         justify-content: center;
     }
 }
+/* ===== زر "قدم طلبك الآن" داخل بطاقات الخدمات ===== */
+.btn-service-request {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #F5B041, #E67E22);
+    color: #0A1628;
+    border-radius: 40px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: 0.3s;
+    font-family: 'Cairo', sans-serif;
+    border: none;
+    cursor: pointer;
+}
+.btn-service-request:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 176, 65, 0.4);
+    background: linear-gradient(135deg, #F1C40F, #F5B041);
+}
+.btn-service-request i {
+    margin-left: 6px;
+}
