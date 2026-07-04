@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ==============================================
-// الإعدادات الأمنية والأداء (تم تعديل CSP)
+// الإعدادات الأمنية والأداء
 // ==============================================
 app.use(helmet({
     contentSecurityPolicy: {
@@ -27,7 +27,7 @@ app.use(helmet({
             "font-src": ["'self'", "https:", "data:"],
             "style-src": ["'self'", "'unsafe-inline'", "https:"],
             "img-src": ["'self'", "data:", "https:"],
-            "connect-src": ["'self'", "https://generativelanguage.googleapis.com"], // للسماح بـ Gemini API
+            "connect-src": ["'self'", "https://generativelanguage.googleapis.com"],
         },
     },
 }));
@@ -53,18 +53,18 @@ const DATA_DIR = path.join(__dirname, 'data');
 fs.ensureDirSync(DATA_DIR);
 
 // ==============================================
-// استيراد المسارات (تم إضافة chatRoutes)
+// استيراد المسارات
 // ==============================================
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
-const chatRoutes = require('./routes/chat'); // ✅ تم إضافة هذا السطر
+const chatRoutes = require('./routes/chat');
 
 // ==============================================
 // المسارات العامة
 // ==============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/chat', chatRoutes); // ✅ تم إضافة هذا السطر
+app.use('/api/chat', chatRoutes);
 
 // ==============================================
 // مسارات المقالات والشهادات (للواجهة الرئيسية)
