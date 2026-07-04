@@ -514,3 +514,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ تم تحميل script.js بنجاح');
+
+// ===== إصلاح الأيقونات (تحميل Font Awesome بشكل آمن) =====
+(function ensureFontAwesome() {
+    // التحقق من وجود أي رابط لـ Font Awesome
+    const existingLink = document.querySelector('link[href*="font-awesome"]');
+    if (!existingLink) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+        console.log('✅ Font Awesome تم تحميله تلقائياً');
+    }
+})();
