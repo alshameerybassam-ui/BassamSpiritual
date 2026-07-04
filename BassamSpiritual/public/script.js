@@ -90,11 +90,11 @@ const chatScenarios = {
 
         if (text.includes('سحر') || text.includes('عين') || text.includes('حسد') || text.includes('مس')) {
             serviceType = 'علاج العين والحسد والأسحار والرصد';
-            price = '200 ر.س';
+            price = '100 ر.س';
             recommendation = '🛡️ يبدو أنك تعاني من أعراض قد تكون مرتبطة بالعين أو الحسد أو السحر. نوصي بجلسة علاجية شاملة تشمل الرقية الشرعية والتحصين.';
         } else if (text.includes('قلق') || text.includes('اكتئاب') || text.includes('توتر') || text.includes('نفس')) {
             serviceType = 'استشارة روحانية ونفسية';
-            price = 'مجاناً';
+            price = '100 ر.س';
             recommendation = '🕊️ يبدو أنك بحاجة إلى توجيه روحاني ونفسي. هذه الاستشارة ستساعدك في توضيح رؤيتك وتقديم النصائح المناسبة لحالتك.';
         } else if (text.includes('ألم') || text.includes('مرض') || text.includes('جسد')) {
             serviceType = 'جلسة صوتية مباشرة مع الشيخ';
@@ -267,7 +267,7 @@ function transferToForm() {
     if (serviceSelect && data.serviceType) {
         const serviceMap = {
             'علاج العين والحسد والأسحار والرصد': 'علاج',
-            'استشارة روحانية ونفسية': 'استشارة مجانية',
+            'استشارة روحانية ونفسية': 'استشارة',
             'جلسة صوتية مباشرة مع الشيخ': 'جلسة صوتية',
             'استشارة روحانية عامة': 'استشارة'
         };
