@@ -22,10 +22,11 @@ app.set('trust proxy', 1);
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
+            "default-src": ["'self'"],
             "script-src-attr": ["'unsafe-inline'"],
-            "script-src": ["'self'", "'unsafe-inline'"],
-            "font-src": ["'self'", "https:", "data:"],
-            "style-src": ["'self'", "'unsafe-inline'", "https:"],
+            "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+            "font-src": ["'self'", "https:", "data:", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
+            "style-src": ["'self'", "'unsafe-inline'", "https:", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
             "img-src": ["'self'", "data:", "https:"],
             "connect-src": ["'self'", "https://generativelanguage.googleapis.com"],
         },
