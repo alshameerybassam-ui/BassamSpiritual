@@ -8,10 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- رابط Font Awesome الثابت الذي يعمل دائماً -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* تنسيقات داخلية لضمان العمل حتى لو لم يتم تحميل style.css */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
         .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -21,6 +19,9 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
             flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041;
         }
+        .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; }
+        .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; }
+        .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; }
         .btn-primary {
             background: linear-gradient(135deg, #F5B041, #E67E22);
             color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px;
