@@ -43,6 +43,7 @@ const authenticate = (req, res, next) => {
         req.userId = decoded.id;
         next();
     } catch (e) {
+        console.error('❌ خطأ في التحقق من الرمز:', e.message);
         res.status(401).json({ error: 'رمز غير صالح' });
     }
 };
@@ -69,19 +70,12 @@ router.get('/me', authenticate, (req, res) => {
             status: r.status,
             paymentStatus: r.paymentStatus,
             createdAt: r.createdAt,
-            message: r.message || null,
+            description: r.description || '',
             diagnosis: r.diagnosis || null,
             treatment: r.treatment || null,
-            treatmentDetails: r.treatmentDetails || null,
-            appointmentTime: r.appointmentTime || null,
-            meetingLink: r.meetingLink || null,
-            adminReplies: r.adminReplies || [],
-            description: r.description || ''
+            treatmentDetails: r.treatmentDetails || null
         })),
-        notifications: user.spiritualProfile?.notifications || [],
-        articles: user.spiritualProfile?.articles || [],
-        ruqya: user.spiritualProfile?.ruqya || [],
-        dailyWirds: user.spiritualProfile?.dailyWirds || []
+        notifications: user.spiritualProfile?.notifications || []
     });
 });
 
@@ -101,7 +95,7 @@ router.post('/request',
             return res.status(400).json({ error: 'بيانات غير صالحة', details: errors.array() });
         }
 
-        const { serviceType, description, contactMethod, voiceNote } = req.body;
+        const { serviceType, description, contactMethod } = req.body;
         const user = req.user;
 
         const requests = readRequests();
@@ -114,7 +108,6 @@ router.post('/request',
             serviceType,
             description,
             contactMethod,
-            voiceNote: voiceNote || null,
             status: 'pending',
             paymentStatus: 'pending',
             paymentHistory: [],
@@ -123,10 +116,7 @@ router.post('/request',
             treatment: null,
             treatmentDetails: null,
             adminReplies: [],
-            messages: [],
-            appointmentTime: null,
-            meetingLink: null,
-            completedAt: null
+            messages: []
         };
 
         requests.push(newRequest);
@@ -167,7 +157,7 @@ router.get('/request/:id', authenticate, (req, res) => {
 // ==============================================
 // 4. تأكيد الدفع (المرحلة الأولى - 100 ريال)
 // ==============================================
-router.post('/payment/confirm/:id', authenticate, async (req, res) => {
+router.post('/payment/confirm/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const { transferCode, paymentMethod } = req.body;
     if (!transferCode) {
@@ -199,7 +189,7 @@ router.post('/payment/confirm/:id', authenticate, async (req, res) => {
 });
 
 // ==============================================
-// 5. الموافقة على العلاج (المرحلة الثانية - الجلسة الصوتية)
+// 5. الموافقة على العلاج (المرحلة الثانية)
 // ==============================================
 router.post('/treatment/agree/:id', authenticate, (req, res) => {
     const { id } = req.params;
@@ -241,7 +231,7 @@ router.post('/treatment/agree/:id', authenticate, (req, res) => {
 });
 
 // ==============================================
-// 6. إرسال رسالة استفسار (نافذة التواصل بعد العلاج)
+// 6. إرسال رسالة استفسار
 // ==============================================
 router.post('/message/:id', authenticate, (req, res) => {
     const { id } = req.params;
