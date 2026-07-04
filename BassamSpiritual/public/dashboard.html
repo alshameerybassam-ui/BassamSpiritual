@@ -8,201 +8,62 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: #F8FAFC;
-            color: #1A2835;
-        }
-        .dashboard-wrapper {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+        body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
+        .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 15px 25px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 10px;
-            border-right: 6px solid #F5B041;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; padding: 15px 25px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
+            flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041;
         }
-        .dashboard-header .user-info h3 {
-            color: #0A1628;
-            font-size: 1.2rem;
-        }
-        .dashboard-header .user-info p {
-            color: #6A7A8A;
-            font-size: 0.9rem;
-        }
-        .dashboard-header .actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
+        .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; }
+        .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; }
+        .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; }
         .btn-primary {
             background: linear-gradient(135deg, #F5B041, #E67E22);
-            color: #0A1628;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Cairo', sans-serif;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s;
+            font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 8px;
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(245, 176, 65, 0.4);
-        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,176,65,0.4); }
         .btn-outline {
-            background: transparent;
-            color: #0A1628;
-            border: 2px solid #E2E8F0;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Cairo', sans-serif;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            background: transparent; color: #0A1628; border: 2px solid #E2E8F0;
+            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
         }
-        .btn-outline:hover {
-            border-color: #F5B041;
-            color: #F5B041;
-        }
+        .btn-outline:hover { border-color: #F5B041; color: #F5B041; }
         .btn-danger-outline {
-            background: transparent;
-            color: #e74c3c;
-            border: 2px solid #e74c3c;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Cairo', sans-serif;
+            background: transparent; color: #e74c3c; border: 2px solid #e74c3c;
+            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
         }
-        .btn-danger-outline:hover {
-            background: #e74c3c;
-            color: #fff;
-        }
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 25px;
-        }
-        .dashboard-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            border-right: 4px solid #F5B041;
-        }
-        .card h4 {
-            color: #0A1628;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card h4 i {
-            color: #F5B041;
-        }
-        .card .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .card .stat-item:last-child {
-            border-bottom: none;
-        }
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: inline-block;
-        }
+        .btn-danger-outline:hover { background: #e74c3c; color: #fff; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+        .dashboard-sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-right: 4px solid #F5B041; }
+        .card h4 { color: #0A1628; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .card h4 i { color: #F5B041; }
+        .card .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .card .stat-item:last-child { border-bottom: none; }
+        .status-badge { padding: 4px 12px; border-radius: 40px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         .status-pending { background: #FEF3C7; color: #92400E; }
         .status-processing { background: #DBEAFE; color: #1E40AF; }
         .status-completed { background: #D1FAE5; color: #065F46; }
         .status-rejected { background: #FEE2E2; color: #991B1B; }
 
-        .request-item {
-            background: #F8FAFC;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 12px;
-            border-right: 4px solid #E2E8F0;
-            transition: 0.3s;
-        }
-        .request-item:hover {
-            border-right-color: #F5B041;
-        }
-        .request-item .top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .request-item .top-row .service {
-            font-weight: 700;
-            color: #0A1628;
-        }
-        .request-item .top-row .date {
-            color: #6A7A8A;
-            font-size: 0.8rem;
-        }
-        .request-item .description {
-            color: #4A5A6A;
-            font-size: 0.9rem;
-            margin: 8px 0;
-            line-height: 1.6;
-        }
-        .request-item .actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        .btn-sm {
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Cairo', sans-serif;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .request-item { background: #F8FAFC; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-right: 4px solid #E2E8F0; transition: 0.3s; }
+        .request-item:hover { border-right-color: #F5B041; }
+        .request-item .top-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .request-item .top-row .service { font-weight: 700; color: #0A1628; }
+        .request-item .top-row .date { color: #6A7A8A; font-size: 0.8rem; }
+        .request-item .description { color: #4A5A6A; font-size: 0.9rem; margin: 8px 0; line-height: 1.6; }
+        .request-item .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .btn-sm { padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
         .btn-sm-gold { background: #F5B041; color: #0A1628; }
         .btn-sm-gold:hover { background: #E67E22; }
         .btn-sm-green { background: #27ae60; color: #fff; }
@@ -213,68 +74,28 @@
         .btn-sm-blue:hover { background: #2980b9; }
 
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 22, 40, 0.7);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
+            padding: 20px; backdrop-filter: blur(4px);
         }
         .modal-overlay.show { display: flex; }
         .modal-box {
-            background: #fff;
-            border-radius: 20px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 85vh;
-            overflow-y: auto;
-            padding: 30px;
-            border-top: 8px solid #F5B041;
+            background: #fff; border-radius: 20px; max-width: 600px; width: 100%;
+            max-height: 85vh; overflow-y: auto; padding: 30px; border-top: 8px solid #F5B041;
             box-shadow: 0 30px 80px rgba(0,0,0,0.3);
         }
         .modal-box h3 { color: #0A1628; margin-bottom: 15px; }
-        .modal-box .close-modal {
-            float: left;
-            font-size: 1.8rem;
-            cursor: pointer;
-            color: #999;
-            transition: 0.3s;
-        }
+        .modal-box .close-modal { float: left; font-size: 1.8rem; cursor: pointer; color: #999; transition: 0.3s; }
         .modal-box .close-modal:hover { color: #e74c3c; transform: rotate(90deg); }
         .modal-box label { display: block; font-weight: 700; margin-top: 15px; margin-bottom: 5px; }
-        .modal-box input, .modal-box select, .modal-box textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #E2E8F0;
-            border-radius: 10px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.95rem;
-        }
+        .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.95rem; }
         .modal-box textarea { min-height: 80px; }
-        .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus {
-            border-color: #F5B041;
-            outline: none;
-        }
+        .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; }
 
         .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 25px;
-            border-radius: 12px;
-            color: #fff;
-            font-weight: 600;
-            z-index: 99999;
-            display: none;
-            min-width: 300px;
-            text-align: center;
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600;
+            z-index: 99999; display: none; min-width: 300px; text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
         .notification.success { background: #27ae60; }
@@ -282,29 +103,10 @@
         .notification.show { display: block; }
 
         @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .dashboard-header .actions {
-                width: 100%;
-                justify-content: flex-start;
-            }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; }
+            .dashboard-header .actions { width: 100%; justify-content: flex-start; }
         }
-        .chat-bubble {
-            background: #FFFBF0;
-            border-radius: 12px;
-            padding: 15px;
-            margin: 10px 0;
-            border-right: 4px solid #F5B041;
-        }
-        .chat-bubble .sender { font-weight: 700; color: #0A1628; }
-        .chat-bubble .text { color: #1A2835; margin-top: 5px; line-height: 1.6; }
-        .chat-bubble .time { color: #999; font-size: 0.75rem; margin-top: 5px; display: block; }
-        .chat-bubble.admin { background: #F0F7F4; border-right-color: #1B4D3D; }
     </style>
 </head>
 <body>
@@ -312,7 +114,6 @@
     <div id="notification" class="notification"></div>
 
     <div class="dashboard-wrapper">
-        <!-- الهيدر -->
         <div class="dashboard-header">
             <div class="user-info">
                 <h3 id="userName">مرحباً، <span>...</span></h3>
@@ -325,9 +126,7 @@
             </div>
         </div>
 
-        <!-- المحتوى الرئيسي -->
         <div class="dashboard-grid">
-            <!-- الشريط الجانبي (الإحصائيات والملف الشخصي) -->
             <div class="dashboard-sidebar">
                 <div class="card">
                     <h4><i class="fas fa-user-circle"></i> ملفي الشخصي</h4>
@@ -353,63 +152,20 @@
                     <div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div>
                     <div class="stat-item"><span>❌ مرفوضة</span> <span id="statRejected">0</span></div>
                 </div>
-
-                <div class="card">
-                    <h4><i class="fas fa-robot"></i> المساعد الذكي</h4>
-                    <p style="font-size:0.9rem; color:#4A5A6A; margin-bottom:10px;">
-                        محادثة ذكية مع مستشار روحاني إسلامي. (20 رسالة مجانية)
-                    </p>
-                    <a href="/dashboard.html?tab=chat" class="btn-primary" style="display:block; text-align:center; text-decoration:none;">
-                        <i class="fas fa-comment-dots"></i> الذهاب إلى المساعد
-                    </a>
-                </div>
             </div>
 
-            <!-- القائمة الرئيسية (الطلبات) -->
             <div>
                 <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                    <button onclick="showTab('requests')" class="btn-primary" id="tabRequestsBtn" style="background:linear-gradient(135deg,#F5B041,#E67E22);">
+                    <button onclick="showTab('requests')" class="btn-primary" id="tabRequestsBtn">
                         <i class="fas fa-list-ul"></i> طلباتي
-                    </button>
-                    <button onclick="showTab('chat')" class="btn-outline" id="tabChatBtn">
-                        <i class="fas fa-robot"></i> المساعد الذكي
-                    </button>
-                    <button onclick="showTab('notifications')" class="btn-outline" id="tabNotificationsBtn">
-                        <i class="fas fa-bell"></i> الإشعارات
                     </button>
                 </div>
 
-                <!-- تبويب الطلبات -->
                 <div id="tabRequests" class="tab-content">
                     <div class="card" style="border-right-color:#1B4D3D;">
                         <h4><i class="fas fa-list"></i> جميع طلباتي</h4>
                         <div id="requestsList">
                             <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- تبويب المساعد الذكي -->
-                <div id="tabChat" class="tab-content" style="display:none;">
-                    <div class="card" style="border-right-color:#F5B041;">
-                        <h4><i class="fas fa-robot" style="color:#F5B041;"></i> المستشار الروحاني الذكي</h4>
-                        <div style="background:#F8FAFC; border-radius:12px; padding:15px; height:350px; overflow-y:auto; margin-bottom:15px;" id="chatMessages">
-                            <div style="text-align:center; color:#6A7A8A; padding:20px;">مرحباً! اسألني أي سؤال روحاني. (رسائل مجانية: <span id="chatRemaining">20</span>)</div>
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" id="chatInput" placeholder="اكتب سؤالك الروحاني..." style="flex:1; padding:10px 15px; border:2px solid #E2E8F0; border-radius:30px; font-family:'Cairo', sans-serif; font-size:0.95rem;">
-                            <button onclick="sendChatMessage()" class="btn-primary" style="padding:10px 20px;"><i class="fas fa-paper-plane"></i></button>
-                        </div>
-                        <div id="chatStatus" style="margin-top:10px; font-size:0.85rem; color:#6A7A8A;"></div>
-                    </div>
-                </div>
-
-                <!-- تبويب الإشعارات -->
-                <div id="tabNotifications" class="tab-content" style="display:none;">
-                    <div class="card" style="border-right-color:#3498db;">
-                        <h4><i class="fas fa-bell" style="color:#3498db;"></i> إشعاراتي</h4>
-                        <div id="notificationsList">
-                            <p style="text-align:center; color:#6A7A8A; padding:20px;">لا توجد إشعارات جديدة.</p>
                         </div>
                     </div>
                 </div>
@@ -441,14 +197,6 @@
                 <label>وصف المشكلة بالتفصيل <span style="color:#e74c3c;">*</span></label>
                 <textarea id="reqDescription" rows="4" placeholder="اكتب مشكلتك بوضوح..." required></textarea>
 
-                <label>تسجيل صوتي (اختياري)</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button type="button" onclick="startRecording()" class="btn-sm btn-sm-blue"><i class="fas fa-microphone"></i> تسجيل</button>
-                    <button type="button" onclick="stopRecording()" class="btn-sm btn-sm-red"><i class="fas fa-stop"></i> إيقاف</button>
-                    <span id="recordingStatus" style="color:#6A7A8A; font-size:0.85rem;">جاهز للتسجيل</span>
-                </div>
-                <input type="hidden" id="reqVoiceNote">
-
                 <button type="submit" class="btn-primary" style="width:100%; margin-top:15px; justify-content:center;">
                     <i class="fas fa-paper-plane"></i> إرسال الطلب
                 </button>
@@ -459,14 +207,12 @@
         </div>
     </div>
 
-    <!-- مودال عرض تفاصيل الطلب والدفع -->
+    <!-- مودال عرض تفاصيل الطلب -->
     <div id="requestDetailsModal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal" onclick="closeDetailsModal()">&times;</span>
             <h3><i class="fas fa-file-alt"></i> تفاصيل الطلب</h3>
-            <div id="requestDetailsContent">
-                <p>جاري التحميل...</p>
-            </div>
+            <div id="requestDetailsContent"><p>جاري التحميل...</p></div>
         </div>
     </div>
 
