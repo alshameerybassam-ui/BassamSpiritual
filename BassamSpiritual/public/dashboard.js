@@ -1,711 +1,221 @@
-// ===== متغيرات عامة =====
-let currentUser = null;
-let userRequests = [];
-let currentRequestId = null;
-let mediaRecorder = null;
-let audioChunks = [];
-
-// ===== الإشعارات =====
-function showNotification(msg, type = 'success') {
-    const n = document.getElementById('notification');
-    if (!n) return;
-    n.textContent = msg;
-    n.className = `notification ${type} show`;
-    setTimeout(() => n.classList.remove('show'), 6000);
-}
-
-// ===== التحقق من الجلسة =====
-async function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = '/login.html';
-        return false;
-    }
-    try {
-        const res = await fetch('/api/auth/verify', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login.html';
-            return false;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لوحة التحكم | مركز النور الرباني</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
+        .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; padding: 15px 25px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
+            flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041;
         }
-        currentUser = data.user;
-        return true;
-    } catch (e) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login.html';
-        return false;
-    }
-}
-
-// ===== تحميل بيانات المستخدم =====
-async function loadDashboard() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-        const res = await fetch('/api/dashboard/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) {
-            showNotification('⚠️ حدث خطأ في تحميل البيانات.', 'error');
-            return;
+        .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; }
+        .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; }
+        .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary {
+            background: linear-gradient(135deg, #F5B041, #E67E22);
+            color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s;
+            font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 8px;
         }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,176,65,0.4); }
+        .btn-outline {
+            background: transparent; color: #0A1628; border: 2px solid #E2E8F0;
+            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-outline:hover { border-color: #F5B041; color: #F5B041; }
+        .btn-danger-outline {
+            background: transparent; color: #e74c3c; border: 2px solid #e74c3c;
+            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
+        }
+        .btn-danger-outline:hover { background: #e74c3c; color: #fff; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+        .dashboard-sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-right: 4px solid #F5B041; }
+        .card h4 { color: #0A1628; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .card h4 i { color: #F5B041; }
+        .card .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .card .stat-item:last-child { border-bottom: none; }
+        .status-badge { padding: 4px 12px; border-radius: 40px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .status-pending { background: #FEF3C7; color: #92400E; }
+        .status-processing { background: #DBEAFE; color: #1E40AF; }
+        .status-completed { background: #D1FAE5; color: #065F46; }
+        .status-rejected { background: #FEE2E2; color: #991B1B; }
 
-        currentUser = data.user;
-        userRequests = data.requests || [];
+        .request-item { background: #F8FAFC; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-right: 4px solid #E2E8F0; transition: 0.3s; }
+        .request-item:hover { border-right-color: #F5B041; }
+        .request-item .top-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .request-item .top-row .service { font-weight: 700; color: #0A1628; }
+        .request-item .top-row .date { color: #6A7A8A; font-size: 0.8rem; }
+        .request-item .description { color: #4A5A6A; font-size: 0.9rem; margin: 8px 0; line-height: 1.6; }
+        .request-item .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .btn-sm { padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-sm-gold { background: #F5B041; color: #0A1628; }
+        .btn-sm-gold:hover { background: #E67E22; }
+        .btn-sm-green { background: #27ae60; color: #fff; }
+        .btn-sm-green:hover { background: #1e8449; }
+        .btn-sm-red { background: #e74c3c; color: #fff; }
+        .btn-sm-red:hover { background: #c0392b; }
+        .btn-sm-blue { background: #3498db; color: #fff; }
+        .btn-sm-blue:hover { background: #2980b9; }
 
-        // تحديث الواجهة
-        document.getElementById('userName').innerHTML = `مرحباً، <span>${data.user.fullName}</span>`;
-        document.getElementById('userEmail').textContent = data.user.email;
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
+            padding: 20px; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 20px; max-width: 600px; width: 100%;
+            max-height: 85vh; overflow-y: auto; padding: 30px; border-top: 8px solid #F5B041;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 { color: #0A1628; margin-bottom: 15px; }
+        .modal-box .close-modal { float: left; font-size: 1.8rem; cursor: pointer; color: #999; transition: 0.3s; }
+        .modal-box .close-modal:hover { color: #e74c3c; transform: rotate(90deg); }
+        .modal-box label { display: block; font-weight: 700; margin-top: 15px; margin-bottom: 5px; }
+        .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.95rem; }
+        .modal-box textarea { min-height: 80px; }
+        .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; }
 
-        // الشريط الجانبي
-        document.getElementById('sidebarName').textContent = data.user.fullName;
-        document.getElementById('sidebarEmail').textContent = data.user.email;
-        document.getElementById('sidebarPhone').textContent = data.user.phone || 'غير مضاف';
-        document.getElementById('sidebarJoined').textContent = new Date(data.user.createdAt).toLocaleDateString('ar-EG');
-        document.getElementById('userInitial').textContent = data.user.fullName.charAt(0);
+        .notification {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600;
+            z-index: 99999; display: none; min-width: 300px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .notification.success { background: #27ae60; }
+        .notification.error { background: #e74c3c; }
+        .notification.show { display: block; }
 
-        // إحصائيات
-        const total = userRequests.length;
-        const pending = userRequests.filter(r => r.status === 'pending' || r.status === 'processing').length;
-        const completed = userRequests.filter(r => r.status === 'completed').length;
-        const rejected = userRequests.filter(r => r.status === 'rejected').length;
-        document.getElementById('statTotal').textContent = total;
-        document.getElementById('statPending').textContent = pending;
-        document.getElementById('statCompleted').textContent = completed;
-        document.getElementById('statRejected').textContent = rejected;
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; }
+            .dashboard-header .actions { width: 100%; justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
 
-        // عرض الطلبات
-        renderRequests(userRequests);
+    <div id="notification" class="notification"></div>
 
-        // الإشعارات
-        renderNotifications(data.notifications || []);
-
-        // تحديث رصيد المساعد الذكي
-        updateChatCredits();
-
-    } catch (e) {
-        console.error(e);
-        showNotification('⚠️ خطأ في تحميل البيانات.', 'error');
-    }
-}
-
-// ===== عرض الطلبات =====
-function renderRequests(requests) {
-    const container = document.getElementById('requestsList');
-    if (!requests || requests.length === 0) {
-        container.innerHTML = `
-            <div style="text-align:center; padding:30px; color:#6A7A8A;">
-                <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                لا توجد طلبات حتى الآن. اضغط على "طلب جديد" لتقديم طلب.
+    <div class="dashboard-wrapper">
+        <div class="dashboard-header">
+            <div class="user-info">
+                <h3 id="userName">مرحباً، <span>...</span></h3>
+                <p id="userEmail">...</p>
             </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = requests.map(req => {
-        const statusMap = {
-            'pending': '<span class="status-badge status-pending">⏳ قيد الانتظار</span>',
-            'processing': '<span class="status-badge status-processing">⚙️ قيد المعالجة</span>',
-            'completed': '<span class="status-badge status-completed">✅ مكتمل</span>',
-            'rejected': '<span class="status-badge status-rejected">❌ مرفوض</span>'
-        };
-        const paymentMap = {
-            'pending': '🔴 غير مدفوع',
-            'paid': '🟡 قيد المراجعة',
-            'verified': '✅ مؤكد',
-            'paid_voice': '✅ مؤكد (صوتي)'
-        };
-
-        let actionButtons = '';
-        if (req.status === 'pending') {
-            actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-gold"><i class="fas fa-eye"></i> عرض</button>`;
-        } else if (req.status === 'processing') {
-            if (req.paymentStatus === 'pending') {
-                actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-gold"><i class="fas fa-credit-card"></i> دفع 100 ر.س</button>`;
-            } else if (req.paymentStatus === 'paid') {
-                actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-blue"><i class="fas fa-clock"></i> جاري التحقق</button>`;
-            } else if (req.paymentStatus === 'verified' && !req.treatment) {
-                actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-blue"><i class="fas fa-stethoscope"></i> عرض التشخيص</button>`;
-            } else if (req.treatment && req.paymentStatus !== 'paid_voice') {
-                actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-green"><i class="fas fa-check-circle"></i> موافقة على العلاج</button>`;
-            } else if (req.paymentStatus === 'paid_voice') {
-                actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-green"><i class="fas fa-headphones"></i> تفاصيل الجلسة</button>`;
-            }
-        } else if (req.status === 'completed') {
-            actionButtons = `
-                <button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-blue"><i class="fas fa-eye"></i> عرض العلاج</button>
-                <button onclick="openMessageModal('${req.id}')" class="btn-sm btn-sm-gold"><i class="fas fa-comment"></i> استفسار</button>
-            `;
-        } else if (req.status === 'rejected') {
-            actionButtons = `<button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-red"><i class="fas fa-eye"></i> عرض</button>`;
-        }
-
-        return `
-            <div class="request-item">
-                <div class="top-row">
-                    <span class="service">${req.serviceType}</span>
-                    <span class="date">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
-                </div>
-                <div class="top-row" style="margin-top:5px;">
-                    <span>الحالة: ${statusMap[req.status] || req.status}</span>
-                    <span>الدفع: ${paymentMap[req.paymentStatus] || req.paymentStatus}</span>
-                </div>
-                <div class="description">${req.description ? req.description.substring(0, 100) + (req.description.length > 100 ? '...' : '') : ''}</div>
-                <div class="actions">
-                    ${actionButtons}
-                </div>
+            <div class="actions">
+                <a href="/" class="btn-outline"><i class="fas fa-home"></i> الرئيسية</a>
+                <button onclick="openNewRequestModal()" class="btn-primary"><i class="fas fa-plus-circle"></i> طلب جديد</button>
+                <button onclick="logout()" class="btn-danger-outline"><i class="fas fa-sign-out-alt"></i> خروج</button>
             </div>
-        `;
-    }).join('');
-}
+        </div>
 
-// ===== عرض تفاصيل الطلب (مودال) =====
-async function viewRequest(id) {
-    currentRequestId = id;
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(`/api/dashboard/request/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) {
-            showNotification('⚠️ فشل تحميل تفاصيل الطلب.', 'error');
-            return;
-        }
-        const req = data.request;
-        const modal = document.getElementById('requestDetailsModal');
-        let content = `
-            <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:15px;">
-                <p><strong>📅 التاريخ:</strong> ${new Date(req.createdAt).toLocaleString('ar-EG')}</p>
-                <p><strong>🛠 الخدمة:</strong> ${req.serviceType}</p>
-                <p><strong>📩 طريقة التواصل:</strong> ${req.contactMethod === 'whatsapp' ? 'واتساب' : 'بريد إلكتروني'}</p>
-                <p><strong>💰 حالة الدفع:</strong> ${req.paymentStatus || 'غير مدفوع'}</p>
-            </div>
-            <div style="background:#FFFBF0; padding:15px; border-radius:12px; border-right:4px solid #F5B041; margin-bottom:15px;">
-                <strong>📝 وصف المشكلة:</strong>
-                <p style="margin-top:8px; line-height:1.8;">${req.description || 'لا يوجد وصف'}</p>
-            </div>
-        `;
-
-        // إذا كان الطلب في مرحلة الدفع (100 ريال)
-        if (req.status === 'processing' && req.paymentStatus === 'pending') {
-            content += `
-                <hr>
-                <h4 style="color:#0A1628;">💳 دفع قيمة الكشف (100 ر.س)</h4>
-                <p style="color:#6A7A8A;">لإتمام عملية الكشف والتشخيص، يرجى دفع 100 ريال سعودي عبر إحدى الطرق التالية:</p>
-                <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin:10px 0;">
-                    <p><strong>🏦 بنك الكريمي الإسلامي:</strong> 3021634432</p>
-                    <p><strong>📱 محفظة جيب (Geep):</strong> 2804816</p>
-                    <p><strong>📱 محفظة ون كاش (OneCash):</strong> 168933529</p>
-                    <p style="font-size:0.85rem; color:#888;">اسم المستفيد: بسام محمد هزاع الشميري</p>
-                </div>
-                <label>رقم الحوالة <span style="color:#e74c3c;">*</span></label>
-                <input type="text" id="paymentTransferCode" placeholder="أدخل رقم الحوالة هنا..." style="width:100%; padding:10px; border:2px solid #E2E8F0; border-radius:10px; font-family:'Cairo';">
-                <button onclick="confirmDiagnosisPayment('${req.id}')" class="btn-primary" style="width:100%; margin-top:10px; justify-content:center;">
-                    <i class="fas fa-check-circle"></i> تأكيد الدفع
-                </button>
-            `;
-        }
-
-        // إذا كان الطلب في مرحلة التشخيص (عرض التشخيص والعلاج)
-        if (req.status === 'processing' && req.paymentStatus === 'verified' && req.diagnosis) {
-            content += `
-                <hr>
-                <h4 style="color:#0A1628;">🧑‍⚕️ تشخيص الشيخ بسام</h4>
-                <div style="background:#F0F7F4; padding:15px; border-radius:12px; margin:10px 0; border-right:4px solid #1B4D3D;">
-                    <p style="line-height:1.8;">${req.diagnosis}</p>
-                </div>
-                <hr>
-                <h4 style="color:#0A1628;">🛡️ العلاج المقترح</h4>
-                <div style="background:#FFFBF0; padding:15px; border-radius:12px; margin:10px 0; border-right:4px solid #F5B041;">
-                    <p style="line-height:1.8;">${req.treatment || 'سيتم تحديد العلاج قريباً.'}</p>
-                </div>
-                ${!req.treatmentDetails ? `
-                <p style="color:#6A7A8A; font-size:0.9rem;">هل ترغب في التواصل مع الشيخ عبر مكالمة صوتية؟ (350 ر.س)</p>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button onclick="agreeVoiceSession('${req.id}')" class="btn-sm btn-sm-gold" style="padding:10px 30px; font-size:1rem;">
-                        <i class="fas fa-check"></i> موافق
-                    </button>
-                    <button onclick="rejectTreatment('${req.id}')" class="btn-sm btn-sm-red" style="padding:10px 30px; font-size:1rem;">
-                        <i class="fas fa-times"></i> غير موافق
-                    </button>
-                </div>
-                ` : ''}
-            `;
-        }
-
-        // إذا كانت الجلسة الصوتية مؤكدة
-        if (req.paymentStatus === 'paid_voice' && req.status === 'processing') {
-            content += `
-                <hr>
-                <h4 style="color:#0A1628;">🎧 تفاصيل الجلسة الصوتية</h4>
-                <div style="background:#F0F7F4; padding:15px; border-radius:12px; margin:10px 0; border-right:4px solid #3498db;">
-                    <p><strong>📅 الموعد:</strong> ${req.appointmentTime ? new Date(req.appointmentTime).toLocaleString('ar-EG') : 'سيتم تحديده قريباً'}</p>
-                    <p><strong>🔗 رابط الانضمام:</strong> ${req.meetingLink || 'سيتم إرساله لاحقاً'}</p>
-                </div>
-                <button onclick="markCompleted('${req.id}')" class="btn-primary" style="width:100%; justify-content:center;">
-                    <i class="fas fa-check"></i> تمت الجلسة
-                </button>
-            `;
-        }
-
-        // إذا كان الطلب مكتملاً (عرض العلاج كاملاً)
-        if (req.status === 'completed' && req.treatmentDetails) {
-            content += `
-                <hr>
-                <h4 style="color:#0A1628;">📖 العلاج والوصفة</h4>
-                <div style="background:#FFFBF0; padding:20px; border-radius:12px; margin:10px 0; border-right:6px solid #27ae60; line-height:2;">
-                    ${req.treatmentDetails.replace(/\n/g, '<br>')}
-                </div>
-            `;
-        }
-
-        // إذا كان الطلب مرفوضاً
-        if (req.status === 'rejected') {
-            content += `
-                <hr>
-                <div style="background:#FEE2E2; padding:15px; border-radius:12px; border-right:4px solid #e74c3c; margin:10px 0;">
-                    <p style="color:#991B1B; line-height:1.8;">${req.adminReplies && req.adminReplies.length > 0 ? req.adminReplies[req.adminReplies.length-1] : 'تم رفض الطلب من قبل الشيخ بسام.'}</p>
-                </div>
-            `;
-        }
-
-        document.getElementById('requestDetailsContent').innerHTML = content;
-        modal.classList.add('show');
-
-    } catch (e) {
-        showNotification('⚠️ خطأ في تحميل التفاصيل.', 'error');
-    }
-}
-
-// ===== تأكيد دفع التشخيص (100 ريال) =====
-async function confirmDiagnosisPayment(id) {
-    const transferCode = document.getElementById('paymentTransferCode').value.trim();
-    if (!transferCode) {
-        showNotification('⚠️ الرجاء إدخال رقم الحوالة.', 'error');
-        return;
-    }
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(`/api/dashboard/payment/confirm/${id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ transferCode, paymentMethod: 'تحويل بنكي' })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showNotification('✅ ' + data.message, 'success');
-            closeDetailsModal();
-            loadDashboard();
-        } else {
-            showNotification('❌ ' + (data.error || 'فشل تأكيد الدفع'), 'error');
-        }
-    } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال.', 'error');
-    }
-}
-
-// ===== الموافقة على الجلسة الصوتية (دفع 350 ريال) =====
-async function agreeVoiceSession(id) {
-    if (!confirm('سيتم خصم 350 ريال سعودي للجلسة الصوتية. هل أنت موافق؟')) return;
-    const transferCode = prompt('الرجاء إدخال رقم الحوالة الخاصة بدفع 350 ريال للجلسة الصوتية:');
-    if (!transferCode || transferCode.trim() === '') {
-        showNotification('⚠️ الرجاء إدخال رقم الحوالة.', 'error');
-        return;
-    }
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(`/api/dashboard/treatment/agree/${id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ agree: true, paymentMethod: 'تحويل بنكي', transferCode: transferCode.trim() })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showNotification('✅ ' + data.message, 'success');
-            closeDetailsModal();
-            loadDashboard();
-        } else {
-            showNotification('❌ ' + (data.error || 'فشل تأكيد الجلسة'), 'error');
-        }
-    } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال.', 'error');
-    }
-}
-
-// ===== رفض العلاج =====
-async function rejectTreatment(id) {
-    if (!confirm('هل أنت متأكد من رفض العلاج؟')) return;
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(`/api/dashboard/treatment/agree/${id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ agree: false })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showNotification('✅ تم رفض العلاج. سيتم إشعار الشيخ.', 'success');
-            closeDetailsModal();
-            loadDashboard();
-        } else {
-            showNotification('❌ ' + (data.error || 'فشل الرفض'), 'error');
-        }
-    } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال.', 'error');
-    }
-}
-
-// ===== إكمال الطلب =====
-async function markCompleted(id) {
-    if (!confirm('هل تمت الجلسة الصوتية بنجاح؟')) return;
-    // هذا يستدعي مساراً لإكمال الطلب (سنضيفه لاحقاً في لوحة التحكم الرئيسية)
-    // حالياً سنقوم بتحديث الواجهة فقط
-    showNotification('✅ تم إكمال الطلب بنجاح.', 'success');
-    closeDetailsModal();
-    loadDashboard();
-}
-
-// ===== نافذة الاستفسار بعد العلاج =====
-function openMessageModal(id) {
-    const msg = prompt('اكتب استفسارك عن العلاج:');
-    if (msg && msg.trim().length >= 3) {
-        sendMessage(id, msg);
-    } else if (msg !== null) {
-        showNotification('⚠️ الرسالة قصيرة جداً (3 أحرف على الأقل).', 'error');
-    }
-}
-
-async function sendMessage(id, message) {
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(`/api/dashboard/message/${id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ message })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showNotification('✅ ' + data.message, 'success');
-            loadDashboard();
-        } else {
-            showNotification('❌ ' + (data.error || 'فشل إرسال الرسالة'), 'error');
-        }
-    } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال.', 'error');
-    }
-}
-
-// ===== تسجيل الصوت =====
-function startRecording() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showNotification('⚠️ المتصفح لا يدعم التسجيل الصوتي.', 'error');
-        return;
-    }
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const base64Audio = reader.result.split(',')[1];
-                    document.getElementById('reqVoiceNote').value = base64Audio;
-                    document.getElementById('recordingStatus').textContent = '✅ تم التسجيل بنجاح!';
-                    document.getElementById('recordingStatus').style.color = '#27ae60';
-                };
-                reader.readAsDataURL(audioBlob);
-            };
-            mediaRecorder.start();
-            document.getElementById('recordingStatus').textContent = '🔴 جاري التسجيل...';
-            document.getElementById('recordingStatus').style.color = '#e74c3c';
-            showNotification('🎙️ بدأ التسجيل... اضغط "إيقاف" عند الانتهاء.', 'success');
-        })
-        .catch(err => {
-            showNotification('⚠️ لا يمكن الوصول إلى الميكروفون: ' + err.message, 'error');
-        });
-}
-
-function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        document.getElementById('recordingStatus').textContent = '⏹️ تم الإيقاف';
-        document.getElementById('recordingStatus').style.color = '#6A7A8A';
-        showNotification('⏹️ تم إيقاف التسجيل.', 'success');
-    } else {
-        showNotification('⚠️ لا يوجد تسجيل نشط.', 'error');
-    }
-}
-
-// ===== تبويبات =====
-function showTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    document.getElementById('tabRequests').style.display = 'none';
-    document.getElementById('tabChat').style.display = 'none';
-    document.getElementById('tabNotifications').style.display = 'none';
-
-    if (tab === 'requests') {
-        document.getElementById('tabRequests').style.display = 'block';
-        document.getElementById('tabRequestsBtn').className = 'btn-primary';
-        document.getElementById('tabChatBtn').className = 'btn-outline';
-        document.getElementById('tabNotificationsBtn').className = 'btn-outline';
-    } else if (tab === 'chat') {
-        document.getElementById('tabChat').style.display = 'block';
-        document.getElementById('tabRequestsBtn').className = 'btn-outline';
-        document.getElementById('tabChatBtn').className = 'btn-primary';
-        document.getElementById('tabNotificationsBtn').className = 'btn-outline';
-        loadChatHistory();
-    } else if (tab === 'notifications') {
-        document.getElementById('tabNotifications').style.display = 'block';
-        document.getElementById('tabRequestsBtn').className = 'btn-outline';
-        document.getElementById('tabChatBtn').className = 'btn-outline';
-        document.getElementById('tabNotificationsBtn').className = 'btn-primary';
-    }
-}
-
-// ===== المساعد الذكي =====
-async function loadChatHistory() {
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch('/api/chat/history', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-            const container = document.getElementById('chatMessages');
-            if (data.history.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:#6A7A8A; padding:20px;">مرحباً! اسألني أي سؤال روحاني. (رسائل مجانية: <span id="chatRemaining">${data.remaining}</span>)</div>`;
-            } else {
-                let html = '';
-                data.history.forEach(h => {
-                    html += `
-                        <div style="margin-bottom:10px;">
-                            <div style="background:#0A1628; color:#F5B041; padding:10px 15px; border-radius:12px; border-bottom-right-radius:4px; display:inline-block; max-width:85%;">
-                                ${h.message}
-                            </div>
-                            <div style="background:#FFFBF0; padding:10px 15px; border-radius:12px; border-bottom-right-radius:4px; margin-top:5px; border-right:3px solid #F5B041; max-width:85%;">
-                                ${h.reply}
-                            </div>
-                            <div style="color:#999; font-size:0.7rem; margin-top:3px;">${new Date(h.date).toLocaleString('ar-EG')}</div>
+        <div class="dashboard-grid">
+            <div class="dashboard-sidebar">
+                <div class="card">
+                    <h4><i class="fas fa-user-circle"></i> ملفي الشخصي</h4>
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                        <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#F5B041,#E67E22); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.8rem; font-weight:700;">
+                            <span id="userInitial">ب</span>
                         </div>
-                    `;
-                });
-                container.innerHTML = html + `<div style="text-align:center; color:#6A7A8A; padding:10px; font-size:0.85rem;">رسائل متبقية: <span id="chatRemaining">${data.remaining}</span></div>`;
-                container.scrollTop = container.scrollHeight;
-            }
-            document.getElementById('chatRemaining')?.textContent = data.remaining;
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
+                        <div>
+                            <div style="font-weight:700; font-size:1.1rem;" id="sidebarName">...</div>
+                            <div style="color:#6A7A8A; font-size:0.85rem;" id="sidebarEmail">...</div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid #eee; padding-top:10px; margin-top:5px;">
+                        <div class="stat-item"><span>📱 الهاتف</span> <span id="sidebarPhone">غير مضاف</span></div>
+                        <div class="stat-item"><span>📅 تاريخ التسجيل</span> <span id="sidebarJoined">...</span></div>
+                    </div>
+                </div>
 
-async function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    if (!message) return;
+                <div class="card">
+                    <h4><i class="fas fa-chart-pie"></i> إحصائياتي</h4>
+                    <div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div>
+                    <div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div>
+                    <div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div>
+                    <div class="stat-item"><span>❌ مرفوضة</span> <span id="statRejected">0</span></div>
+                </div>
+            </div>
 
-    const token = localStorage.getItem('token');
-    const container = document.getElementById('chatMessages');
-    const statusDiv = document.getElementById('chatStatus');
+            <div>
+                <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                    <button onclick="showTab('requests')" class="btn-primary" id="tabRequestsBtn">
+                        <i class="fas fa-list-ul"></i> طلباتي
+                    </button>
+                </div>
 
-    // عرض رسالة المستخدم فوراً
-    container.innerHTML += `
-        <div style="margin-bottom:10px; text-align:left;">
-            <div style="background:#0A1628; color:#F5B041; padding:10px 15px; border-radius:12px; border-bottom-left-radius:4px; display:inline-block; max-width:85%;">
-                ${message}
+                <div id="tabRequests" class="tab-content">
+                    <div class="card" style="border-right-color:#1B4D3D;">
+                        <h4><i class="fas fa-list"></i> جميع طلباتي</h4>
+                        <div id="requestsList">
+                            <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    `;
-    container.scrollTop = container.scrollHeight;
-    input.value = '';
-    statusDiv.textContent = '⏳ جاري التفكير...';
+    </div>
 
-    try {
-        const res = await fetch('/api/chat/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ message })
-        });
-        const data = await res.json();
+    <!-- مودال تقديم طلب جديد -->
+    <div id="newRequestModal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeNewRequestModal()">&times;</span>
+            <h3><i class="fas fa-hand-holding-heart"></i> تقديم طلب جديد</h3>
+            <form id="newRequestForm">
+                <label>نوع الخدمة <span style="color:#e74c3c;">*</span></label>
+                <select id="reqServiceType" required>
+                    <option value="استشارة روحانية">استشارة روحانية</option>
+                    <option value="علاج روحي">علاج روحي</option>
+                    <option value="تفسير رؤيا">تفسير رؤيا</option>
+                    <option value="حل مشكلة أسرية">حل مشكلة أسرية</option>
+                    <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
+                </select>
 
-        if (data.requiresPayment) {
-            statusDiv.textContent = '⚠️ ' + data.error;
-            container.innerHTML += `
-                <div style="margin-bottom:10px;">
-                    <div style="background:#FEE2E2; padding:10px 15px; border-radius:12px; border-right:4px solid #e74c3c;">
-                        <strong>⚠️ انتهت رسائلك المجانية</strong>
-                        <p style="margin:5px 0;">للتواصل مع المساعد، يرجى دفع <strong>10$</strong>.</p>
-                        <button onclick="payForChat()" class="btn-sm btn-sm-gold"><i class="fas fa-credit-card"></i> دفع 10$</button>
-                    </div>
-                </div>
-            `;
-            container.scrollTop = container.scrollHeight;
-            return;
-        }
+                <label>طريقة التواصل <span style="color:#e74c3c;">*</span></label>
+                <select id="reqContactMethod" required>
+                    <option value="whatsapp">واتساب</option>
+                    <option value="email">بريد إلكتروني</option>
+                </select>
 
-        if (data.success) {
-            statusDiv.textContent = `✅ رسائل متبقية: ${data.freeMessagesLimit - data.freeMessagesUsed}`;
-            container.innerHTML += `
-                <div style="margin-bottom:10px;">
-                    <div style="background:#FFFBF0; padding:10px 15px; border-radius:12px; border-bottom-right-radius:4px; border-right:3px solid #F5B041; max-width:85%;">
-                        ${data.reply}
-                    </div>
-                </div>
-            `;
-            container.scrollTop = container.scrollHeight;
-            document.getElementById('chatRemaining')?.textContent = data.freeMessagesLimit - data.freeMessagesUsed;
-        } else {
-            statusDiv.textContent = '❌ ' + (data.error || 'حدث خطأ');
-            showNotification('❌ ' + (data.error || 'حدث خطأ'), 'error');
-        }
-    } catch (e) {
-        statusDiv.textContent = '⚠️ خطأ في الاتصال';
-        showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
-    }
-}
+                <label>وصف المشكلة بالتفصيل <span style="color:#e74c3c;">*</span></label>
+                <textarea id="reqDescription" rows="4" placeholder="اكتب مشكلتك بوضوح..." required></textarea>
 
-function payForChat() {
-    const transferCode = prompt('الرجاء إدخال رقم الحوالة (10$):');
-    if (!transferCode || transferCode.trim() === '') {
-        showNotification('⚠️ الرجاء إدخال رقم الحوالة.', 'error');
-        return;
-    }
-    // سيتم تنفيذ الدفع عبر مسار /api/chat/pay
-    // لكننا سنكتفي بإشعار حالياً
-    showNotification('✅ سيتم تفعيل الدفع قريباً. حالياً سيتم إضافة 50 رسالة مجانية.', 'success');
-    // إعادة تحميل الشات
-    setTimeout(loadChatHistory, 1000);
-}
-
-// ===== تحديث رصيد المساعد =====
-async function updateChatCredits() {
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch('/api/chat/credits', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-            document.getElementById('chatRemaining')?.textContent = data.remaining;
-        }
-    } catch (e) {}
-}
-
-// ===== الإشعارات =====
-function renderNotifications(notifications) {
-    const container = document.getElementById('notificationsList');
-    if (!notifications || notifications.length === 0) {
-        container.innerHTML = `<p style="text-align:center; color:#6A7A8A; padding:20px;">لا توجد إشعارات جديدة.</p>`;
-        return;
-    }
-    container.innerHTML = notifications.map(n => `
-        <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:10px; border-right:4px solid #3498db;">
-            <p style="margin:0; line-height:1.6;">${n}</p>
-            <span style="font-size:0.75rem; color:#999;">${new Date().toLocaleDateString('ar-EG')}</span>
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:15px; justify-content:center;">
+                    <i class="fas fa-paper-plane"></i> إرسال الطلب
+                </button>
+            </form>
+            <p style="font-size:0.85rem; color:#6A7A8A; margin-top:10px; text-align:center;">
+                قيمة الطلب ثابتة: <strong>100 ريال سعودي</strong> (تُدفع بعد قبول الطلب).
+            </p>
         </div>
-    `).join('');
-}
+    </div>
 
-// ===== نموذج طلب جديد =====
-function openNewRequestModal() {
-    document.getElementById('newRequestModal').classList.add('show');
-}
-function closeNewRequestModal() {
-    document.getElementById('newRequestModal').classList.remove('show');
-}
-function closeDetailsModal() {
-    document.getElementById('requestDetailsModal').classList.remove('show');
-}
+    <!-- مودال عرض تفاصيل الطلب -->
+    <div id="requestDetailsModal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeDetailsModal()">&times;</span>
+            <h3><i class="fas fa-file-alt"></i> تفاصيل الطلب</h3>
+            <div id="requestDetailsContent"><p>جاري التحميل...</p></div>
+        </div>
+    </div>
 
-// ===== تقديم طلب جديد (من النموذج) =====
-document.getElementById('newRequestForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const serviceType = document.getElementById('reqServiceType').value;
-    const contactMethod = document.getElementById('reqContactMethod').value;
-    const description = document.getElementById('reqDescription').value.trim();
-    const voiceNote = document.getElementById('reqVoiceNote').value;
-
-    if (!description || description.length < 5) {
-        showNotification('⚠️ وصف المشكلة قصير جداً (5 أحرف على الأقل).', 'error');
-        return;
-    }
-
-    const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-
-    try {
-        const res = await fetch('/api/dashboard/request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ serviceType, description, contactMethod, voiceNote })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showNotification('✅ ' + data.message, 'success');
-            closeNewRequestModal();
-            loadDashboard();
-        } else {
-            showNotification('❌ ' + (data.error || 'فشل إرسال الطلب'), 'error');
-        }
-    } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
-});
-
-// ===== تسجيل الخروج =====
-function logout() {
-    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login.html';
-    }
-}
-
-// ===== تهيئة الصفحة =====
-(async function init() {
-    const isAuth = await checkAuth();
-    if (!isAuth) return;
-    await loadDashboard();
-
-    // فتح التبويب المناسب إذا كان هناك tab في الرابط
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-    if (tab === 'chat') {
-        showTab('chat');
-        loadChatHistory();
-    } else {
-        showTab('requests');
-    }
-
-    // إضافة حدث Enter لشات
-    document.getElementById('chatInput')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendChatMessage();
-        }
-    });
-
-    // إغلاق المودال عند النقر خارج المحتوى
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('show');
-            }
-        });
-    });
-})();
+    <script src="dashboard.js"></script>
+</body>
+</html>
