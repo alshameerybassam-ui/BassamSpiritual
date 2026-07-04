@@ -13,13 +13,11 @@ function showNotification(msg, type = 'success') {
 // 2. إصلاح الأيقونات (تحميل Font Awesome بشكل آمن)
 // ==============================================
 (function ensureFontAwesome() {
-    // التحقق من وجود أي رابط لـ Font Awesome
     const existingLink = document.querySelector('link[href*="font-awesome"]');
     if (!existingLink) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
-        link.integrity = 'sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==';
         link.crossOrigin = 'anonymous';
         document.head.appendChild(link);
         console.log('✅ Font Awesome تم تحميله تلقائياً');
@@ -154,7 +152,6 @@ function toggleChat() {
         document.getElementById('chatInput').focus();
         const badge = document.querySelector('.chat-badge');
         if (badge) badge.style.display = 'none';
-        // تحديث رصيد الرسائل إذا كان هناك توكن
         updateChatCredits();
     }
 }
@@ -181,7 +178,6 @@ async function sendChatMessage() {
     const currentStep = chatState.step;
     const data = chatState.userData;
 
-    // حفظ إجابة المستخدم حسب الخطوة الحالية
     if (currentStep === 'intro') {
         data.problem = message;
         chatState.step = 'problem';
@@ -201,7 +197,6 @@ async function sendChatMessage() {
     let isSummary = false;
 
     if (chatState.step === 'summary') {
-        // الخطوة الأخيرة - توليد التوصية
         const scenario = chatScenarios.summary;
         if (typeof scenario === 'function') {
             reply = scenario(data);
@@ -210,7 +205,6 @@ async function sendChatMessage() {
         }
         isSummary = true;
     } else {
-        // الحصول على رسالة الخطوة الحالية
         const stepKey = chatState.step;
         const scenario = chatScenarios[stepKey];
         if (scenario && typeof scenario === 'object') {
@@ -227,7 +221,6 @@ async function sendChatMessage() {
     container.appendChild(botDiv);
     container.scrollTop = container.scrollHeight;
 
-    // إذا كانت هذه هي الخلاصة، أضف أزرار الإجراء
     if (isSummary) {
         setTimeout(() => {
             const body = document.getElementById('chatBody');
@@ -258,13 +251,11 @@ function transferToForm() {
     const data = window._chatData || chatState.userData;
     const description = `[تم إنشاء هذا الطلب عبر المستشار الروحاني الذكي]\n\nالمشكلة: ${data.problem}\nالتصنيف: ${data.category || 'غير محدد'}\nالمدة: ${data.duration || 'غير محدد'}\nالمحاولات السابقة: ${data.previous || 'غير محدد'}\n\nالتوصية: ${data.recommendation || ''}`;
     
-    // محاولة ملء النموذج إذا كان موجوداً في الصفحة
     const descField = document.getElementById('description');
     if (descField) {
         descField.value = description;
         showNotification('✅ تم نقل بياناتك إلى نموذج الطلب!', 'success');
     } else {
-        // إذا لم يكن النموذج في الصفحة الحالية، نوجه المستخدم لتسجيل الدخول
         showNotification('⚠️ يرجى تسجيل الدخول لتقديم الطلب.', 'error');
         setTimeout(() => {
             window.location.href = '/login.html';
@@ -272,7 +263,6 @@ function transferToForm() {
         return;
     }
 
-    // اختيار الخدمة المناسبة تلقائياً في النموذج
     const serviceSelect = document.getElementById('serviceType');
     if (serviceSelect && data.serviceType) {
         const serviceMap = {
@@ -290,13 +280,11 @@ function transferToForm() {
         }
     }
 
-    // التمرير إلى النموذج
     const formCard = document.querySelector('.form-card');
     if (formCard) {
         formCard.scrollIntoView({ behavior: 'smooth' });
     }
     
-    // إغلاق نافذة الدردشة
     toggleChat();
     resetChat();
 }
@@ -334,7 +322,7 @@ function createChatStatus() {
     return status;
 }
 
-// ===== تحديث رصيد الرسائل (إن وجد) =====
+// ===== تحديث رصيد الرسائل =====
 async function updateChatCredits() {
     const token = localStorage.getItem('token');
     const status = document.getElementById('chatStatus') || createChatStatus();
@@ -513,10 +501,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(animateCounters, 600);
     setTimeout(autoOpenChat, 2500);
     
-    // تحديث رصيد الرسائل كل 30 ثانية
     setInterval(updateChatCredits, 30000);
 
-    // إضافة حدث Enter في حقل الإدخال
     const input = document.getElementById('chatInput');
     if (input) {
         input.addEventListener('keypress', function(e) {
