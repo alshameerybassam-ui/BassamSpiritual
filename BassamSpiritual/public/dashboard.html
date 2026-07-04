@@ -8,8 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- رابط Font Awesome الثابت الذي يعمل دائماً -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+        /* تنسيقات داخلية لضمان العمل حتى لو لم يتم تحميل style.css */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
         .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -19,9 +21,6 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
             flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041;
         }
-        .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; }
-        .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; }
-        .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; }
         .btn-primary {
             background: linear-gradient(135deg, #F5B041, #E67E22);
             color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px;
@@ -61,17 +60,9 @@
         .request-item .top-row .service { font-weight: 700; color: #0A1628; }
         .request-item .top-row .date { color: #6A7A8A; font-size: 0.8rem; }
         .request-item .description { color: #4A5A6A; font-size: 0.9rem; margin: 8px 0; line-height: 1.6; }
-        .request-item .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
         .btn-sm { padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
         .btn-sm-gold { background: #F5B041; color: #0A1628; }
         .btn-sm-gold:hover { background: #E67E22; }
-        .btn-sm-green { background: #27ae60; color: #fff; }
-        .btn-sm-green:hover { background: #1e8449; }
-        .btn-sm-red { background: #e74c3c; color: #fff; }
-        .btn-sm-red:hover { background: #c0392b; }
-        .btn-sm-blue { background: #3498db; color: #fff; }
-        .btn-sm-blue:hover { background: #2980b9; }
-
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
@@ -90,7 +81,6 @@
         .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.95rem; }
         .modal-box textarea { min-height: 80px; }
         .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; }
-
         .notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600;
@@ -100,7 +90,6 @@
         .notification.success { background: #27ae60; }
         .notification.error { background: #e74c3c; }
         .notification.show { display: block; }
-
         @media (max-width: 768px) {
             .dashboard-grid { grid-template-columns: 1fr; }
             .dashboard-header { flex-direction: column; align-items: flex-start; }
@@ -109,7 +98,6 @@
     </style>
 </head>
 <body>
-
     <div id="notification" class="notification"></div>
 
     <div class="dashboard-wrapper">
@@ -172,7 +160,7 @@
         </div>
     </div>
 
-    <!-- ===== هذا هو المودال المفقود (طلب جديد) ===== -->
+    <!-- مودال تقديم طلب جديد -->
     <div id="newRequestModal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal" onclick="closeNewRequestModal()">&times;</span>
