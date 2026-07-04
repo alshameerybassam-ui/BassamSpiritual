@@ -43,7 +43,73 @@ const authenticate = (req, res, next) => {
 };
 
 // ==============================================
-// 1. إرسال رسالة إلى المساعد الذكي (بعد التسجيل)
+// دالة مساعدة للاتصال بـ Gemini API
+// ==============================================
+async function callGeminiAPI(userMessage, userFullName, userEmail, history) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new Error('مفتاح Gemini API غير موجود. يرجى إضافته في متغيرات البيئة.');
+    }
+
+    // بناء السياق (System Prompt) بالطريقة التي يدعمها Gemini
+    const systemPrompt = `أنت مستشار روحاني إسلامي متخصص في المنهج الصوفي الروحاني.
+اسمك "المستشار الروحاني الذكي" في مركز النور الرباني.
+التزامك:
+1- الردود تكون بلغة عربية فصحى واضحة ومهذبة.
+2- تلتزم بالمنهج الإسلامي الوسطي، وتذكر الله في ردودك.
+3- لا تفتي في أمور حرام، ولا تتجاوز حدود الأدب الشرعي.
+4- تشجع المستفيد على التقرب إلى الله، وتذكر فضائل الذكر والعبادة.
+5- إذا سُئلت عن أمر لا تعرفه، قل بصدق: "هذا السؤال يحتاج إلى توجيه الشيخ بسام، سأنقل استفسارك إليه."
+6- تذكير المستفيد بأن المحادثة مسجلة لتحسين الخدمة.
+7- أسلوبك هادئ، مطمئن، ومليء بالرحمة والحكمة.
+
+المستخدم الحالي: ${userFullName}
+بريده: ${userEmail}`;
+
+    // بناء تاريخ المحادثة (آخر 10 رسائل)
+    let conversationHistory = history.slice(-10).flatMap(h => [
+        { role: 'user', parts: [{ text: h.message }] },
+        { role: 'model', parts: [{ text: h.reply }] }
+    ]);
+
+    // بناء الطلب النهائي لـ Gemini
+    const requestBody = {
+        contents: [
+            {
+                role: 'user',
+                parts: [{ text: systemPrompt }]
+            },
+            ...conversationHistory,
+            {
+                role: 'user',
+                parts: [{ text: userMessage }]
+            }
+        ],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800,
+            topP: 0.9
+        }
+    };
+
+    try {
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            requestBody,
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        // استخراج النص من رد Gemini
+        const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، لم أستطع فهم سؤالك. هل يمكنك إعادة صياغته؟';
+        return reply;
+    } catch (error) {
+        console.error('❌ خطأ في Gemini API:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
+// ==============================================
+// 1. إرسال رسالة إلى المساعد الذكي
 // ==============================================
 router.post('/send', authenticate, async (req, res) => {
     const { message } = req.body;
@@ -54,67 +120,38 @@ router.post('/send', authenticate, async (req, res) => {
     const userId = req.userId;
     const user = req.user;
 
-    // حساب عدد رسائل المستخدم المجانية
+    // حساب عدد رسائل المستخدم
     const history = readChatHistory();
     const userHistory = history.filter(h => h.userId === userId);
     const freeMessagesCount = userHistory.length;
 
-    // 100 رسالة مجانية فقط
-    if (freeMessagesCount >= 100) {
+    const FREE_LIMIT = 50; // تم تعديلها إلى 50 رسالة مجانية
+
+    if (freeMessagesCount >= FREE_LIMIT) {
         return res.status(403).json({
-            error: 'لقد استهلكت جميع رسائلك المجانية (100 رسالة). يرجى دفع 10$ للاستمرار في المحادثة.',
+            error: `لقد استهلكت جميع رسائلك المجانية (${FREE_LIMIT} رسالة). يرجى التواصل مع الشيخ بسام مباشرة عبر نموذج الطلب.`,
             requiresPayment: true,
             freeMessagesUsed: freeMessagesCount,
-            freeMessagesLimit: 100
+            freeMessagesLimit: FREE_LIMIT
         });
     }
 
     try {
-        // الاتصال بـ DeepSeek API
-        const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
-            model: 'deepseek-chat',
-            messages: [
-                {
-                    role: 'system',
-                    content: `أنت مستشار روحاني إسلامي متخصص في المنهج الصوفي الروحاني. 
-                    اسمك "المستشار الروحاني الذكي" في مركز النور الرباني.
-                    التزامك:
-                    1- الردود تكون بلغة عربية فصحى واضحة ومهذبة.
-                    2- تلتزم بالمنهج الإسلامي الروحي، وتذكر الله في ردودك.
-                    3- لا تفتي في أمور حرام، ولا تتجاوز حدود الأدب الشرعي.
-                    4- تشجع المستفيد على التقرب إلى الله، وتذكر فضائل الذكر والعبادة.
-                    5- إذا سُئلت عن أمر لا تعرفه، قل بصدق: "هذا السؤال يحتاج إلى توجيه الشيخ بسام، سأنقل استفسارك إليه."
-                    6- تذكير المستفيد بأن المحادثة مسجلة لتحسين الخدمة.
-                    7- أسلوبك هادئ، مطمئن، ومليء بالرحمة والحكمة.
-                    
-                    المستفيد الحالي: ${user.fullName}
-                    بريده: ${user.email}
-                    `
-                },
-                ...userHistory.slice(-10).flatMap(h => [
-                    { role: 'user', content: h.message },
-                    { role: 'assistant', content: h.reply }
-                ]),
-                { role: 'user', content: message }
-            ],
-            temperature: 0.7,
-            max_tokens: 800,
-            stream: false
-        }, {
-            headers: {
-                'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const reply = response.data.choices[0].message.content;
+        // الاتصال بـ Gemini API
+        const reply = await callGeminiAPI(
+            message,
+            user.fullName,
+            user.email,
+            userHistory
+        );
 
         // حفظ المحادثة
         history.push({
             userId: userId,
             message: message,
             reply: reply,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            provider: 'gemini'
         });
         writeChatHistory(history);
 
@@ -122,29 +159,30 @@ router.post('/send', authenticate, async (req, res) => {
             success: true,
             reply: reply,
             freeMessagesUsed: freeMessagesCount + 1,
-            freeMessagesLimit: 100
+            freeMessagesLimit: FREE_LIMIT
         });
 
     } catch (error) {
-        console.error('خطأ في DeepSeek API:', error.response?.data || error.message);
-        
-        // إذا فشل الاتصال بـ DeepSeek، نستخدم رداً احتياطياً
+        console.error('❌ فشل الاتصال بـ Gemini API:', error.message);
+
+        // رد احتياطي عند فشل الاتصال
         const fallbackReply = `🌙 السلام عليكم ورحمة الله وبركاته يا ${user.fullName}،
 
-        أشكرك على سؤالك. لاحظت أن هناك صعوبة تقنية في الاتصال بالخادم في هذه اللحظة.
+أشكرك على سؤالك. لاحظت أن هناك صعوبة تقنية في الاتصال بالخادم في هذه اللحظة.
 
-        لكن لا تقلق، سأقوم بنقل استفسارك إلى الشيخ بسام مباشرة، وسيتواصل معك قريباً عبر البريد الإلكتروني أو واتساب.
+لكن لا تقلق، سأقوم بنقل استفسارك إلى الشيخ بسام مباشرة، وسيتواصل معك قريباً عبر البريد الإلكتروني أو واتساب.
 
-        يمكنك أيضاً الاستمرار في المحادثة لاحقاً، أو التواصل مع الشيخ مباشرة عبر نموذج الطلب في الموقع.
+يمكنك أيضاً التواصل مع الشيخ مباشرة عبر نموذج الطلب في الموقع.
 
-        نسأل الله لك التوفيق والسداد. 🙏`;
+نسأل الله لك التوفيق والسداد. 🙏`;
 
         history.push({
             userId: userId,
             message: message,
             reply: fallbackReply,
             date: new Date().toISOString(),
-            isFallback: true
+            isFallback: true,
+            provider: 'fallback'
         });
         writeChatHistory(history);
 
@@ -152,7 +190,7 @@ router.post('/send', authenticate, async (req, res) => {
             success: true,
             reply: fallbackReply,
             freeMessagesUsed: freeMessagesCount + 1,
-            freeMessagesLimit: 100,
+            freeMessagesLimit: FREE_LIMIT,
             isFallback: true
         });
     }
@@ -165,83 +203,31 @@ router.get('/history', authenticate, (req, res) => {
     const userId = req.userId;
     const history = readChatHistory();
     const userHistory = history.filter(h => h.userId === userId);
+    const FREE_LIMIT = 50;
     res.json({
         success: true,
         history: userHistory,
         count: userHistory.length,
-        freeMessagesLimit: 100,
-        remaining: Math.max(0, 100 - userHistory.length)
+        freeMessagesLimit: FREE_LIMIT,
+        remaining: Math.max(0, FREE_LIMIT - userHistory.length)
     });
 });
 
 // ==============================================
-// 3. دفع رسوم الاستمرار في المحادثة (10$)
-// ==============================================
-router.post('/pay', authenticate, async (req, res) => {
-    const { transferCode, paymentMethod } = req.body;
-    
-    if (!transferCode) {
-        return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
-    }
-    
-    const userId = req.userId;
-    
-    // تسجيل الدفع في ملف المستخدم
-    const users = readUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-        return res.status(404).json({ error: 'المستخدم غير موجود' });
-    }
-    
-    if (!users[userIndex].paymentHistory) {
-        users[userIndex].paymentHistory = [];
-    }
-    
-    users[userIndex].paymentHistory.push({
-        amount: 10,
-        currency: 'USD',
-        method: paymentMethod || 'تحويل بنكي',
-        transferCode,
-        date: new Date().toISOString(),
-        purpose: 'chat_continuation'
-    });
-    
-    // إعادة تعيين عداد الرسائل المجانية (بإضافة 500 رسالة إضافية)
-    // سنقوم بتخزين ذلك في ملف المستخدم
-    users[userIndex].chatCredits = (users[userIndex].chatCredits || 0) + 500;
-    writeUsers(users);
-    
-    res.json({
-        success: true,
-        message: '✅ تم تأكيد الدفع بنجاح. تم إضافة 500 رسالة إضافية إلى رصيدك.'
-    });
-});
-
-// ==============================================
-// 4. جلب عدد الرسائل المتبقية
+// 3. جلب عدد الرسائل المتبقية
 // ==============================================
 router.get('/credits', authenticate, (req, res) => {
     const userId = req.userId;
-    const users = readUsers();
-    const user = users.find(u => u.id === userId);
-    
     const history = readChatHistory();
     const userHistory = history.filter(h => h.userId === userId);
     const usedMessages = userHistory.length;
-    
-    const chatCredits = user?.chatCredits || 0;
-    const freeLimit = 100;
-    
-    const totalAvailable = freeLimit + chatCredits;
-    const remaining = Math.max(0, totalAvailable - usedMessages);
-    
+    const FREE_LIMIT = 50;
+
     res.json({
         success: true,
         usedMessages: usedMessages,
-        freeLimit: freeLimit,
-        chatCredits: chatCredits,
-        totalAvailable: totalAvailable,
-        remaining: remaining
+        freeLimit: FREE_LIMIT,
+        remaining: Math.max(0, FREE_LIMIT - usedMessages)
     });
 });
 
