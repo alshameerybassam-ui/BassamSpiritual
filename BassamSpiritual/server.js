@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ==============================================
-// الإعدادات الأمنية والأداء
+// الإعدادات الأمنية والأداء (تم تعديل CSP)
 // ==============================================
 app.use(helmet({
     contentSecurityPolicy: {
@@ -27,6 +27,7 @@ app.use(helmet({
             "font-src": ["'self'", "https:", "data:"],
             "style-src": ["'self'", "'unsafe-inline'", "https:"],
             "img-src": ["'self'", "data:", "https:"],
+            "connect-src": ["'self'", "https://generativelanguage.googleapis.com"], // للسماح بـ Gemini API
         },
     },
 }));
@@ -52,16 +53,39 @@ const DATA_DIR = path.join(__dirname, 'data');
 fs.ensureDirSync(DATA_DIR);
 
 // ==============================================
-// استيراد المسارات
+// استيراد المسارات (تم إضافة chatRoutes)
 // ==============================================
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
+const chatRoutes = require('./routes/chat'); // ✅ تم إضافة هذا السطر
 
 // ==============================================
 // المسارات العامة
 // ==============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/chat', chatRoutes); // ✅ تم إضافة هذا السطر
+
+// ==============================================
+// مسارات المقالات والشهادات (للواجهة الرئيسية)
+// ==============================================
+app.get('/api/articles', (req, res) => {
+    try {
+        const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json')));
+        res.json(data.articles || []);
+    } catch (e) {
+        res.json([]);
+    }
+});
+
+app.get('/api/testimonials', (req, res) => {
+    try {
+        const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json')));
+        res.json(data.testimonials || []);
+    } catch (e) {
+        res.json([]);
+    }
+});
 
 // ==============================================
 // تقديم الملفات الثابتة
