@@ -1,277 +1,221 @@
-const express = require('express');
-const router = express.Router();
-const fs = require('fs-extra');
-const path = require('path');
-const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator'); // ✅ هذا هو التصحيح
-
-const USERS_FILE = path.join(__dirname, '../data/users.json');
-const REQUESTS_FILE = path.join(__dirname, '../data/requests.json');
-const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
-
-// التأكد من وجود الملفات
-fs.ensureFileSync(USERS_FILE);
-fs.ensureFileSync(REQUESTS_FILE);
-if (!fs.existsSync(USERS_FILE) || fs.readFileSync(USERS_FILE).length === 0) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify([]));
-}
-if (!fs.existsSync(REQUESTS_FILE) || fs.readFileSync(REQUESTS_FILE).length === 0) {
-    fs.writeFileSync(REQUESTS_FILE, JSON.stringify([]));
-}
-
-const readUsers = () => JSON.parse(fs.readFileSync(USERS_FILE));
-const writeUsers = (data) => fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
-const readRequests = () => JSON.parse(fs.readFileSync(REQUESTS_FILE));
-const writeRequests = (data) => fs.writeFileSync(REQUESTS_FILE, JSON.stringify(data, null, 2));
-
-// ==============================================
-// الوسيط: التحقق من صحة المستخدم
-// ==============================================
-const authenticate = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ error: 'غير مصرح' });
-    }
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const users = readUsers();
-        const user = users.find(u => u.id === decoded.id);
-        if (!user || !user.isActive) {
-            return res.status(401).json({ error: 'الحساب غير نشط' });
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لوحة التحكم | مركز النور الرباني</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
+        .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; padding: 15px 25px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
+            flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041;
         }
-        req.user = user;
-        req.userId = decoded.id;
-        next();
-    } catch (e) {
-        res.status(401).json({ error: 'رمز غير صالح' });
-    }
-};
-
-// ==============================================
-// 1. الحصول على بيانات المستخدم ولوحة التحكم
-// ==============================================
-router.get('/me', authenticate, (req, res) => {
-    const user = req.user;
-    const requests = readRequests().filter(r => r.userId === user.id);
-    requests.sort((a, b) => b.createdAt - a.createdAt);
-    res.json({
-        success: true,
-        user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            phone: user.phone,
-            createdAt: user.createdAt
-        },
-        requests: requests.map(r => ({
-            id: r.id,
-            serviceType: r.serviceType,
-            status: r.status,
-            paymentStatus: r.paymentStatus,
-            createdAt: r.createdAt,
-            message: r.message || null,
-            diagnosis: r.diagnosis || null,
-            treatment: r.treatment || null,
-            treatmentDetails: r.treatmentDetails || null,
-            appointmentTime: r.appointmentTime || null,
-            meetingLink: r.meetingLink || null,
-            adminReplies: r.adminReplies || [],
-            description: r.description || ''
-        })),
-        notifications: user.spiritualProfile?.notifications || [],
-        articles: user.spiritualProfile?.articles || [],
-        ruqya: user.spiritualProfile?.ruqya || [],
-        dailyWirds: user.spiritualProfile?.dailyWirds || []
-    });
-});
-
-// ==============================================
-// 2. تقديم طلب جديد
-// ==============================================
-router.post('/request',
-    authenticate,
-    [
-        body('serviceType').notEmpty().withMessage('نوع الخدمة مطلوب'),
-        body('description').notEmpty().isLength({ min: 5 }).withMessage('الوصف قصير جداً'),
-        body('contactMethod').notEmpty().withMessage('طريقة التواصل مطلوبة')
-    ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'بيانات غير صالحة', details: errors.array() });
+        .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; }
+        .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; }
+        .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary {
+            background: linear-gradient(135deg, #F5B041, #E67E22);
+            color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s;
+            font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 8px;
         }
-
-        const { serviceType, description, contactMethod, voiceNote } = req.body;
-        const user = req.user;
-
-        const requests = readRequests();
-        const newRequest = {
-            id: Date.now(),
-            userId: user.id,
-            userFullName: user.fullName,
-            userEmail: user.email,
-            userPhone: user.phone || '',
-            serviceType,
-            description,
-            contactMethod,
-            voiceNote: voiceNote || null,
-            status: 'pending',
-            paymentStatus: 'pending',
-            paymentHistory: [],
-            createdAt: new Date().toISOString(),
-            diagnosis: null,
-            treatment: null,
-            treatmentDetails: null,
-            adminReplies: [],
-            messages: [],
-            appointmentTime: null,
-            meetingLink: null,
-            completedAt: null
-        };
-
-        requests.push(newRequest);
-        writeRequests(requests);
-
-        const users = readUsers();
-        const userIndex = users.findIndex(u => u.id === user.id);
-        if (userIndex !== -1) {
-            if (!users[userIndex].requests) users[userIndex].requests = [];
-            users[userIndex].requests.push(newRequest.id);
-            writeUsers(users);
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,176,65,0.4); }
+        .btn-outline {
+            background: transparent; color: #0A1628; border: 2px solid #E2E8F0;
+            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
         }
+        .btn-outline:hover { border-color: #F5B041; color: #F5B041; }
+        .btn-danger-outline {
+            background: transparent; color: #e74c3c; border: 2px solid #e74c3c;
+            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
+        }
+        .btn-danger-outline:hover { background: #e74c3c; color: #fff; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+        .dashboard-sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-right: 4px solid #F5B041; }
+        .card h4 { color: #0A1628; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .card h4 i { color: #F5B041; }
+        .card .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .card .stat-item:last-child { border-bottom: none; }
+        .status-badge { padding: 4px 12px; border-radius: 40px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .status-pending { background: #FEF3C7; color: #92400E; }
+        .status-processing { background: #DBEAFE; color: #1E40AF; }
+        .status-completed { background: #D1FAE5; color: #065F46; }
+        .status-rejected { background: #FEE2E2; color: #991B1B; }
 
-        res.json({
-            success: true,
-            requestId: newRequest.id,
-            message: '✅ تم استلام طلبك بنجاح.'
-        });
-    }
-);
+        .request-item { background: #F8FAFC; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-right: 4px solid #E2E8F0; transition: 0.3s; }
+        .request-item:hover { border-right-color: #F5B041; }
+        .request-item .top-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .request-item .top-row .service { font-weight: 700; color: #0A1628; }
+        .request-item .top-row .date { color: #6A7A8A; font-size: 0.8rem; }
+        .request-item .description { color: #4A5A6A; font-size: 0.9rem; margin: 8px 0; line-height: 1.6; }
+        .request-item .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .btn-sm { padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-sm-gold { background: #F5B041; color: #0A1628; }
+        .btn-sm-gold:hover { background: #E67E22; }
+        .btn-sm-green { background: #27ae60; color: #fff; }
+        .btn-sm-green:hover { background: #1e8449; }
+        .btn-sm-red { background: #e74c3c; color: #fff; }
+        .btn-sm-red:hover { background: #c0392b; }
+        .btn-sm-blue { background: #3498db; color: #fff; }
+        .btn-sm-blue:hover { background: #2980b9; }
 
-// ==============================================
-// 3. الحصول على تفاصيل طلب معين
-// ==============================================
-router.get('/request/:id', authenticate, (req, res) => {
-    const { id } = req.params;
-    const requests = readRequests();
-    const request = requests.find(r => r.id == id);
-    if (!request) {
-        return res.status(404).json({ error: 'الطلب غير موجود' });
-    }
-    if (request.userId !== req.user.id) {
-        return res.status(403).json({ error: 'غير مصرح' });
-    }
-    res.json({ success: true, request });
-});
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
+            padding: 20px; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 20px; max-width: 600px; width: 100%;
+            max-height: 85vh; overflow-y: auto; padding: 30px; border-top: 8px solid #F5B041;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 { color: #0A1628; margin-bottom: 15px; }
+        .modal-box .close-modal { float: left; font-size: 1.8rem; cursor: pointer; color: #999; transition: 0.3s; }
+        .modal-box .close-modal:hover { color: #e74c3c; transform: rotate(90deg); }
+        .modal-box label { display: block; font-weight: 700; margin-top: 15px; margin-bottom: 5px; }
+        .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.95rem; }
+        .modal-box textarea { min-height: 80px; }
+        .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; }
 
-// ==============================================
-// 4. تأكيد الدفع (المرحلة الأولى - 100 ريال)
-// ==============================================
-router.post('/payment/confirm/:id', authenticate, async (req, res) => {
-    const { id } = req.params;
-    const { transferCode, paymentMethod } = req.body;
-    if (!transferCode) {
-        return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
-    }
-    const requests = readRequests();
-    const index = requests.findIndex(r => r.id == id);
-    if (index === -1) {
-        return res.status(404).json({ error: 'الطلب غير موجود' });
-    }
-    if (requests[index].userId !== req.user.id) {
-        return res.status(403).json({ error: 'غير مصرح' });
-    }
-    requests[index].paymentStatus = 'paid';
-    if (!requests[index].paymentHistory) requests[index].paymentHistory = [];
-    requests[index].paymentHistory.push({
-        amount: 100,
-        currency: 'SAR',
-        method: paymentMethod || 'تحويل بنكي',
-        transferCode,
-        date: new Date().toISOString(),
-        stage: 'diagnosis'
-    });
-    writeRequests(requests);
-    res.json({
-        success: true,
-        message: '✅ تم استلام طلب الدفع بنجاح. سيتم التحقق من قبل الشيخ وإشعارك قريباً.'
-    });
-});
+        .notification {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600;
+            z-index: 99999; display: none; min-width: 300px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .notification.success { background: #27ae60; }
+        .notification.error { background: #e74c3c; }
+        .notification.show { display: block; }
 
-// ==============================================
-// 5. الموافقة على العلاج (المرحلة الثانية - الجلسة الصوتية)
-// ==============================================
-router.post('/treatment/agree/:id', authenticate, (req, res) => {
-    const { id } = req.params;
-    const { agree, paymentMethod, transferCode } = req.body;
-    const requests = readRequests();
-    const index = requests.findIndex(r => r.id == id);
-    if (index === -1) {
-        return res.status(404).json({ error: 'الطلب غير موجود' });
-    }
-    if (requests[index].userId !== req.user.id) {
-        return res.status(403).json({ error: 'غير مصرح' });
-    }
-    if (agree === false) {
-        requests[index].status = 'rejected';
-        writeRequests(requests);
-        return res.json({
-            success: true,
-            message: 'تم رفض العلاج. سيتم إشعار الشيخ بذلك.'
-        });
-    }
-    if (!transferCode) {
-        return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
-    }
-    if (!requests[index].paymentHistory) requests[index].paymentHistory = [];
-    requests[index].paymentHistory.push({
-        amount: 350,
-        currency: 'SAR',
-        method: paymentMethod || 'تحويل بنكي',
-        transferCode,
-        date: new Date().toISOString(),
-        stage: 'voice_session'
-    });
-    requests[index].paymentStatus = 'paid_voice';
-    writeRequests(requests);
-    res.json({
-        success: true,
-        message: '✅ تم استلام طلب الجلسة الصوتية. سيتم التواصل معك لتحديد الموعد.'
-    });
-});
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; }
+            .dashboard-header .actions { width: 100%; justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
 
-// ==============================================
-// 6. إرسال رسالة استفسار (نافذة التواصل بعد العلاج)
-// ==============================================
-router.post('/message/:id', authenticate, (req, res) => {
-    const { id } = req.params;
-    const { message } = req.body;
-    if (!message || message.trim().length < 3) {
-        return res.status(400).json({ error: 'الرسالة قصيرة جداً' });
-    }
-    const requests = readRequests();
-    const index = requests.findIndex(r => r.id == id);
-    if (index === -1) {
-        return res.status(404).json({ error: 'الطلب غير موجود' });
-    }
-    if (requests[index].userId !== req.user.id) {
-        return res.status(403).json({ error: 'غير مصرح' });
-    }
-    if (requests[index].status !== 'completed') {
-        return res.status(400).json({ error: 'لا يمكن إرسال رسالة إلا بعد اكتمال العلاج' });
-    }
-    if (!requests[index].messages) requests[index].messages = [];
-    requests[index].messages.push({
-        from: 'user',
-        text: message.trim(),
-        date: new Date().toISOString(),
-        read: false
-    });
-    writeRequests(requests);
-    res.json({
-        success: true,
-        message: '✅ تم إرسال رسالتك. سيتم الرد عليها قريباً.'
-    });
-});
+    <div id="notification" class="notification"></div>
 
-module.exports = router;
+    <div class="dashboard-wrapper">
+        <div class="dashboard-header">
+            <div class="user-info">
+                <h3 id="userName">مرحباً، <span>...</span></h3>
+                <p id="userEmail">...</p>
+            </div>
+            <div class="actions">
+                <a href="/" class="btn-outline"><i class="fas fa-home"></i> الرئيسية</a>
+                <button onclick="openNewRequestModal()" class="btn-primary"><i class="fas fa-plus-circle"></i> طلب جديد</button>
+                <button onclick="logout()" class="btn-danger-outline"><i class="fas fa-sign-out-alt"></i> خروج</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-sidebar">
+                <div class="card">
+                    <h4><i class="fas fa-user-circle"></i> ملفي الشخصي</h4>
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                        <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#F5B041,#E67E22); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.8rem; font-weight:700;">
+                            <span id="userInitial">ب</span>
+                        </div>
+                        <div>
+                            <div style="font-weight:700; font-size:1.1rem;" id="sidebarName">...</div>
+                            <div style="color:#6A7A8A; font-size:0.85rem;" id="sidebarEmail">...</div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid #eee; padding-top:10px; margin-top:5px;">
+                        <div class="stat-item"><span>📱 الهاتف</span> <span id="sidebarPhone">غير مضاف</span></div>
+                        <div class="stat-item"><span>📅 تاريخ التسجيل</span> <span id="sidebarJoined">...</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4><i class="fas fa-chart-pie"></i> إحصائياتي</h4>
+                    <div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div>
+                    <div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div>
+                    <div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div>
+                    <div class="stat-item"><span>❌ مرفوضة</span> <span id="statRejected">0</span></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                    <button onclick="showTab('requests')" class="btn-primary" id="tabRequestsBtn">
+                        <i class="fas fa-list-ul"></i> طلباتي
+                    </button>
+                </div>
+
+                <div id="tabRequests" class="tab-content">
+                    <div class="card" style="border-right-color:#1B4D3D;">
+                        <h4><i class="fas fa-list"></i> جميع طلباتي</h4>
+                        <div id="requestsList">
+                            <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تقديم طلب جديد -->
+    <div id="newRequestModal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeNewRequestModal()">&times;</span>
+            <h3><i class="fas fa-hand-holding-heart"></i> تقديم طلب جديد</h3>
+            <form id="newRequestForm">
+                <label>نوع الخدمة <span style="color:#e74c3c;">*</span></label>
+                <select id="reqServiceType" required>
+                    <option value="استشارة روحانية">استشارة روحانية</option>
+                    <option value="علاج روحي">علاج روحي</option>
+                    <option value="تفسير رؤيا">تفسير رؤيا</option>
+                    <option value="حل مشكلة أسرية">حل مشكلة أسرية</option>
+                    <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
+                </select>
+
+                <label>طريقة التواصل <span style="color:#e74c3c;">*</span></label>
+                <select id="reqContactMethod" required>
+                    <option value="whatsapp">واتساب</option>
+                    <option value="email">بريد إلكتروني</option>
+                </select>
+
+                <label>وصف المشكلة بالتفصيل <span style="color:#e74c3c;">*</span></label>
+                <textarea id="reqDescription" rows="4" placeholder="اكتب مشكلتك بوضوح..." required></textarea>
+
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:15px; justify-content:center;">
+                    <i class="fas fa-paper-plane"></i> إرسال الطلب
+                </button>
+            </form>
+            <p style="font-size:0.85rem; color:#6A7A8A; margin-top:10px; text-align:center;">
+                قيمة الطلب ثابتة: <strong>100 ريال سعودي</strong> (تُدفع بعد قبول الطلب).
+            </p>
+        </div>
+    </div>
+
+    <!-- مودال عرض تفاصيل الطلب -->
+    <div id="requestDetailsModal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeDetailsModal()">&times;</span>
+            <h3><i class="fas fa-file-alt"></i> تفاصيل الطلب</h3>
+            <div id="requestDetailsContent"><p>جاري التحميل...</p></div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
