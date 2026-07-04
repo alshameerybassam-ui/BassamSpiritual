@@ -1,225 +1,277 @@
-// ===== متغيرات عامة =====
-let currentUser = null;
-let userRequests = [];
-let currentRequestId = null;
+const express = require('express');
+const router = express.Router();
+const fs = require('fs-extra');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 
-// ===== الإشعارات =====
-function showNotification(msg, type = 'success') {
-    const n = document.getElementById('notification');
-    if (!n) return;
-    n.textContent = msg;
-    n.className = `notification ${type} show`;
-    setTimeout(() => n.classList.remove('show'), 6000);
+const USERS_FILE = path.join(__dirname, '../data/users.json');
+const REQUESTS_FILE = path.join(__dirname, '../data/requests.json');
+const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
+
+// التأكد من وجود الملفات
+fs.ensureFileSync(USERS_FILE);
+fs.ensureFileSync(REQUESTS_FILE);
+if (!fs.existsSync(USERS_FILE) || fs.readFileSync(USERS_FILE).length === 0) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify([]));
+}
+if (!fs.existsSync(REQUESTS_FILE) || fs.readFileSync(REQUESTS_FILE).length === 0) {
+    fs.writeFileSync(REQUESTS_FILE, JSON.stringify([]));
 }
 
-// ===== التحقق من الجلسة =====
-async function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (!token) { window.location.href = '/login.html'; return false; }
+const readUsers = () => JSON.parse(fs.readFileSync(USERS_FILE));
+const writeUsers = (data) => fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+const readRequests = () => JSON.parse(fs.readFileSync(REQUESTS_FILE));
+const writeRequests = (data) => fs.writeFileSync(REQUESTS_FILE, JSON.stringify(data, null, 2));
+
+// ==============================================
+// الوسيط: التحقق من صحة المستخدم
+// ==============================================
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'غير مصرح' });
+    }
     try {
-        const res = await fetch('/api/auth/verify', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) {
-            localStorage.removeItem('token'); localStorage.removeItem('user');
-            window.location.href = '/login.html'; return false;
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const users = readUsers();
+        const user = users.find(u => u.id === decoded.id);
+        if (!user || !user.isActive) {
+            return res.status(401).json({ error: 'الحساب غير نشط' });
         }
-        currentUser = data.user;
-        return true;
+        req.user = user;
+        req.userId = decoded.id;
+        next();
     } catch (e) {
-        localStorage.removeItem('token'); localStorage.removeItem('user');
-        window.location.href = '/login.html'; return false;
+        res.status(401).json({ error: 'رمز غير صالح' });
     }
-}
+};
 
-// ===== تحميل لوحة التحكم =====
-async function loadDashboard() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-        const res = await fetch('/api/dashboard/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) { showNotification('⚠️ حدث خطأ في تحميل البيانات.', 'error'); return; }
-
-        currentUser = data.user;
-        userRequests = data.requests || [];
-
-        document.getElementById('userName').innerHTML = `مرحباً، <span>${data.user.fullName}</span>`;
-        document.getElementById('userEmail').textContent = data.user.email;
-        document.getElementById('sidebarName').textContent = data.user.fullName;
-        document.getElementById('sidebarEmail').textContent = data.user.email;
-        document.getElementById('sidebarPhone').textContent = data.user.phone || 'غير مضاف';
-        document.getElementById('sidebarJoined').textContent = new Date(data.user.createdAt).toLocaleDateString('ar-EG');
-        document.getElementById('userInitial').textContent = data.user.fullName.charAt(0);
-
-        const total = userRequests.length;
-        const pending = userRequests.filter(r => r.status === 'pending' || r.status === 'processing').length;
-        const completed = userRequests.filter(r => r.status === 'completed').length;
-        const rejected = userRequests.filter(r => r.status === 'rejected').length;
-        document.getElementById('statTotal').textContent = total;
-        document.getElementById('statPending').textContent = pending;
-        document.getElementById('statCompleted').textContent = completed;
-        document.getElementById('statRejected').textContent = rejected;
-
-        renderRequests(userRequests);
-    } catch (e) { showNotification('⚠️ خطأ في تحميل البيانات.', 'error'); }
-}
-
-// ===== عرض الطلبات =====
-function renderRequests(requests) {
-    const container = document.getElementById('requestsList');
-    if (!requests || requests.length === 0) {
-        container.innerHTML = `
-            <div style="text-align:center; padding:30px; color:#6A7A8A;">
-                <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                لا توجد طلبات حتى الآن. اضغط على "طلب جديد" لتقديم طلب.
-            </div>
-        `;
-        return;
-    }
-
-    const statusMap = {
-        'pending': '<span class="status-badge status-pending">⏳ قيد الانتظار</span>',
-        'processing': '<span class="status-badge status-processing">⚙️ قيد المعالجة</span>',
-        'completed': '<span class="status-badge status-completed">✅ مكتمل</span>',
-        'rejected': '<span class="status-badge status-rejected">❌ مرفوض</span>'
-    };
-
-    container.innerHTML = requests.map(req => `
-        <div class="request-item">
-            <div class="top-row">
-                <span class="service">${req.serviceType}</span>
-                <span class="date">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
-            </div>
-            <div class="top-row" style="margin-top:5px;">
-                <span>الحالة: ${statusMap[req.status] || req.status}</span>
-                <span>الدفع: ${req.paymentStatus === 'verified' ? '✅ مؤكد' : req.paymentStatus === 'paid' ? '🟡 قيد المراجعة' : '🔴 غير مدفوع'}</span>
-            </div>
-            <div class="description">${req.description ? req.description.substring(0, 100) + (req.description.length > 100 ? '...' : '') : ''}</div>
-            <div class="actions">
-                <button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-gold"><i class="fas fa-eye"></i> عرض</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// ===== عرض تفاصيل الطلب =====
-async function viewRequest(id) {
-    currentRequestId = id;
-    const token = localStorage.getItem('token');
-    try {
-        const res = await fetch(`/api/dashboard/request/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) { showNotification('⚠️ فشل تحميل التفاصيل.', 'error'); return; }
-
-        const req = data.request;
-        const modal = document.getElementById('requestDetailsModal');
-        document.getElementById('requestDetailsContent').innerHTML = `
-            <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:15px;">
-                <p><strong>📅 التاريخ:</strong> ${new Date(req.createdAt).toLocaleString('ar-EG')}</p>
-                <p><strong>🛠 الخدمة:</strong> ${req.serviceType}</p>
-                <p><strong>📩 طريقة التواصل:</strong> ${req.contactMethod === 'whatsapp' ? 'واتساب' : 'بريد إلكتروني'}</p>
-                <p><strong>💰 حالة الدفع:</strong> ${req.paymentStatus || 'غير مدفوع'}</p>
-            </div>
-            <div style="background:#FFFBF0; padding:15px; border-radius:12px; border-right:4px solid #F5B041; margin-bottom:15px;">
-                <strong>📝 وصف المشكلة:</strong>
-                <p style="margin-top:8px; line-height:1.8;">${req.description || 'لا يوجد وصف'}</p>
-            </div>
-            ${req.status === 'rejected' ? `
-                <div style="background:#FEE2E2; padding:15px; border-radius:12px; border-right:4px solid #e74c3c;">
-                    <p style="color:#991B1B;">❌ تم رفض الطلب من قبل الشيخ بسام.</p>
-                </div>
-            ` : ''}
-            ${req.status === 'completed' && req.treatmentDetails ? `
-                <div style="background:#D1FAE5; padding:15px; border-radius:12px; border-right:4px solid #27ae60; margin-top:15px;">
-                    <strong>✅ العلاج:</strong>
-                    <p style="margin-top:8px; line-height:1.8;">${req.treatmentDetails.replace(/\n/g, '<br>')}</p>
-                </div>
-            ` : ''}
-        `;
-        modal.classList.add('show');
-    } catch (e) { showNotification('⚠️ خطأ في تحميل التفاصيل.', 'error'); }
-}
-
-// ===== فتح وإغلاق مودال الطلب الجديد =====
-function openNewRequestModal() {
-    document.getElementById('newRequestModal').classList.add('show');
-}
-function closeNewRequestModal() {
-    document.getElementById('newRequestModal').classList.remove('show');
-}
-function closeDetailsModal() {
-    document.getElementById('requestDetailsModal').classList.remove('show');
-}
-
-// ===== تقديم طلب جديد =====
-document.getElementById('newRequestForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const serviceType = document.getElementById('reqServiceType').value;
-    const contactMethod = document.getElementById('reqContactMethod').value;
-    const description = document.getElementById('reqDescription').value.trim();
-
-    if (!description || description.length < 5) {
-        showNotification('⚠️ وصف المشكلة قصير جداً (5 أحرف على الأقل).', 'error');
-        return;
-    }
-
-    const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-
-    try {
-        const res = await fetch('/api/dashboard/request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ serviceType, description, contactMethod })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showNotification('✅ ' + data.message, 'success');
-            closeNewRequestModal();
-            loadDashboard();
-        } else {
-            showNotification('❌ ' + (data.error || 'فشل إرسال الطلب'), 'error');
-        }
-    } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
+// ==============================================
+// 1. الحصول على بيانات المستخدم ولوحة التحكم
+// ==============================================
+router.get('/me', authenticate, (req, res) => {
+    const user = req.user;
+    const requests = readRequests().filter(r => r.userId === user.id);
+    requests.sort((a, b) => b.createdAt - a.createdAt);
+    res.json({
+        success: true,
+        user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            createdAt: user.createdAt
+        },
+        requests: requests.map(r => ({
+            id: r.id,
+            serviceType: r.serviceType,
+            status: r.status,
+            paymentStatus: r.paymentStatus,
+            createdAt: r.createdAt,
+            message: r.message || null,
+            diagnosis: r.diagnosis || null,
+            treatment: r.treatment || null,
+            treatmentDetails: r.treatmentDetails || null,
+            appointmentTime: r.appointmentTime || null,
+            meetingLink: r.meetingLink || null,
+            adminReplies: r.adminReplies || [],
+            description: r.description || ''
+        })),
+        notifications: user.spiritualProfile?.notifications || [],
+        articles: user.spiritualProfile?.articles || [],
+        ruqya: user.spiritualProfile?.ruqya || [],
+        dailyWirds: user.spiritualProfile?.dailyWirds || []
+    });
 });
 
-// ===== تسجيل الخروج =====
-function logout() {
-    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-        localStorage.removeItem('token'); localStorage.removeItem('user');
-        window.location.href = '/login.html';
-    }
-}
+// ==============================================
+// 2. تقديم طلب جديد
+// ==============================================
+router.post('/request',
+    authenticate,
+    [
+        body('serviceType').notEmpty().withMessage('نوع الخدمة مطلوب'),
+        body('description').notEmpty().isLength({ min: 5 }).withMessage('الوصف قصير جداً'),
+        body('contactMethod').notEmpty().withMessage('طريقة التواصل مطلوبة')
+    ],
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'بيانات غير صالحة', details: errors.array() });
+        }
 
-// ===== تبويبات =====
-function showTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    document.getElementById('tabRequests').style.display = 'block';
-    document.getElementById('tabRequestsBtn').className = 'btn-primary';
-}
+        const { serviceType, description, contactMethod, voiceNote } = req.body;
+        const user = req.user;
 
-// ===== تهيئة الصفحة =====
-(async function init() {
-    const isAuth = await checkAuth();
-    if (!isAuth) return;
-    await loadDashboard();
-    showTab('requests');
+        const requests = readRequests();
+        const newRequest = {
+            id: Date.now(),
+            userId: user.id,
+            userFullName: user.fullName,
+            userEmail: user.email,
+            userPhone: user.phone || '',
+            serviceType,
+            description,
+            contactMethod,
+            voiceNote: voiceNote || null,
+            status: 'pending',
+            paymentStatus: 'pending',
+            paymentHistory: [],
+            createdAt: new Date().toISOString(),
+            diagnosis: null,
+            treatment: null,
+            treatmentDetails: null,
+            adminReplies: [],
+            messages: [],
+            appointmentTime: null,
+            meetingLink: null,
+            completedAt: null
+        };
 
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) this.classList.remove('show');
+        requests.push(newRequest);
+        writeRequests(requests);
+
+        const users = readUsers();
+        const userIndex = users.findIndex(u => u.id === user.id);
+        if (userIndex !== -1) {
+            if (!users[userIndex].requests) users[userIndex].requests = [];
+            users[userIndex].requests.push(newRequest.id);
+            writeUsers(users);
+        }
+
+        res.json({
+            success: true,
+            requestId: newRequest.id,
+            message: '✅ تم استلام طلبك بنجاح.'
         });
+    }
+);
+
+// ==============================================
+// 3. الحصول على تفاصيل طلب معين
+// ==============================================
+router.get('/request/:id', authenticate, (req, res) => {
+    const { id } = req.params;
+    const requests = readRequests();
+    const request = requests.find(r => r.id == id);
+    if (!request) {
+        return res.status(404).json({ error: 'الطلب غير موجود' });
+    }
+    if (request.userId !== req.user.id) {
+        return res.status(403).json({ error: 'غير مصرح' });
+    }
+    res.json({ success: true, request });
+});
+
+// ==============================================
+// 4. تأكيد الدفع (المرحلة الأولى - 100 ريال)
+// ==============================================
+router.post('/payment/confirm/:id', authenticate, async (req, res) => {
+    const { id } = req.params;
+    const { transferCode, paymentMethod } = req.body;
+    if (!transferCode) {
+        return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
+    }
+    const requests = readRequests();
+    const index = requests.findIndex(r => r.id == id);
+    if (index === -1) {
+        return res.status(404).json({ error: 'الطلب غير موجود' });
+    }
+    if (requests[index].userId !== req.user.id) {
+        return res.status(403).json({ error: 'غير مصرح' });
+    }
+    requests[index].paymentStatus = 'paid';
+    if (!requests[index].paymentHistory) requests[index].paymentHistory = [];
+    requests[index].paymentHistory.push({
+        amount: 100,
+        currency: 'SAR',
+        method: paymentMethod || 'تحويل بنكي',
+        transferCode,
+        date: new Date().toISOString(),
+        stage: 'diagnosis'
     });
-})();
+    writeRequests(requests);
+    res.json({
+        success: true,
+        message: '✅ تم استلام طلب الدفع بنجاح. سيتم التحقق من قبل الشيخ وإشعارك قريباً.'
+    });
+});
+
+// ==============================================
+// 5. الموافقة على العلاج (المرحلة الثانية - الجلسة الصوتية)
+// ==============================================
+router.post('/treatment/agree/:id', authenticate, (req, res) => {
+    const { id } = req.params;
+    const { agree, paymentMethod, transferCode } = req.body;
+    const requests = readRequests();
+    const index = requests.findIndex(r => r.id == id);
+    if (index === -1) {
+        return res.status(404).json({ error: 'الطلب غير موجود' });
+    }
+    if (requests[index].userId !== req.user.id) {
+        return res.status(403).json({ error: 'غير مصرح' });
+    }
+    if (agree === false) {
+        requests[index].status = 'rejected';
+        writeRequests(requests);
+        return res.json({
+            success: true,
+            message: 'تم رفض العلاج. سيتم إشعار الشيخ بذلك.'
+        });
+    }
+    if (!transferCode) {
+        return res.status(400).json({ error: 'رقم الحوالة مطلوب' });
+    }
+    if (!requests[index].paymentHistory) requests[index].paymentHistory = [];
+    requests[index].paymentHistory.push({
+        amount: 350,
+        currency: 'SAR',
+        method: paymentMethod || 'تحويل بنكي',
+        transferCode,
+        date: new Date().toISOString(),
+        stage: 'voice_session'
+    });
+    requests[index].paymentStatus = 'paid_voice';
+    writeRequests(requests);
+    res.json({
+        success: true,
+        message: '✅ تم استلام طلب الجلسة الصوتية. سيتم التواصل معك لتحديد الموعد.'
+    });
+});
+
+// ==============================================
+// 6. إرسال رسالة استفسار (نافذة التواصل بعد العلاج)
+// ==============================================
+router.post('/message/:id', authenticate, (req, res) => {
+    const { id } = req.params;
+    const { message } = req.body;
+    if (!message || message.trim().length < 3) {
+        return res.status(400).json({ error: 'الرسالة قصيرة جداً' });
+    }
+    const requests = readRequests();
+    const index = requests.findIndex(r => r.id == id);
+    if (index === -1) {
+        return res.status(404).json({ error: 'الطلب غير موجود' });
+    }
+    if (requests[index].userId !== req.user.id) {
+        return res.status(403).json({ error: 'غير مصرح' });
+    }
+    if (requests[index].status !== 'completed') {
+        return res.status(400).json({ error: 'لا يمكن إرسال رسالة إلا بعد اكتمال العلاج' });
+    }
+    if (!requests[index].messages) requests[index].messages = [];
+    requests[index].messages.push({
+        from: 'user',
+        text: message.trim(),
+        date: new Date().toISOString(),
+        read: false
+    });
+    writeRequests(requests);
+    res.json({
+        success: true,
+        message: '✅ تم إرسال رسالتك. سيتم الرد عليها قريباً.'
+    });
+});
+
+module.exports = router;
