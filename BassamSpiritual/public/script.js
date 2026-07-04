@@ -1,5 +1,5 @@
 // ==============================================
-// الإشعارات العامة
+// 1. الإشعارات العامة
 // ==============================================
 function showNotification(msg, type = 'success') {
     const n = document.getElementById('notification');
@@ -10,7 +10,24 @@ function showNotification(msg, type = 'success') {
 }
 
 // ==============================================
-// التحقق من الجلسة في الواجهة الرئيسية
+// 2. إصلاح الأيقونات (تحميل Font Awesome بشكل آمن)
+// ==============================================
+(function ensureFontAwesome() {
+    // التحقق من وجود أي رابط لـ Font Awesome
+    const existingLink = document.querySelector('link[href*="font-awesome"]');
+    if (!existingLink) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
+        link.integrity = 'sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==';
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+        console.log('✅ Font Awesome تم تحميله تلقائياً');
+    }
+})();
+
+// ==============================================
+// 3. التحقق من الجلسة في الواجهة الرئيسية
 // ==============================================
 (function checkSessionOnHome() {
     const token = localStorage.getItem('token');
@@ -44,33 +61,100 @@ function showNotification(msg, type = 'success') {
 })();
 
 // ==============================================
-// المساعد الذكي (المدمج مع DeepSeek)
+// 4. المساعد الذكي - سيناريوهات متعددة
 // ==============================================
+
+// تعريف سيناريوهات المحادثة
+const chatScenarios = {
+    intro: {
+        message: 'السلام عليكم ورحمة الله وبركاته 🌙\nأنا المستشار الروحاني الذكي في مركز النور الرباني.\nأنا هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.\n🔹 هل يمكنك إخباري بما تمر به؟',
+        next: 'problem'
+    },
+    problem: {
+        message: 'شكراً لك على المشاركة.\n🔹 هل هذه المشكلة مرتبطة بالروح (خوف، وسواس، عين، سحر)، أم بالنفس (قلق، اكتئاب، توتر)، أم بالجسد (ألم، مرض)؟\n(اختر: روح / نفس / جسد / لا أعرف)',
+        next: 'duration'
+    },
+    duration: {
+        message: '🔹 منذ متى وأنت تعاني من هذه المشكلة؟\n(أشهر، سنوات، منذ الطفولة، حديثاً)',
+        next: 'previous'
+    },
+    previous: {
+        message: '🔹 هل حاولت علاج هذه المشكلة سابقاً؟\n(رقية شرعية، استشارة نفسية، طبيب، لم أحاول)',
+        next: 'summary'
+    },
+    summary: function(data) {
+        // تحليل البيانات وتوليد توصية
+        let recommendation = '';
+        let serviceType = '';
+        let price = '';
+
+        const text = (data.problem + ' ' + (data.category || '')).toLowerCase();
+
+        if (text.includes('سحر') || text.includes('عين') || text.includes('حسد') || text.includes('مس')) {
+            serviceType = 'علاج العين والحسد والأسحار والرصد';
+            price = '200 ر.س';
+            recommendation = '🛡️ يبدو أنك تعاني من أعراض قد تكون مرتبطة بالعين أو الحسد أو السحر. نوصي بجلسة علاجية شاملة تشمل الرقية الشرعية والتحصين.';
+        } else if (text.includes('قلق') || text.includes('اكتئاب') || text.includes('توتر') || text.includes('نفس')) {
+            serviceType = 'استشارة روحانية ونفسية';
+            price = 'مجاناً';
+            recommendation = '🕊️ يبدو أنك بحاجة إلى توجيه روحاني ونفسي. هذه الاستشارة ستساعدك في توضيح رؤيتك وتقديم النصائح المناسبة لحالتك.';
+        } else if (text.includes('ألم') || text.includes('مرض') || text.includes('جسد')) {
+            serviceType = 'جلسة صوتية مباشرة مع الشيخ';
+            price = '350 ر.س';
+            recommendation = '🎧 حالتك تتطلب تواصلاً مباشراً مع الشيخ عبر مكالمة صوتية. ستتيح لك فرصة لمناقشة تفاصيلك بشكل أعمق والحصول على توجيه فوري.';
+        } else {
+            serviceType = 'استشارة روحانية عامة';
+            price = '100 ر.س';
+            recommendation = '📖 نوصي باستشارة عامة مع الشيخ بسام لتحديد طبيعة مشكلتك بدقة والحصول على التوجيه المناسب.';
+        }
+
+        const result = `
+✨ بناءً على ما شاركتني به، إليك توصيتي:
+
+📌 الخدمة المناسبة: **${serviceType}**
+💰 التكلفة: **${price}**
+
+📝 ${recommendation}
+
+🔹 هل ترغب في نقل هذه المعلومات إلى نموذج الطلب وتقديم طلبك الآن؟
+        `;
+        // حفظ البيانات للاستخدام في النقل
+        window._chatData = {
+            problem: data.problem,
+            category: data.category || '',
+            duration: data.duration || '',
+            previous: data.previous || '',
+            serviceType: serviceType,
+            price: price,
+            recommendation: recommendation
+        };
+        return result;
+    }
+};
+
+// حالة المحادثة
 let chatState = {
     step: 'intro',
-    userData: { problem: '', duration: '', previous: '' },
+    userData: { problem: '', category: '', duration: '', previous: '' },
     isProcessing: false
 };
 let hasAutoOpened = false;
-let chatFreeMessages = 20;
 
 // ===== فتح/إغلاق نافذة الدردشة =====
 function toggleChat() {
     const window = document.getElementById('chatWindow');
     const isShowing = window.classList.contains('show');
-    
     if (!isShowing) {
         sessionStorage.removeItem('chat_manual_closed');
     } else {
         sessionStorage.setItem('chat_manual_closed', 'true');
     }
-    
     window.classList.toggle('show');
     if (window.classList.contains('show')) {
         document.getElementById('chatInput').focus();
         const badge = document.querySelector('.chat-badge');
         if (badge) badge.style.display = 'none';
-        // تحديث رصيد الرسائل عند فتح النافذة
+        // تحديث رصيد الرسائل إذا كان هناك توكن
         updateChatCredits();
     }
 }
@@ -81,12 +165,8 @@ async function sendChatMessage() {
     const message = input.value.trim();
     if (!message || chatState.isProcessing) return;
 
-    // التحقق من وجود توكن (مستخدم مسجل)
-    const token = localStorage.getItem('token');
-    
     chatState.isProcessing = true;
     input.disabled = true;
-    const statusDiv = document.getElementById('chatStatus') || createChatStatus();
 
     // عرض رسالة المستخدم فوراً
     const container = document.getElementById('chatBody');
@@ -97,69 +177,75 @@ async function sendChatMessage() {
     container.scrollTop = container.scrollHeight;
     input.value = '';
 
-    statusDiv.textContent = '⏳ جاري التفكير...';
+    // تحديث حالة المحادثة
+    const currentStep = chatState.step;
+    const data = chatState.userData;
 
-    try {
-        const res = await fetch('/api/chat/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({ message })
-        });
+    // حفظ إجابة المستخدم حسب الخطوة الحالية
+    if (currentStep === 'intro') {
+        data.problem = message;
+        chatState.step = 'problem';
+    } else if (currentStep === 'problem') {
+        data.category = message;
+        chatState.step = 'duration';
+    } else if (currentStep === 'duration') {
+        data.duration = message;
+        chatState.step = 'previous';
+    } else if (currentStep === 'previous') {
+        data.previous = message;
+        chatState.step = 'summary';
+    }
 
-        const data = await res.json();
+    // توليد الرد المناسب
+    let reply = '';
+    let isSummary = false;
 
-        // إذا كانت الرسالة تتطلب تسجيل الدخول
-        if (res.status === 401) {
-            statusDiv.innerHTML = `
-                ⚠️ للاستمرار في المحادثة، يرجى <a href="/login.html" style="color:#F5B041; font-weight:700;">تسجيل الدخول</a> أو <a href="/register.html" style="color:#F5B041; font-weight:700;">إنشاء حساب</a>.
-                <br><span style="font-size:0.8rem; color:#888;">(بعد التسجيل، ستحصل على 20 رسالة مجانية)</span>
-            `;
-            showNotification('⚠️ يرجى تسجيل الدخول للاستمرار في المحادثة.', 'error');
-            chatState.isProcessing = false;
-            input.disabled = false;
-            input.focus();
-            return;
-        }
-
-        if (data.requiresPayment) {
-            statusDiv.innerHTML = `
-                ⚠️ لقد استهلكت جميع رسائلك المجانية (20 رسالة).
-                <br>للاستمرار، يرجى <a href="/login.html" style="color:#F5B041; font-weight:700;">تسجيل الدخول</a> أو <a href="/register.html" style="color:#F5B041; font-weight:700;">إنشاء حساب</a>.
-                <br><span style="font-size:0.8rem; color:#888;">(المستخدمون المسجلون يحصلون على 20 رسالة مجانية)</span>
-            `;
-            showNotification('⚠️ انتهت رسائلك المجانية. سجل الدخول للاستمرار.', 'error');
-            chatState.isProcessing = false;
-            input.disabled = false;
-            input.focus();
-            return;
-        }
-
-        if (data.success) {
-            // تحديث عداد الرسائل المتبقية
-            const remaining = data.freeMessagesLimit - (data.freeMessagesUsed || 0);
-            statusDiv.textContent = `✅ رسائل متبقية: ${remaining}`;
-            
-            // عرض رد المساعد
-            const botDiv = document.createElement('div');
-            botDiv.className = 'chat-message bot';
-            botDiv.innerHTML = `<div class="message-content">${data.reply}</div>`;
-            container.appendChild(botDiv);
-            container.scrollTop = container.scrollHeight;
-
-            // تحديث العداد في الأعلى إذا كان موجوداً
-            const remainingSpan = document.getElementById('chatRemaining');
-            if (remainingSpan) remainingSpan.textContent = remaining;
+    if (chatState.step === 'summary') {
+        // الخطوة الأخيرة - توليد التوصية
+        const scenario = chatScenarios.summary;
+        if (typeof scenario === 'function') {
+            reply = scenario(data);
         } else {
-            statusDiv.textContent = '❌ ' + (data.error || 'حدث خطأ');
-            showNotification('❌ ' + (data.error || 'حدث خطأ'), 'error');
+            reply = scenario || 'شكراً لك على المعلومات. كيف يمكنني مساعدتك أكثر؟';
         }
-    } catch (e) {
-        console.error('❌ خطأ في المساعد الذكي:', e);
-        statusDiv.textContent = '⚠️ خطأ في الاتصال بالخادم. حاول مرة أخرى.';
-        showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
+        isSummary = true;
+    } else {
+        // الحصول على رسالة الخطوة الحالية
+        const stepKey = chatState.step;
+        const scenario = chatScenarios[stepKey];
+        if (scenario && typeof scenario === 'object') {
+            reply = scenario.message || 'أنا هنا لمساعدتك. أخبرني أكثر.';
+        } else {
+            reply = 'أنا هنا لمساعدتك. أخبرني أكثر.';
+        }
+    }
+
+    // إضافة رد البوت
+    const botDiv = document.createElement('div');
+    botDiv.className = 'chat-message bot';
+    botDiv.innerHTML = `<div class="message-content">${reply.replace(/\n/g, '<br>')}</div>`;
+    container.appendChild(botDiv);
+    container.scrollTop = container.scrollHeight;
+
+    // إذا كانت هذه هي الخلاصة، أضف أزرار الإجراء
+    if (isSummary) {
+        setTimeout(() => {
+            const body = document.getElementById('chatBody');
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'chat-message bot';
+            actionDiv.innerHTML = `
+                <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041;">
+                    <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%;">
+                        <i class="fas fa-arrow-left"></i> نقل إلى نموذج الطلب
+                    </button>
+                    <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:8px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; margin-top:8px; width:100%;">
+                        <i class="fas fa-undo"></i> بدء محادثة جديدة
+                    </button>
+                </div>
+            `;
+            body.appendChild(actionDiv);
+            body.scrollTop = body.scrollHeight;
+        }, 500);
     }
 
     chatState.isProcessing = false;
@@ -167,27 +253,97 @@ async function sendChatMessage() {
     input.focus();
 }
 
-// ===== إنشاء عنصر حالة المحادثة إذا لم يكن موجوداً =====
+// ===== نقل البيانات إلى نموذج الطلب =====
+function transferToForm() {
+    const data = window._chatData || chatState.userData;
+    const description = `[تم إنشاء هذا الطلب عبر المستشار الروحاني الذكي]\n\nالمشكلة: ${data.problem}\nالتصنيف: ${data.category || 'غير محدد'}\nالمدة: ${data.duration || 'غير محدد'}\nالمحاولات السابقة: ${data.previous || 'غير محدد'}\n\nالتوصية: ${data.recommendation || ''}`;
+    
+    // محاولة ملء النموذج إذا كان موجوداً في الصفحة
+    const descField = document.getElementById('description');
+    if (descField) {
+        descField.value = description;
+        showNotification('✅ تم نقل بياناتك إلى نموذج الطلب!', 'success');
+    } else {
+        // إذا لم يكن النموذج في الصفحة الحالية، نوجه المستخدم لتسجيل الدخول
+        showNotification('⚠️ يرجى تسجيل الدخول لتقديم الطلب.', 'error');
+        setTimeout(() => {
+            window.location.href = '/login.html';
+        }, 1500);
+        return;
+    }
+
+    // اختيار الخدمة المناسبة تلقائياً في النموذج
+    const serviceSelect = document.getElementById('serviceType');
+    if (serviceSelect && data.serviceType) {
+        const serviceMap = {
+            'علاج العين والحسد والأسحار والرصد': 'علاج',
+            'استشارة روحانية ونفسية': 'استشارة مجانية',
+            'جلسة صوتية مباشرة مع الشيخ': 'جلسة صوتية',
+            'استشارة روحانية عامة': 'استشارة'
+        };
+        const mappedValue = serviceMap[data.serviceType] || '';
+        for (let option of serviceSelect.options) {
+            if (option.value === mappedValue || option.text.includes(data.serviceType.split(' ')[0])) {
+                option.selected = true;
+                break;
+            }
+        }
+    }
+
+    // التمرير إلى النموذج
+    const formCard = document.querySelector('.form-card');
+    if (formCard) {
+        formCard.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // إغلاق نافذة الدردشة
+    toggleChat();
+    resetChat();
+}
+
+// ===== إعادة ضبط المحادثة =====
+function resetChat() {
+    chatState = {
+        step: 'intro',
+        userData: { problem: '', category: '', duration: '', previous: '' },
+        isProcessing: false
+    };
+    window._chatData = null;
+    const body = document.getElementById('chatBody');
+    body.innerHTML = `
+        <div class="chat-message bot">
+            <div class="message-content">${chatScenarios.intro.message.replace(/\n/g, '<br>')}</div>
+        </div>
+    `;
+    sessionStorage.removeItem('chat_manual_closed');
+    hasAutoOpened = false;
+}
+
+// ===== إنشاء عنصر حالة المحادثة =====
 function createChatStatus() {
     let status = document.getElementById('chatStatus');
     if (!status) {
         const footer = document.querySelector('.chat-footer');
-        status = document.createElement('div');
-        status.id = 'chatStatus';
-        status.style.cssText = 'margin-top:8px; font-size:0.85rem; color:#6A7A8A; text-align:center;';
-        footer.parentNode.insertBefore(status, footer.nextSibling);
+        if (footer) {
+            status = document.createElement('div');
+            status.id = 'chatStatus';
+            status.style.cssText = 'margin-top:8px; font-size:0.85rem; color:#6A7A8A; text-align:center;';
+            footer.parentNode.insertBefore(status, footer.nextSibling);
+        }
     }
     return status;
 }
 
-// ===== تحديث رصيد الرسائل =====
+// ===== تحديث رصيد الرسائل (إن وجد) =====
 async function updateChatCredits() {
     const token = localStorage.getItem('token');
+    const status = document.getElementById('chatStatus') || createChatStatus();
     if (!token) {
-        const status = document.getElementById('chatStatus') || createChatStatus();
-        status.innerHTML = `
-            🔓 غير مسجل. <a href="/login.html" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على 20 رسالة مجانية.
-        `;
+        if (status) {
+            status.innerHTML = `
+                🔓 غير مسجل. <a href="/login.html" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على 50 رسالة مجانية.
+            `;
+        }
         return;
     }
     try {
@@ -195,15 +351,12 @@ async function updateChatCredits() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (data.success) {
-            const remainingSpan = document.getElementById('chatRemaining');
-            if (remainingSpan) remainingSpan.textContent = data.remaining;
-            const status = document.getElementById('chatStatus') || createChatStatus();
+        if (data.success && status) {
             if (data.remaining > 0) {
                 status.textContent = `✅ رسائل متبقية: ${data.remaining}`;
             } else {
                 status.innerHTML = `
-                    ⚠️ انتهت رسائلك المجانية. <a href="/login.html" style="color:#F5B041; font-weight:700;">اشترك الآن</a> للاستمرار.
+                    ⚠️ انتهت رسائلك المجانية. <a href="/dashboard.html" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.
                 `;
             }
         }
@@ -212,7 +365,7 @@ async function updateChatCredits() {
     }
 }
 
-// ===== فتح الدردشة تلقائياً (مرة واحدة) =====
+// ===== فتح الدردشة تلقائياً =====
 function autoOpenChat() {
     const manualClosed = sessionStorage.getItem('chat_manual_closed');
     if (manualClosed === 'true') return;
@@ -222,27 +375,18 @@ function autoOpenChat() {
         const chatWindow = document.getElementById('chatWindow');
         if (chatWindow && !chatWindow.classList.contains('show')) {
             chatWindow.classList.add('show');
-            document.getElementById('chatInput').focus();
+            const input = document.getElementById('chatInput');
+            if (input) input.focus();
             const badge = document.querySelector('.chat-badge');
             if (badge) badge.style.display = 'none';
             updateChatCredits();
         }
-    }, 3000);
+    }, 4000);
 }
 
-// ===== إضافة حدث Enter في حقل الإدخال =====
-document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('chatInput');
-    if (input) {
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        });
-    }
-});
-
-// ===== تحميل المقالات والشهادات (الكود القديم) =====
+// ==============================================
+// 5. تحميل المقالات والشهادات
+// ==============================================
 async function loadArticles() {
     try {
         const res = await fetch('/api/articles');
@@ -359,14 +503,28 @@ function animateCounters() {
     });
 }
 
-// ===== تهيئة الصفحة =====
+// ==============================================
+// 6. تهيئة الصفحة
+// ==============================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تم تحميل الصفحة بالكامل...');
     loadArticles();
     loadTestimonials();
     setTimeout(animateCounters, 600);
-    setTimeout(autoOpenChat, 2000);
+    setTimeout(autoOpenChat, 2500);
     
     // تحديث رصيد الرسائل كل 30 ثانية
     setInterval(updateChatCredits, 30000);
+
+    // إضافة حدث Enter في حقل الإدخال
+    const input = document.getElementById('chatInput');
+    if (input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+    }
 });
+
+console.log('✅ تم تحميل script.js بنجاح');
