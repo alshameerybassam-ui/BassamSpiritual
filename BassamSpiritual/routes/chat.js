@@ -36,10 +36,14 @@ const authenticate = (req, res, next) => {
     }
 };
 
-// دالة الاتصال بـ Gemini مع نظام السياقات
+// دالة الاتصال بـ Gemini مع نظام السياقات (مع سجلات تصحيح)
 async function callGeminiAPI(userMessage, userFullName, userEmail, history) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('مفتاح Gemini غير موجود');
+    if (!apiKey) {
+        console.error('❌ مفتاح Gemini API غير موجود في متغيرات البيئة');
+        throw new Error('مفتاح Gemini غير موجود');
+    }
+    console.log('✅ تم العثور على مفتاح Gemini API (يبدأ بـ: ' + apiKey.substring(0, 10) + '...)');
 
     const systemPrompt = `أنت مستشار روحاني إسلامي متخصص في المنهج الصوفي الروحاني، وتمثل "مركز النور الرباني" بإدارة الشيخ بسام الشميري.
 
@@ -64,16 +68,32 @@ async function callGeminiAPI(userMessage, userFullName, userEmail, history) {
         generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
     };
 
-    const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        requestBody,
-        { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    return response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، لم أستطع فهم سؤالك.';
+    try {
+        console.log('📤 جاري إرسال الطلب إلى Gemini API...');
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            requestBody,
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+        console.log('📥 تم استلام الرد من Gemini API بنجاح.');
+        return response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، لم أستطع فهم سؤالك.';
+    } catch (error) {
+        console.error('❌ فشل الاتصال بـ Gemini API:');
+        if (error.response) {
+            console.error('📌 رمز الحالة:', error.response.status);
+            console.error('📌 بيانات الخطأ:', JSON.stringify(error.response.data, null, 2));
+        } else if (error.request) {
+            console.error('📌 لم يتم استلام رد من الخادم (Network Error)');
+        } else {
+            console.error('📌 خطأ في إعداد الطلب:', error.message);
+        }
+        throw error;
+    }
 }
 
-// مسارات المساعد
+// ==============================================
+// 1. إرسال رسالة إلى المساعد الذكي
+// ==============================================
 router.post('/send', authenticate, async (req, res) => {
     const { message } = req.body;
     if (!message || message.trim().length < 2) {
@@ -118,14 +138,38 @@ router.post('/send', authenticate, async (req, res) => {
     }
 });
 
-router.get('/credits', authenticate, (req, res) => {
+// ==============================================
+// 2. جلب تاريخ المحادثة للمستخدم
+// ==============================================
+router.get('/history', authenticate, (req, res) => {
     const userId = req.userId;
     const history = readChatHistory();
     const userHistory = history.filter(h => h.userId === userId);
     const FREE_LIMIT = 50;
     res.json({
         success: true,
+        history: userHistory,
+        count: userHistory.length,
+        freeMessagesLimit: FREE_LIMIT,
         remaining: Math.max(0, FREE_LIMIT - userHistory.length)
+    });
+});
+
+// ==============================================
+// 3. جلب عدد الرسائل المتبقية
+// ==============================================
+router.get('/credits', authenticate, (req, res) => {
+    const userId = req.userId;
+    const history = readChatHistory();
+    const userHistory = history.filter(h => h.userId === userId);
+    const usedMessages = userHistory.length;
+    const FREE_LIMIT = 50;
+
+    res.json({
+        success: true,
+        usedMessages: usedMessages,
+        freeLimit: FREE_LIMIT,
+        remaining: Math.max(0, FREE_LIMIT - usedMessages)
     });
 });
 
