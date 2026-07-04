@@ -56,14 +56,12 @@ fs.ensureDirSync(DATA_DIR);
 // ==============================================
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
-const chatRoutes = require('./routes/chat');
 
 // ==============================================
 // المسارات العامة
 // ==============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/chat', chatRoutes);
 
 // ==============================================
 // تقديم الملفات الثابتة
