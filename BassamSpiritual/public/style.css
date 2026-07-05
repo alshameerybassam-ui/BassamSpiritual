@@ -1406,3 +1406,32 @@ html, body {
 .btn-service-request i {
     margin-left: 6px;
 }
+/* === الشريط المتحرك الاحترافي (بديل marquee) === */
+.marquee-wrapper {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+}
+
+.marquee-content {
+    display: inline-block;
+    animation: marqueeScroll 20s linear infinite;
+}
+
+.marquee-content span {
+    display: inline-block;
+    margin-left: 50px; /* مسافة بين الجمل */
+    font-size: 0.9rem;
+    color: #ddd;
+    white-space: nowrap;
+}
+
+.marquee-content i {
+    margin-left: 5px;
+    color: #D4AF37;
+}
+
+@keyframes marqueeScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
