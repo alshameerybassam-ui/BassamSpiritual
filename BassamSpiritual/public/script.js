@@ -490,29 +490,6 @@ function animateCounters() {
         updateCounter();
     });
 }
-
-// ==============================================
-// 6. تهيئة الصفحة
-// ==============================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 تم تحميل الصفحة بالكامل...');
-    loadArticles();
-    loadTestimonials();
-    setTimeout(animateCounters, 600);
-    setTimeout(autoOpenChat, 2500);
-    
-    setInterval(updateChatCredits, 30000);
-
-    const input = document.getElementById('chatInput');
-    if (input) {
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        });
-    }
-});
-
 // === كود عداد الأرقام التصاعدي ===
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
@@ -546,6 +523,28 @@ window.addEventListener('scroll', () => {
         countersAnimated = true;
     }
 });
+// ==============================================
+// 6. تهيئة الصفحة
+// ==============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 تم تحميل الصفحة بالكامل...');
+    loadArticles();
+    loadTestimonials();
+    setTimeout(animateCounters, 600);
+    setTimeout(autoOpenChat, 2500);
+    
+    setInterval(updateChatCredits, 30000);
+
+    const input = document.getElementById('chatInput');
+    if (input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+    }
+});
+
 console.log('✅ تم تحميل script.js بنجاح');
 
 // ===== إصلاح الأيقونات (تحميل Font Awesome بشكل آمن) =====
