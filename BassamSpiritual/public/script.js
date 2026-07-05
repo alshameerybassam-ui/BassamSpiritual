@@ -513,6 +513,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// === كود عداد الأرقام التصاعدي ===
+function animateCounters() {
+    const counters = document.querySelectorAll('.counter-number');
+    const speed = 30; // كلما قل الرقم زادت السرعة
+
+    counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        const count = +counter.innerText;
+
+        const inc = target / speed;
+
+        if (count < target) {
+            counter.innerText = Math.ceil(count + inc);
+            setTimeout(animateCounters, 20);
+        } else {
+            counter.innerText = target;
+        }
+    });
+}
+
+// لتشغيل العداد عند التمرير
+let countersAnimated = false;
+window.addEventListener('scroll', () => {
+    const counterSection = document.querySelector('.trust-counter');
+    if (!counterSection) return;
+    const sectionPos = counterSection.getBoundingClientRect().top;
+    const screenPos = window.innerHeight / 1.3;
+
+    if (sectionPos < screenPos && !countersAnimated) {
+        animateCounters();
+        countersAnimated = true;
+    }
+});
 console.log('✅ تم تحميل script.js بنجاح');
 
 // ===== إصلاح الأيقونات (تحميل Font Awesome بشكل آمن) =====
