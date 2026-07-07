@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
     <style>
         .auth-page {
             min-height: 100vh;
@@ -185,7 +187,7 @@
                     <label>الاسم الرباعي <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
                         <i class="fas fa-user"></i>
-                        <input type="text" id="fullName" placeholder="مثال: بسام محمد هزاع الشميري" required>
+                        <input type="text" id="fullName" name="fullName" autocomplete="name" placeholder="مثال: بسام محمد هزاع الشميري" required>
                     </div>
                 </div>
 
@@ -193,7 +195,7 @@
                     <label>البريد الإلكتروني <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="email" placeholder="example@email.com" required>
+                        <input type="email" id="email" name="email" autocomplete="email" placeholder="example@email.com" required>
                     </div>
                 </div>
 
@@ -201,7 +203,7 @@
                     <label>رقم الهاتف (واتساب) <span class="optional">(اختياري)</span></label>
                     <div class="input-wrapper">
                         <i class="fab fa-whatsapp"></i>
-                        <input type="text" id="phone" placeholder="مثال: 777941366">
+                        <input type="text" id="phone" name="phone" autocomplete="tel" placeholder="مثال: 777941366">
                     </div>
                 </div>
 
@@ -209,7 +211,7 @@
                     <label>كلمة المرور <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="password" placeholder="على الأقل 6 أحرف" required minlength="6">
+                        <input type="password" id="password" name="password" autocomplete="new-password" placeholder="على الأقل 6 أحرف" required minlength="6">
                     </div>
                 </div>
 
@@ -217,7 +219,7 @@
                     <label>تأكيد كلمة المرور <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="confirmPassword" placeholder="أعد كتابة كلمة المرور" required>
+                        <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" placeholder="أعد كتابة كلمة المرور" required>
                     </div>
                 </div>
 
@@ -234,7 +236,7 @@
             </form>
 
             <div class="auth-link">
-                لديك حساب بالفعل؟ <a href="/login.html">تسجيل الدخول</a>
+                دليك حساب بالفعل؟ <a href="/login.html">تسجيل الدخول</a>
             </div>
 
             <div style="text-align:center; margin-top:15px;">
@@ -299,7 +301,6 @@
                 const json = await res.json();
 
                 if (json.success) {
-                    // حفظ التوكن والمستخدم في localStorage
                     localStorage.setItem('token', json.token);
                     localStorage.setItem('user', JSON.stringify(json.user));
                     showNotification('✅ تم إنشاء حسابك بنجاح! جاري تحويلك إلى لوحة التحكم...', 'success');
