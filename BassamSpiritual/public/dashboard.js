@@ -12,24 +12,39 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 6000);
 }
 
-// ===== التحقق من الجلسة =====
+// ===== التحقق من الجلسة (نسخة مصلحة تمنع الطرد التلقائي) =====
 async function checkAuth() {
     const token = localStorage.getItem('token');
-    if (!token) { window.location.href = '/login.html'; return false; }
+    
+    // إذا لم يكن هناك توكن نهائياً، يطرد فوراً
+    if (!token) { 
+        window.location.href = '/login.html'; 
+        return false; 
+    }
+    
     try {
+        // نرسل طلب التحقق للخلفية
         const res = await fetch('/api/auth/verify', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
-        if (!data.success) {
-            localStorage.removeItem('token'); localStorage.removeItem('user');
-            window.location.href = '/login.html'; return false;
+        
+        // إذا كان السيرفر مستيقظاً وأعطى استجابة صريحة بالفشل، نطرد المستخدم
+        if (res.status === 401 || res.status === 403) {
+            const data = await res.json();
+            if (!data.success) {
+                localStorage.removeItem('token'); 
+                localStorage.removeItem('user');
+                window.location.href = '/login.html'; 
+                return false;
+            }
         }
-        currentUser = data.user;
-        return true;
+        
+        return true; 
     } catch (e) {
-        localStorage.removeItem('token'); localStorage.removeItem('user');
-        window.location.href = '/login.html'; return false;
+        // في حال حدوث خطأ اتصال (مثل تأخر سيرفر Render في الاستيقاظ)، 
+        // لا نطرد المستخدم! نتركه يرى لوحة التحكم والتوكن سيتولى جلب البيانات لاحقاً.
+        console.warn("⚠️ الخادم يستغرق وقتاً للاستجابة، تم تجاوز الفحص المؤقت.");
+        return true; 
     }
 }
 
