@@ -86,10 +86,12 @@ async function loadDashboard() {
 // ===== عرض الطلبات =====
 function renderRequests(requests) {
     const container = document.getElementById('requestsList');
+    if (!container) return;
+    
     if (!requests || requests.length === 0) {
         container.innerHTML = `
             <div style="text-align:center; padding:30px; color:#6A7A8A;">
-                <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
                 لا توجد طلبات حتى الآن. اضغط على "طلب جديد" لتقديم طلب.
             </div>
         `;
@@ -115,7 +117,7 @@ function renderRequests(requests) {
             </div>
             <div class="description">${req.description ? req.description.substring(0, 100) + (req.description.length > 100 ? '...' : '') : ''}</div>
             <div class="actions">
-                <button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-gold"><i class="fas fa-eye"></i> عرض</button>
+                <button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-gold"><i class="bi bi-eye"></i> عرض</button>
             </div>
         </div>
     `).join('');
@@ -134,6 +136,8 @@ async function viewRequest(id) {
 
         const req = data.request;
         const modal = document.getElementById('requestDetailsModal');
+        if (!modal) return;
+        
         document.getElementById('requestDetailsContent').innerHTML = `
             <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:15px;">
                 <p><strong>📅 التاريخ:</strong> ${new Date(req.createdAt).toLocaleString('ar-EG')}</p>
@@ -163,13 +167,16 @@ async function viewRequest(id) {
 
 // ===== فتح وإغلاق مودال الطلب الجديد =====
 function openNewRequestModal() {
-    document.getElementById('newRequestModal').classList.add('show');
+    const modal = document.getElementById('newRequestModal');
+    if (modal) modal.classList.add('show');
 }
 function closeNewRequestModal() {
-    document.getElementById('newRequestModal').classList.remove('show');
+    const modal = document.getElementById('newRequestModal');
+    if (modal) modal.classList.remove('show');
 }
 function closeDetailsModal() {
-    document.getElementById('requestDetailsModal').classList.remove('show');
+    const modal = document.getElementById('requestDetailsModal');
+    if (modal) modal.classList.remove('show');
 }
 
 // ===== تقديم طلب جديد =====
@@ -187,12 +194,16 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
 
     const btn = this.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> جاري الإرسال...';
 
     try {
+        // تم تأمين الطلب وإرسال الـ Authorization هيدر لمنع خطأ 401
         const res = await fetch('/api/dashboard/request', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
             body: JSON.stringify({ serviceType, description, contactMethod })
         });
         const data = await res.json();
@@ -200,6 +211,7 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
             showNotification('✅ ' + data.message, 'success');
             closeNewRequestModal();
             loadDashboard();
+            this.reset(); // تفريغ الحقول بعد النجاح
         } else {
             showNotification('❌ ' + (data.error || 'فشل إرسال الطلب'), 'error');
         }
@@ -207,22 +219,24 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
         showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
     }
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
+    btn.innerHTML = '<i class="bi bi-send"></i> إرسال الطلب';
 });
 
 // ===== تسجيل الخروج =====
 function logout() {
     if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-        localStorage.removeItem('token'); localStorage.removeItem('user');
+        localStorage.removeItem('token'); 
+        localStorage.removeItem('user');
         window.location.href = '/login.html';
     }
 }
 
 // ===== تبويبات =====
 function showTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    document.getElementById('tabRequests').style.display = 'block';
-    document.getElementById('tabRequestsBtn').className = 'btn-primary';
+    const tabReq = document.getElementById('tabRequests');
+    const tabBtn = document.getElementById('tabRequestsBtn');
+    if (tabReq) tabReq.style.display = 'block';
+    if (tabBtn) tabBtn.className = 'btn-primary';
 }
 
 // ===== تهيئة الصفحة =====
