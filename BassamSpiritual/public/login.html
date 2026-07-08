@@ -193,18 +193,32 @@
             setTimeout(() => notification.classList.remove('show'), 6000);
         }
 
-        // التحقق من وجود جلسة مسبقة
+        // توجيه ذكي مخصص بناءً على الرتبة المحددة (Admin أو User)
+        function redirectUserBasedOnRole(user) {
+            if (user && user.role === 'admin') {
+                showNotification('✨ مرحباً بك يا فضيلة الشيخ بسام! جاري توجيهك للوحة الإدارة...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin.html';
+                }, 1500);
+            } else {
+                showNotification('✅ مرحباً بعودتك! جاري تحويلك إلى لوحة التحكم...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1500);
+            }
+        }
+
+        // التحقق الذكي من وجود جلسة مسبقة عند دخول الصفحة
         (function checkExistingSession() {
             const token = localStorage.getItem('token');
             if (token) {
-                // إذا كان هناك توكن، نتحقق من صلاحيته
                 fetch('/api/auth/verify', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        window.location.href = '/dashboard.html';
+                    if (data.success && data.user) {
+                        redirectUserBasedOnRole(data.user);
                     } else {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
@@ -242,10 +256,9 @@
                 if (json.success) {
                     localStorage.setItem('token', json.token);
                     localStorage.setItem('user', JSON.stringify(json.user));
-                    showNotification('✅ مرحباً بعودتك! جاري تحويلك إلى لوحة التحكم...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/dashboard.html';
-                    }, 1200);
+                    
+                    // استدعاء التوجيه الذكي بعد تسجيل الدخول الناجح مباشرة
+                    redirectUserBasedOnRole(json.user);
                 } else {
                     showNotification('❌ ' + (json.error || 'بيانات الدخول غير صحيحة.'), 'error');
                     loginBtn.disabled = false;
