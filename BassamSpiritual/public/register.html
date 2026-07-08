@@ -236,7 +236,7 @@
             </form>
 
             <div class="auth-link">
-                دليك حساب بالفعل؟ <a href="/login.html">تسجيل الدخول</a>
+                لديك حساب بالفعل؟ <a href="/login.html">تسجيل الدخول</a>
             </div>
 
             <div style="text-align:center; margin-top:15px;">
@@ -293,6 +293,7 @@
             registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
 
             try {
+                // 1. تسجيل الحساب بالسيرفر
                 const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -301,12 +302,46 @@
                 const json = await res.json();
 
                 if (json.success) {
-                    localStorage.setItem('token', json.token);
-                    localStorage.setItem('user', JSON.stringify(json.user));
-                    showNotification('✅ تم إنشاء حسابك بنجاح! جاري تحويلك إلى لوحة التحكم...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/dashboard.html';
-                    }, 1500);
+                    
+                    // 🔥 الحل الاحترافي والذكي لمنع الطرد:
+                    // إذا كان السيرفر لم يرسل التوكن في دالة التسجيل، نقوم بعمل تسجيل دخول صامت فوراً في الخلفية لجلب التوكن
+                    let finalToken = json.token;
+                    let finalUser = json.user;
+
+                    if (!finalToken) {
+                        try {
+                            const loginRes = await fetch('/api/auth/login', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email, password })
+                            });
+                            const loginJson = await loginRes.json();
+                            if (loginJson.success) {
+                                finalToken = loginJson.token;
+                                finalUser = loginJson.user;
+                            }
+                        } catch (err) {
+                            console.error("خطأ تسجيل الدخول الصامت المعالج:", err);
+                        }
+                    }
+
+                    // حفظ البيانات المؤكدة بنسبة 100%
+                    if (finalToken) {
+                        localStorage.setItem('token', finalToken);
+                        localStorage.setItem('user', JSON.stringify(finalUser || { fullName, email }));
+                        
+                        showNotification('✅ تم إنشاء حسابك بنجاح! جاري تحويلك إلى لوحة التحكم...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/dashboard.html';
+                        }, 1500);
+                    } else {
+                        // إذا فشل جلب التوكن تماماً، نوجهه لصفحة تسجيل الدخول العادية ليدخل بأمان بدلاً من طرده المفاجئ
+                        showNotification('✅ تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول لأول مرة.', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 2000);
+                    }
+
                 } else {
                     showNotification('❌ ' + (json.error || 'حدث خطأ في التسجيل. يرجى المحاولة مرة أخرى.'), 'error');
                     registerBtn.disabled = false;
