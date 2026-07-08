@@ -8,39 +8,41 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- تم استبدال Font Awesome برابط مكتبة Bootstrap Icons المستقرة -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
 
-<!-- ===== الإشعارات ===== -->
+    <!-- ===== الإشعارات ===== -->
     <div id="notification" class="notification"></div>
 
     <!-- ===== شريط الخدمات المتحرك ===== -->
     <div class="marquee-wrapper">
         <div class="marquee-content">
-            <span><i class="fas fa-star"></i> بسم الله الرحمن الرحيم</span>
-            <span><i class="fas fa-shield-alt"></i> { مركز النور الرباني والنَفَس الرحماني للعلاج بالطرق الشرعية بموجب المنح الرباني والنفح الرحماني.. بعيداً عن السحر والشعوذة والله علينا رقيباً وحسيبا</span>
-            <span><i class="fas fa-shield-alt"></i> { المعوذات } علاج العين الحاسدة والعاشقة والمتمردة</span>
-            <span><i class="fas fa-shield-alt"></i> علاج تمرد القرين (تمرد النفس)</span>
-            <span><i class="fas fa-star"></i> تعطيل الاسحار والنحوسات وإبطال الاسحار الفلكية</span>
-            <span><i class="fas fa-star"></i> اصلاح ذات البين وازالة اسباب النفور بين الزوجين</span>
-            <span><i class="fas fa-star"></i> استشارات روحانية ونفسية وتأويل الرؤى المنامية</span>
+            <span><i class="bi bi-star-fill"></i> بسم الله الرحمن الرحيم</span>
+            <span><i class="bi bi-shield-lock-fill"></i> { مركز النور الرباني والنَفَس الرحماني للعلاج بالطرق الشرعية بموجب المنح الرباني والنفح الرحماني.. بعيداً عن السحر والشعوذة والله علينا رقيباً وحسيبا</span>
+            <span><i class="bi bi-shield-lock-fill"></i> { المعوذات } علاج العين الحاسدة والعاشقة والمتمردة</span>
+            <span><i class="bi bi-shield-lock-fill"></i> علاج تمرد القرين (تمرد النفس)</span>
+            <span><i class="bi bi-star-fill"></i> تعطيل الاسحار والنحوسات وإبطال الاسحار الفلكية</span>
+            <span><i class="bi bi-star-fill"></i> اصلاح ذات البين وازالة اسباب النفور بين الزوجين</span>
+            <span><i class="bi bi-star-fill"></i> استشارات روحانية ونفسية وتأويل الرؤى المنامية</span>
         </div>
     </div>
     
     <div class="header-actions">
         <div class="header-buttons">
             <a href="/login.html" class="btn-header btn-request" id="requestBtn">
-                <i class="fas fa-pen"></i> قدم طلبك الآن
+                <i class="bi bi-pencil-square"></i> قدم طلبك الآن
             </a>
             <a href="/register.html" class="btn-header btn-register" id="registerBtn">
-                <i class="fas fa-user-plus"></i> سجل الآن
+                <i class="bi bi-person-plus-fill"></i> سجل الآن
             </a>
             <a href="/login.html" class="btn-header btn-login" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> دخول
+                <i class="bi bi-box-arrow-in-left"></i> دخول
             </a>
             <a href="/dashboard.html" class="btn-header btn-dashboard" id="dashboardLink" style="display:none;">
-                <i class="fas fa-user"></i> حسابي
+                <i class="bi bi-person-circle"></i> حسابي
             </a>
         </div>
     </div>
@@ -48,33 +50,33 @@
     <div class="container">
         <div class="hero">
             <div class="hero-glow"></div>
-            <div class="hero-badge"><i class="fas fa-certificate"></i> مركز معتمد للاستشفاء الروحي</div>
+            <div class="hero-badge"><i class="bi bi-patch-check-fill"></i> مركز معتمد للاستشفاء الروحي</div>
             <h1>مركز <span>النور الرباني</span> <br>و<span>النَفَس الرحماني</span></h1>
             <p class="sub-title">﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
             <div class="management-line">
-                <i class="fas fa-crown"></i>
+                <i class="bi bi-award-fill"></i>
                 بإدارة الشيخ <strong>بسام الشميري</strong> <span class="lineage-tag">(آل الكدهي)</span>
             </div>
             <div class="expert-badges">
-                <span class="badge"><i class="fas fa-book-quran"></i> راقي شرعي</span>
-                <span class="badge"><i class="fas fa-hand-holding-heart"></i> معالج روحاني</span>
-                <span class="badge"><i class="fas fa-brain"></i> مستشار نفسي</span>
+                <span class="badge"><i class="bi bi-book-half"></i> راقي شرعي</span>
+                <span class="badge"><i class="bi bi-heart-pulse-fill"></i> معالج روحاني</span>
+                <span class="badge"><i class="bi bi-activity"></i> مستشار نفسي</span>
             </div>
             <div class="lineage-link">
                 <a href="/about-sheikh.html" class="btn-lineage-classic">
-                    <i class="fas fa-tree"></i>
+                    <i class="bi bi-tree-fill"></i>
                     النسب الشريف للشيخ بسام الشميري
                     <span class="lineage-underline"></span>
                 </a>
             </div>
             <div class="hero-cta">
                 <button onclick="toggleChat()" class="btn-hero-chat">
-                    <i class="fas fa-robot" style="color:#FFFFFF;"></i>
+                    <i class="bi bi-robot" style="color:#FFFFFF;"></i>
                     تحدث مع المستشار الروحاني الذكي
                     <span class="btn-pulse-ring"></span>
                 </button>
                 <p style="font-size:0.85rem; color:#6A7A8A; margin-top:10px;">
-                    <i class="fas fa-shield-alt" style="color:#F5B041;"></i>
+                    <i class="bi bi-shield-fill-check" style="color:#F5B041;"></i>
                     محادثة آمنة وسرية تامة
                 </p>
             </div>
@@ -85,11 +87,11 @@
 
         <div class="trust-card">
             <div class="trust-icon">
-                <i class="fas fa-shield-alt"></i>
-                <i class="fas fa-lock lock-overlay"></i>
+                <i class="bi bi-shield-shaded"></i>
+                <i class="bi bi-lock-fill lock-overlay"></i>
             </div>
             <div class="trust-content">
-                <h3><i class="fas fa-check-circle"></i> عهد السرية التامة لجميع خدمات المركز</h3>
+                <h3><i class="bi bi-check-circle-fill"></i> عهد السرية التامة لجميع خدمات المركز</h3>
                 <p>
                     نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن.
                     <strong>السرية التامة هي عهدنا المقدس مع كل مستفيد</strong>،
@@ -98,11 +100,11 @@
                     ولا تتجاوز أسرارك جدران هذا المركز المبارك، مهما كان نوع الخدمة التي تختارها.
                 </p>
                 <p class="trust-assurance">
-                    <i class="fas fa-feather-alt"></i>
+                    <i class="bi bi-feather"></i>
                     تحدث بكل راحة واطمئنان.. فأنت في ملاذٍ آمنٍ بإذن الله.
                 </p>
                 <div class="trust-seal">
-                    <i class="fas fa-certificate"></i>
+                    <i class="bi bi-patch-check-fill"></i>
                     <span>سياسة السرية تشمل جميع الخدمات: الاستشارات، العلاج، والجلسات الصوتية</span>
                 </div>
             </div>
@@ -110,22 +112,22 @@
 
         <div class="trust-counter">
             <div class="counter-item">
-                <i class="fas fa-heart"></i>
+                <i class="bi bi-heart-fill"></i>
                 <span class="counter-number" data-target="963">0</span>
                 <p>حالة تم علاجها</p>
             </div>
             <div class="counter-item">
-                <i class="fas fa-star"></i>
+                <i class="bi bi-star-fill"></i>
                 <span class="counter-number" data-target="98">0</span>
                 <p>% نسبة الرضا</p>
             </div>
             <div class="counter-item">
-                <i class="fas fa-users"></i>
+                <i class="bi bi-people-fill"></i>
                 <span class="counter-number" data-target="498">0</span>
                 <p>حالة استشفاء روحي</p>
             </div>
             <div class="counter-item">
-                <i class="fas fa-clock"></i>
+                <i class="bi bi-clock-history"></i>
                 <span class="counter-number" data-target="9">0</span>
                 <p>سنوات من الخبرة</p>
             </div>
@@ -134,7 +136,7 @@
         <!-- ===== قسم المقالات ===== -->
         <section class="section">
             <div class="section-header">
-                <h2><i class="fas fa-feather-alt"></i> مقالات روحية</h2>
+                <h2><i class="bi bi-feather"></i> مقالات روحية</h2>
                 <span>كنوز من النور والمعرفة</span>
             </div>
             <div id="articlesContainer" class="articles-grid">
@@ -143,48 +145,48 @@
         </section>
 
         <!-- ===== قسم الخدمات ===== -->
-<section class="section">
-    <div class="section-header">
-        <h2><i class="fas fa-crown"></i> خدماتنا الروحية</h2>
-        <span>اختر ما يناسبك</span>
-    </div>
-    <div class="services-grid">
-        <!-- بطاقة الخدمة الأولى -->
-        <div class="service-card gold-card">
-            <i class="fas fa-hand-holding-heart"></i>
-            <h4>الاستشارة الروحانية والنفسية وتأويل الرؤى المنامية</h4>
-            <p>توجيه وعلاج بالطاقة الربانية، وكشف الخداع والوهم النفساني</p>
-            <a href="/login.html" class="btn-service-request">
-                <i class="fas fa-pen"></i> قدم طلبك الآن
-            </a>
-        </div>
+        <section class="section">
+            <div class="section-header">
+                <h2><i class="bi bi-gem"></i> خدماتنا الروحية</h2>
+                <span>اختر ما يناسبك</span>
+            </div>
+            <div class="services-grid">
+                <!-- بطاقة الخدمة الأولى -->
+                <div class="service-card gold-card">
+                    <i class="bi bi-heart-fill"></i>
+                    <h4>الاستشارة الروحانية والنفسية وتأويل الرؤى المنامية</h4>
+                    <p>توجيه وعلاج بالطاقة الربانية، وكشف الخداع والوهم النفساني</p>
+                    <a href="/login.html" class="btn-service-request">
+                        <i class="bi bi-pencil-square"></i> قدم طلبك الآن
+                    </a>
+                </div>
 
-        <!-- بطاقة الخدمة الثانية -->
-        <div class="service-card gold-card">
-            <i class="fas fa-stethoscope"></i>
-            <h4>علاج العين والحسد والأسحار والرصد</h4>
-            <p>علاج جميع الحالات المستعصية، تحصين ورقية شرعية</p>
-            <a href="/login.html" class="btn-service-request">
-                <i class="fas fa-pen"></i> قدم طلبك الآن
-            </a>
-        </div>
+                <!-- بطاقة الخدمة الثانية -->
+                <div class="service-card gold-card">
+                    <i class="bi bi-capsule"></i>
+                    <h4>علاج العين والحسد والأسحار والرصد</h4>
+                    <p>علاج جميع الحالات المستعصية، تحصين ورقية شرعية</p>
+                    <a href="/login.html" class="btn-service-request">
+                        <i class="bi bi-pencil-square"></i> قدم طلبك الآن
+                    </a>
+                </div>
 
-        <!-- بطاقة الخدمة الثالثة -->
-        <div class="service-card gold-card">
-            <i class="fas fa-headphones"></i>
-            <h4>الاتصال الصوتي للشيخ مباشرة</h4>
-            <p>جلسة صوتية مباشرة مع الشيخ بسام الشميري</p>
-            <a href="/login.html" class="btn-service-request">
-                <i class="fas fa-pen"></i> قدم طلبك الآن
-            </a>
-        </div>
-    </div>
-</section>
+                <!-- بطاقة الخدمة الثالثة -->
+                <div class="service-card gold-card">
+                    <i class="bi bi-telephone-inbound-fill"></i>
+                    <h4>الاتصال الصوتي للشيخ مباشرة</h4>
+                    <p>جلسة صوتية مباشرة مع الشيخ بسام الشميري</p>
+                    <a href="/login.html" class="btn-service-request">
+                        <i class="bi bi-pencil-square"></i> قدم طلبك الآن
+                    </a>
+                </div>
+            </div>
+        </section>
 
         <!-- ===== قسم آراء المستفيدين ===== -->
         <section class="section">
             <div class="section-header">
-                <h2><i class="fas fa-quote-right"></i> آراء المستفيدين</h2>
+                <h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2>
                 <span>ما قالوه عن رحلة الشفاء</span>
             </div>
             <div id="testimonialsContainer" class="testimonials-grid">
@@ -196,7 +198,7 @@
     <footer class="footer-new">
         <div class="footer-content">
             <div class="footer-section">
-                <h4><i class="fas fa-shield-alt"></i> مركز النور الرباني والنَفَس الرحماني</h4>
+                <h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4>
                 <p class="footer-desc">
                     رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.
                 </p>
@@ -205,21 +207,21 @@
                 </p>
             </div>
             <div class="footer-section">
-                <h4><i class="fas fa-link"></i> روابط سريعة</h4>
+                <h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4>
                 <ul>
-                    <li><a href="/"><i class="fas fa-arrow-left"></i> الرئيسية</a></li>
-                    <li><a href="/about-sheikh.html"><i class="fas fa-tree"></i> النسب الشريف</a></li>
-                    <li><a href="/register.html"><i class="fas fa-user-plus"></i> تسجيل جديد</a></li>
-                    <li><a href="/login.html"><i class="fas fa-sign-in-alt"></i> دخول</a></li>
-                    <li><a href="/dashboard.html"><i class="fas fa-user"></i> حسابي</a></li>
+                    <li><a href="/"><i class="bi bi-arrow-left-short"></i> الرئيسية</a></li>
+                    <li><a href="/about-sheikh.html"><i class="bi bi-tree-fill"></i> النسب الشريف</a></li>
+                    <li><a href="/register.html"><i class="bi bi-person-plus-fill"></i> تسجيل جديد</a></li>
+                    <li><a href="/login.html"><i class="bi bi-box-arrow-in-left"></i> دخول</a></li>
+                    <li><a href="/dashboard.html"><i class="bi bi-person-circle"></i> حسابي</a></li>
                 </ul>
             </div>
             <div class="footer-section">
-                <h4><i class="fas fa-address-card"></i> معلومات الاتصال</h4>
+                <h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4>
                 <ul class="contact-list">
-                    <li><i class="fas fa-phone"></i> +967777941366 - +967733941363</li>
-                    <li><i class="fas fa-envelope"></i> alshameerybassam@gmail.com</li>
-                    <li><i class="fas fa-globe"></i> bassam-spiritual-center.onrender.com</li>
+                    <li><i class="bi bi-telephone-fill"></i> +967777941366 - +967733941363</li>
+                    <li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li>
+                    <li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li>
                 </ul>
             </div>
         </div>
@@ -231,7 +233,7 @@
     <div id="articleModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 id="modalArticleTitle"><i class="fas fa-feather-alt"></i> عنوان المقال</h3>
+                <h3 id="modalArticleTitle"><i class="bi bi-feather"></i> عنوان المقال</h3>
                 <span class="modal-close" onclick="closeArticleModal()">&times;</span>
             </div>
             <div class="modal-body" id="modalArticleContent">
@@ -244,7 +246,7 @@
     </div>
 
     <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
-        <i class="fas fa-robot"></i>
+        <i class="bi bi-robot"></i>
         <span class="chat-badge">💬</span>
         <div class="chat-pulse"></div>
     </div>
@@ -252,7 +254,7 @@
     <div id="chatWindow" class="chat-window">
         <div class="chat-header">
             <div class="chat-header-info">
-                <i class="fas fa-robot" style="color:#F5B041;"></i>
+                <i class="bi bi-robot" style="color:#F5B041;"></i>
                 <span>المستشار الروحاني الذكي</span>
             </div>
             <button onclick="toggleChat()" class="chat-close">&times;</button>
@@ -268,7 +270,7 @@
         </div>
         <div class="chat-footer">
             <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            <button onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
         </div>
     </div>
 
