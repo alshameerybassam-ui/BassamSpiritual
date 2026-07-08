@@ -265,3 +265,92 @@ router.post('/message/:id', authenticate, (req, res) => {
 });
 
 module.exports = router;
+// ==============================================================================
+// مسارات لوحة التحكم (Admin Dashboard Routes) - مخصصة لـ admin.html و admin.js
+// ==============================================================================
+
+// 1. جلب جميع طلبات المستفيدين للوحة التحكم
+router.get('/requests', (req, res) => {
+    try {
+        const requests = readRequests();
+        
+        // ترتيب الطلبات تلقائياً من الأحدث إلى الأقدم بناءً على تاريخ الإنشاء
+        requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        // تحويل الحقول لتطابق تماماً المسميات المتوقعة في كود admin.js
+        const formattedRequests = requests.map(r => ({
+            id: r.id,
+            _id: r.id, // لضمان التوافق التام مع الكود المصحح لـ admin.js
+            fullName: r.userFullName || "مستفيد غير معروف",
+            email: r.userEmail || "—",
+            phone: r.userPhone || "—",
+            serviceType: r.serviceType || "—",
+            status: r.status || "pending",
+            createdAt: r.createdAt,
+            description: r.description || "",
+            country: r.country || "غير محدد",
+            beneficiary: r.beneficiary || "نفسي",
+            adminReply: (r.adminReplies && r.adminReplies.length > 0) ? r.adminReplies[r.adminReplies.length - 1].text : ""
+        }));
+
+        res.json(formattedRequests);
+    } catch (error) {
+        console.error('❌ خطأ في جلب جميع الطلبات للإدارة:', error.message);
+        res.status(500).json({ error: 'خطأ داخلي في السيرفر أثناء جلب البيانات' });
+    }
+});
+
+// 2. تحديث حالة الطلب وإضافة رد المسؤول (PATCH)
+router.patch('/request/:id', (req, res) => {
+    const { id } = req.params;
+    const { status, adminReply } = req.body;
+
+    try {
+        const requests = readRequests();
+        const index = requests.findIndex(r => r.id == id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: 'الطلب غير موجود بنظام البيانات' });
+        }
+
+        // تحديث الحالة إن أُرسلت
+        if (status) {
+            requests[index].status = status;
+        }
+
+        // إضافة الرد الإداري إلى مصفوفة adminReplies
+        if (adminReply !== undefined) {
+            if (!requests[index].adminReplies) requests[index].adminReplies = [];
+            requests[index].adminReplies.push({
+                text: adminReply,
+                date: new Date().toISOString()
+            });
+        }
+
+        writeRequests(requests);
+        res.json({ success: true, message: '✅ تم تحديث بيانات المستفيد بنجاح' });
+    } catch (error) {
+        console.error('❌ خطأ في تحديث الطلب من الإدارة:', error.message);
+        res.status(500).json({ error: 'فشل السيرفر في تحديث البيانات' });
+    }
+});
+
+// 3. حذف طلب مستفيد نهائياً (DELETE)
+router.delete('/request/:id', (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const requests = readRequests();
+        const filtered = requests.filter(r => r.id != id);
+
+        if (requests.length === filtered.length) {
+            return res.status(404).json({ error: 'الطلب غير موجود أو تم حذفه مسبقاً' });
+        }
+
+        writeRequests(filtered);
+        res.json({ success: true, message: '🗑 تم حذف الطلب من السجلات بنجاح' });
+    } catch (error) {
+        console.error('❌ خطأ في حذف الطلب من السجلات:', error.message);
+        res.status(500).json({ error: 'فشل السيرفر في معالجة طلب الحذف' });
+    }
+});
