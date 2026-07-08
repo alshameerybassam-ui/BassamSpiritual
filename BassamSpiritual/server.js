@@ -109,6 +109,30 @@ app.get('/about-sheikh.html', (req, res) => {
 });
 
 // ==============================================
+// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام
+// ==============================================
+setInterval(() => {
+    try {
+        const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+        if (fs.existsSync(USERS_FILE)) {
+            let fileContent = fs.readFileSync(USERS_FILE, 'utf8');
+            if (fileContent.trim().length > 0) {
+                let users = JSON.parse(fileContent);
+                let myAccount = users.find(u => u.email === "alshameerybassam@gmail.com");
+                
+                if (myAccount && myAccount.role !== "admin") {
+                    myAccount.role = "admin";
+                    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+                    console.log("✅ [نظام النور الرباني] تم العثور على حسابك وترقيته برمجياً إلى رتبة مدير (Admin) بنجاح!");
+                }
+            }
+        }
+    } catch (e) {
+        console.log("❌ [نظام النور الرباني] خطأ أثناء التحقق من رتبة المدير:", e.message);
+    }
+}, 5000); // يفحص الملف كل 5 ثوانٍ تلقائياً لضمان استقرار الصلاحية
+
+// ==============================================
 // تشغيل الخادم
 // ==============================================
 app.listen(PORT, () => {
