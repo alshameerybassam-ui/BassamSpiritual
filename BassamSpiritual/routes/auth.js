@@ -19,7 +19,7 @@ const readUsers = () => JSON.parse(fs.readFileSync(USERS_FILE));
 const writeUsers = (data) => fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// 1. تسجيل مستخدم جديد
+// 1. تسجيل مستخدم جديد (مستفيد)
 // ==============================================
 router.post('/register',
     [
@@ -50,6 +50,7 @@ router.post('/register',
             email,
             phone: phone || '',
             password: hashedPassword,
+            role: 'user', // يتم تسجيل أي شخص جديد كـ مستفيد تلقائياً 👤
             createdAt: new Date().toISOString(),
             isActive: true,
             spiritualProfile: { notifications: [], articles: [], ruqya: [], dailyWirds: [] },
@@ -60,8 +61,9 @@ router.post('/register',
         users.push(newUser);
         writeUsers(users);
 
+        // تشفير البيانات داخل التوكن مع الرتبة
         const token = jwt.sign(
-            { id: newUser.id, email: newUser.email, fullName: newUser.fullName },
+            { id: newUser.id, email: newUser.email, fullName: newUser.fullName, role: newUser.role },
             JWT_SECRET,
             { expiresIn: '30d' }
         );
@@ -74,6 +76,7 @@ router.post('/register',
                 fullName: newUser.fullName,
                 email: newUser.email,
                 phone: newUser.phone,
+                role: newUser.role,
                 createdAt: newUser.createdAt
             }
         });
@@ -81,7 +84,7 @@ router.post('/register',
 );
 
 // ==============================================
-// 2. تسجيل الدخول
+// 2. تسجيل الدخول الذكي (يفصل بين العميل والمدير)
 // ==============================================
 router.post('/login',
     [
@@ -111,8 +114,14 @@ router.post('/login',
             return res.status(401).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
         }
 
+        // إذا لم يكن للمستخدم رتبة مسبقة نضع له رتبة user افتراضية حماية للنظام
+        if (!user.role) {
+            user.role = 'user';
+        }
+
+        // تشفير الرتبة الـ role داخل التوكن لضمان الأمان بالأجهزة الأخرى
         const token = jwt.sign(
-            { id: user.id, email: user.email, fullName: user.fullName },
+            { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
             JWT_SECRET,
             { expiresIn: '30d' }
         );
@@ -125,6 +134,7 @@ router.post('/login',
                 fullName: user.fullName,
                 email: user.email,
                 phone: user.phone,
+                role: user.role, // إرسال الرتبة للمتصفح ليقوم بالتوجيه الصحيح
                 createdAt: user.createdAt
             }
         });
@@ -132,7 +142,7 @@ router.post('/login',
 );
 
 // ==============================================
-// 3. التحقق من صحة الرمز (للحفاظ على الجلسة)
+// 3. التحقق من صحة الرمز للحفاظ على الجلسة
 // ==============================================
 router.post('/verify', (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -153,7 +163,8 @@ router.post('/verify', (req, res) => {
                 id: user.id,
                 fullName: user.fullName,
                 email: user.email,
-                phone: user.phone
+                phone: user.phone,
+                role: user.role || 'user'
             }
         });
     } catch (e) {
