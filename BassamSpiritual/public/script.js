@@ -10,22 +10,11 @@ function showNotification(msg, type = 'success') {
 }
 
 // ==============================================
-// 2. إصلاح الأيقونات (تحميل Font Awesome بشكل آمن)
+// 2. تم الاستغناء عن كود التحقق من Font Awesome المسبب للمشاكل
 // ==============================================
-(function ensureFontAwesome() {
-    const existingLink = document.querySelector('link[href*="font-awesome"]');
-    if (!existingLink) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
-        link.crossOrigin = 'anonymous';
-        document.head.appendChild(link);
-        console.log('✅ Font Awesome تم تحميله تلقائياً');
-    }
-})();
 
 // ==============================================
-// 3. التحقق من الجلسة في الواجهة الرئيسية
+// 3. التحقق من الجلسة في الواجهة الرئيسية (بأيقونات بوتستراب الجديدة)
 // ==============================================
 (function checkSessionOnHome() {
     const token = localStorage.getItem('token');
@@ -41,11 +30,11 @@ function showNotification(msg, type = 'success') {
         if (loginBtn) loginBtn.style.display = 'none';
         if (dashboardLink) {
             dashboardLink.style.display = 'inline-flex';
-            dashboardLink.innerHTML = `<i class="fas fa-user"></i> مرحباً، ${user.fullName.split(' ')[0]}`;
+            dashboardLink.innerHTML = `<i class="bi bi-person-circle"></i> مرحباً، ${user.fullName.split(' ')[0]}`;
         }
         if (requestBtn) {
             requestBtn.href = '/dashboard.html';
-            requestBtn.innerHTML = '<i class="fas fa-pen"></i> قدم طلبك الآن';
+            requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> قدم طلبك الآن';
         }
     } else {
         if (registerBtn) registerBtn.style.display = 'inline-flex';
@@ -53,7 +42,7 @@ function showNotification(msg, type = 'success') {
         if (dashboardLink) dashboardLink.style.display = 'none';
         if (requestBtn) {
             requestBtn.href = '/login.html';
-            requestBtn.innerHTML = '<i class="fas fa-pen"></i> قدم طلبك الآن';
+            requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> قدم طلبك الآن';
         }
     }
 })();
@@ -69,7 +58,7 @@ const chatScenarios = {
         next: 'problem'
     },
     problem: {
-        message: 'شكراً لك على المشاركة.\n🔹 هل هذه المشكلة مرتبطة بالروح (خوف، وسواس، عين، سحر)، أم بالنفس (قلق، اكتئاب، توتر)، أم بالجسد (ألم، مرض)؟\n(اختر: روح / نفس / جسد / لا أعرف)',
+        message: 'شكراً لك على المشاركة.\n🔹 هل هذه المشكلة مرتبطة بالروح (خوف، وسواس, عين، سحر)، أم بالنفس (قلق، اكتئاب، توتر)، أم بالجسد (ألم، مرض)؟\n(اختر: روح / نفس / جسد / لا أعرف)',
         next: 'duration'
     },
     duration: {
@@ -114,7 +103,7 @@ const chatScenarios = {
 
 📝 ${recommendation}
 
-🔹 هل ترغب في نقل هذه المعلومات إلى نموذج الطلب وتقديم طلبك الآن؟
+🔹 هل ترغب في نقل هذه المعلومات إلى نموذج الطلب وتقديم طلبك الآن?
         `;
         // حفظ البيانات للاستخدام في النقل
         window._chatData = {
@@ -140,15 +129,16 @@ let hasAutoOpened = false;
 
 // ===== فتح/إغلاق نافذة الدردشة =====
 function toggleChat() {
-    const window = document.getElementById('chatWindow');
-    const isShowing = window.classList.contains('show');
+    const chatWin = document.getElementById('chatWindow');
+    if (!chatWin) return;
+    const isShowing = chatWin.classList.contains('show');
     if (!isShowing) {
         sessionStorage.removeItem('chat_manual_closed');
     } else {
         sessionStorage.setItem('chat_manual_closed', 'true');
     }
-    window.classList.toggle('show');
-    if (window.classList.contains('show')) {
+    chatWin.classList.toggle('show');
+    if (chatWin.classList.contains('show')) {
         document.getElementById('chatInput').focus();
         const badge = document.querySelector('.chat-badge');
         if (badge) badge.style.display = 'none';
@@ -229,10 +219,10 @@ async function sendChatMessage() {
             actionDiv.innerHTML = `
                 <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041;">
                     <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%;">
-                        <i class="fas fa-arrow-left"></i> نقل إلى نموذج الطلب
+                        <i class="bi bi-arrow-left-short"></i> نقل إلى نموذج الطلب
                     </button>
                     <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:8px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; margin-top:8px; width:100%;">
-                        <i class="fas fa-undo"></i> بدء محادثة جديدة
+                        <i class="bi bi-arrow-counterclockwise"></i> بدء محادثة جديدة
                     </button>
                 </div>
             `;
@@ -298,11 +288,13 @@ function resetChat() {
     };
     window._chatData = null;
     const body = document.getElementById('chatBody');
-    body.innerHTML = `
-        <div class="chat-message bot">
-            <div class="message-content">${chatScenarios.intro.message.replace(/\n/g, '<br>')}</div>
-        </div>
-    `;
+    if (body) {
+        body.innerHTML = `
+            <div class="chat-message bot">
+                <div class="message-content">${chatScenarios.intro.message.replace(/\n/g, '<br>')}</div>
+            </div>
+        `;
+    }
     sessionStorage.removeItem('chat_manual_closed');
     hasAutoOpened = false;
 }
@@ -373,7 +365,7 @@ function autoOpenChat() {
 }
 
 // ==============================================
-// 5. تحميل المقالات والشهادات
+// 5. تحميل المقالات والشهادات (بأيقونات بوتستراب)
 // ==============================================
 async function loadArticles() {
     try {
@@ -388,14 +380,15 @@ async function loadArticles() {
         }
         container.innerHTML = articles.map(article => {
             const summary = article.summary || (article.content ? article.content.substring(0, 80) + '...' : '');
+            // تم تحويل أيقونة المقال الافتراضية إلى bi bi-book
             return `
                 <div class="article-card" data-id="${article.id}" style="cursor:pointer;">
-                    <i class="${article.icon || 'fa-solid fa-book'} icon"></i>
+                    <i class="${article.icon || 'bi bi-book'} icon"></i>
                     <h3>${article.title}</h3>
                     <p>${summary}</p>
-                    <span class="date"><i class="far fa-calendar-alt"></i> ${article.date || 'تاريخ غير محدد'}</span>
+                    <span class="date"><i class="bi bi-calendar3"></i> ${article.date || 'تاريخ غير محدد'}</span>
                     <span style="display:block; margin-top:12px; color:#F5B041; font-weight:600; font-size:0.85rem;">
-                        <i class="fas fa-arrow-left"></i> اضغط لقراءة المزيد
+                        <i class="bi bi-arrow-left-short"></i> اضغط لقراءة المزيد
                     </span>
                 </div>
             `;
@@ -421,9 +414,9 @@ async function openArticle(articleId) {
             showNotification('⚠️ المقال غير موجود', 'error');
             return;
         }
-        document.getElementById('modalArticleTitle').innerHTML = `<i class="fas fa-feather-alt"></i> ${article.title}`;
+        document.getElementById('modalArticleTitle').innerHTML = `<i class="bi bi-feather"></i> ${article.title}`;
         let contentHtml = article.content ? article.content.replace(/\n/g, '<br>') : '<p>لا يوجد محتوى مكتوب لهذا المقال بعد.</p>';
-        contentHtml += `<span class="article-date"><i class="far fa-calendar-alt"></i> نشر في: ${article.date || 'تاريخ غير محدد'}</span>`;
+        contentHtml += `<span class="article-date"><i class="bi bi-calendar3"></i> نشر في: ${article.date || 'تاريخ غير محدد'}</span>`;
         document.getElementById('modalArticleContent').innerHTML = contentHtml;
         document.getElementById('articleModal').classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -433,7 +426,8 @@ async function openArticle(articleId) {
 }
 
 function closeArticleModal() {
-    document.getElementById('articleModal').classList.remove('show');
+    const modal = document.getElementById('articleModal');
+    if (modal) modal.classList.remove('show');
     document.body.style.overflow = 'auto';
 }
 
@@ -459,7 +453,7 @@ async function loadTestimonials() {
             const stars = '★'.repeat(Math.min(t.rating || 5, 5)) + '☆'.repeat(Math.max(5 - (t.rating || 5), 0));
             return `
                 <div class="testimonial-card">
-                    <div class="stars">${stars}</div>
+                    <div class="stars" style="color:#F5B041;">${stars}</div>
                     <p class="content">"${t.content}"</p>
                     <div class="name">- ${t.name}</div>
                     <span class="date">${t.date || ''}</span>
@@ -471,46 +465,26 @@ async function loadTestimonials() {
     }
 }
 
+// === كود عداد الأرقام التصاعدي المتطور والمحسن ===
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
-    counters.forEach(counter => {
-        const target = parseInt(counter.getAttribute('data-target'));
-        if (!target) return;
-        let current = 0;
-        const increment = target / 80;
-        const updateCounter = () => {
-            current += increment;
-            if (current < target) {
-                counter.innerText = Math.ceil(current);
-                requestAnimationFrame(updateCounter);
-            } else {
-                counter.innerText = target + (target > 100 ? '+' : '');
-            }
-        };
-        updateCounter();
-    });
-}
-// === كود عداد الأرقام التصاعدي ===
-function animateCounters() {
-    const counters = document.querySelectorAll('.counter-number');
-    const speed = 30; // كلما قل الرقم زادت السرعة
+    const speed = 30;
 
     counters.forEach(counter => {
         const target = +counter.getAttribute('data-target');
         const count = +counter.innerText;
-
         const inc = target / speed;
 
         if (count < target) {
             counter.innerText = Math.ceil(count + inc);
             setTimeout(animateCounters, 20);
         } else {
-            counter.innerText = target;
+            counter.innerText = target + (target > 100 ? '+' : '');
         }
     });
 }
 
-// لتشغيل العداد عند التمرير
+// تشغيل العداد عند التمرير بشكل احترافي
 let countersAnimated = false;
 window.addEventListener('scroll', () => {
     const counterSection = document.querySelector('.trust-counter');
@@ -523,11 +497,12 @@ window.addEventListener('scroll', () => {
         countersAnimated = true;
     }
 });
+
 // ==============================================
-// 6. تهيئة الصفحة
+// 6. تهيئة الصفحة والبدء العملي للخدمات
 // ==============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 تم تحميل الصفحة بالكامل...');
+    console.log('🚀 تم تحميل اللوحة الرئيسية بالكامل والمكتبة مستقرة بنسبة 100%');
     loadArticles();
     loadTestimonials();
     setTimeout(animateCounters, 600);
@@ -545,18 +520,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-console.log('✅ تم تحميل script.js بنجاح');
-
-// ===== إصلاح الأيقونات (تحميل Font Awesome بشكل آمن) =====
-(function ensureFontAwesome() {
-    // التحقق من وجود أي رابط لـ Font Awesome
-    const existingLink = document.querySelector('link[href*="font-awesome"]');
-    if (!existingLink) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
-        link.crossOrigin = 'anonymous';
-        document.head.appendChild(link);
-        console.log('✅ Font Awesome تم تحميله تلقائياً');
-    }
-})();
+console.log('✅ تم تحميل التحديث البرمجي الخالي من فونت أوسم بنجاح');
