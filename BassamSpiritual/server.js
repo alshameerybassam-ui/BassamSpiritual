@@ -27,6 +27,10 @@ const dashboardRouter = require('./routes/dashboard');
 app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 
+// 💡 إذا كان ملف admin.js يطلب مسار مثل /api/admin فقم بفك التعليق عن السطرين التاليين:
+// const adminRouter = require('./routes/admin'); 
+// app.use('/api/admin', adminRouter);
+
 // ==============================================
 // 2.5 مسارات ديناميكية للمقالات، الآراء، ورصيد الشات
 // ==============================================
@@ -65,7 +69,7 @@ app.get('/api/testimonials', (req, res) => {
         console.error('خطأ في قراءة ملف الشهادات:', error);
         res.status(500).json({ error: "حدث خطأ أثناء تحميل الآراء" });
     }
-});
+}
 
 // ==============================================
 // 3. التوجيه الذكي للواجهات (SPA Routing)
@@ -79,8 +83,12 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/dashboard.html'));
 });
 
-// أي مسار آخر غير معرف يتم تحويله لصفحة الرئيسية تلقائياً
+// ⚠️ تعديل هام: منع مسار النجمة من اعتراض طلبات الـ API غير الموجودة وإعادة HTML بدلاً منها
 app.get('*', (req, res) => {
+    // إذا كان الطلب يبدأ بـ /api فهذا يعني أنه طلب بيانات خاطئ وليس طلب صفحة ويب، فنعيد خطأ JSON واضح
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ success: false, error: 'مسار الـ API المطلوب غير موجود في السيرفر' });
+    }
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
