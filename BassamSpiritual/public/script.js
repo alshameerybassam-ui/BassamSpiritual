@@ -51,7 +51,6 @@ function showNotification(msg, type = 'success') {
 // 4. المساعد الذكي - سيناريوهات متعددة
 // ==============================================
 
-// تعريف سيناريوهات المحادثة
 const chatScenarios = {
     intro: {
         message: 'السلام عليكم ورحمة الله وبركاته 🌙\nأنا المستشار الروحاني الذكي في مركز النور الرباني.\nأنا هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.\n🔹 هل يمكنك إخباري بما تمر به؟',
@@ -70,7 +69,6 @@ const chatScenarios = {
         next: 'summary'
     },
     summary: function(data) {
-        // تحليل البيانات وتوليد توصية
         let recommendation = '';
         let serviceType = '';
         let price = '';
@@ -103,9 +101,9 @@ const chatScenarios = {
 
 📝 ${recommendation}
 
-🔹 هل ترغب في نقل هذه المعلومات إلى نموذج الطلب وتقديم طلبك الآن?
+🔹 هل ترغب في نقل هذه المعلومات إلى نموذج الطلب وتقديم طلبك الآن؟
         `;
-        // حفظ البيانات للاستخدام في النقل
+        
         window._chatData = {
             problem: data.problem,
             category: data.category || '',
@@ -119,7 +117,6 @@ const chatScenarios = {
     }
 };
 
-// حالة المحادثة
 let chatState = {
     step: 'intro',
     userData: { problem: '', category: '', duration: '', previous: '' },
@@ -127,7 +124,6 @@ let chatState = {
 };
 let hasAutoOpened = false;
 
-// ===== فتح/إغلاق نافذة الدردشة =====
 function toggleChat() {
     const chatWin = document.getElementById('chatWindow');
     if (!chatWin) return;
@@ -139,24 +135,25 @@ function toggleChat() {
     }
     chatWin.classList.toggle('show');
     if (chatWin.classList.contains('show')) {
-        document.getElementById('chatInput').focus();
+        const input = document.getElementById('chatInput');
+        if (input) input.focus();
         const badge = document.querySelector('.chat-badge');
         if (badge) badge.style.display = 'none';
         updateChatCredits();
     }
 }
 
-// ===== إرسال رسالة إلى المساعد الذكي =====
 async function sendChatMessage() {
     const input = document.getElementById('chatInput');
-    const message = input.value.trim();
+    const message = input?.value.trim();
     if (!message || chatState.isProcessing) return;
 
     chatState.isProcessing = true;
     input.disabled = true;
 
-    // عرض رسالة المستخدم فوراً
     const container = document.getElementById('chatBody');
+    if (!container) return;
+
     const userDiv = document.createElement('div');
     userDiv.className = 'chat-message user';
     userDiv.innerHTML = `<div class="message-content">${message}</div>`;
@@ -164,7 +161,6 @@ async function sendChatMessage() {
     container.scrollTop = container.scrollHeight;
     input.value = '';
 
-    // تحديث حالة المحادثة
     const currentStep = chatState.step;
     const data = chatState.userData;
 
@@ -182,29 +178,18 @@ async function sendChatMessage() {
         chatState.step = 'summary';
     }
 
-    // توليد الرد المناسب
     let reply = '';
     let isSummary = false;
 
     if (chatState.step === 'summary') {
         const scenario = chatScenarios.summary;
-        if (typeof scenario === 'function') {
-            reply = scenario(data);
-        } else {
-            reply = scenario || 'شكراً لك على المعلومات. كيف يمكنني مساعدتك أكثر؟';
-        }
+        reply = typeof scenario === 'function' ? scenario(data) : (scenario || 'شكراً لك.');
         isSummary = true;
     } else {
-        const stepKey = chatState.step;
-        const scenario = chatScenarios[stepKey];
-        if (scenario && typeof scenario === 'object') {
-            reply = scenario.message || 'أنا هنا لمساعدتك. أخبرني أكثر.';
-        } else {
-            reply = 'أنا هنا لمساعدتك. أخبرني أكثر.';
-        }
+        const scenario = chatScenarios[chatState.step];
+        reply = scenario?.message || 'أنا هنا لمساعدتك. أخبرني أكثر.';
     }
 
-    // إضافة رد البوت
     const botDiv = document.createElement('div');
     botDiv.className = 'chat-message bot';
     botDiv.innerHTML = `<div class="message-content">${reply.replace(/\n/g, '<br>')}</div>`;
@@ -213,7 +198,6 @@ async function sendChatMessage() {
 
     if (isSummary) {
         setTimeout(() => {
-            const body = document.getElementById('chatBody');
             const actionDiv = document.createElement('div');
             actionDiv.className = 'chat-message bot';
             actionDiv.innerHTML = `
@@ -226,8 +210,8 @@ async function sendChatMessage() {
                     </button>
                 </div>
             `;
-            body.appendChild(actionDiv);
-            body.scrollTop = body.scrollHeight;
+            container.appendChild(actionDiv);
+            container.scrollTop = container.scrollHeight;
         }, 500);
     }
 
@@ -236,7 +220,6 @@ async function sendChatMessage() {
     input.focus();
 }
 
-// ===== نقل البيانات إلى نموذج الطلب =====
 function transferToForm() {
     const data = window._chatData || chatState.userData;
     const description = `[تم إنشاء هذا الطلب عبر المستشار الروحاني الذكي]\n\nالمشكلة: ${data.problem}\nالتصنيف: ${data.category || 'غير محدد'}\nالمدة: ${data.duration || 'غير محدد'}\nالمحاولات السابقة: ${data.previous || 'غير محدد'}\n\nالتوصية: ${data.recommendation || ''}`;
@@ -247,9 +230,7 @@ function transferToForm() {
         showNotification('✅ تم نقل بياناتك إلى نموذج الطلب!', 'success');
     } else {
         showNotification('⚠️ يرجى تسجيل الدخول لتقديم الطلب.', 'error');
-        setTimeout(() => {
-            window.location.href = '/login.html';
-        }, 1500);
+        setTimeout(() => { window.location.href = '/login.html'; }, 1500);
         return;
     }
 
@@ -279,7 +260,6 @@ function transferToForm() {
     resetChat();
 }
 
-// ===== إعادة ضبط المحادثة =====
 function resetChat() {
     chatState = {
         step: 'intro',
@@ -299,7 +279,6 @@ function resetChat() {
     hasAutoOpened = false;
 }
 
-// ===== إنشاء عنصر حالة المحادثة =====
 function createChatStatus() {
     let status = document.getElementById('chatStatus');
     if (!status) {
@@ -314,15 +293,12 @@ function createChatStatus() {
     return status;
 }
 
-// ===== تحديث رصيد الرسائل =====
 async function updateChatCredits() {
     const token = localStorage.getItem('token');
     const status = document.getElementById('chatStatus') || createChatStatus();
     if (!token) {
         if (status) {
-            status.innerHTML = `
-                🔓 غير مسجل. <a href="/login.html" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على 50 رسالة مجانية.
-            `;
+            status.innerHTML = `🔓 غير مسجل. <a href="/login.html" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على 50 رسالة مجانية.`;
         }
         return;
     }
@@ -335,9 +311,7 @@ async function updateChatCredits() {
             if (data.remaining > 0) {
                 status.textContent = `✅ رسائل متبقية: ${data.remaining}`;
             } else {
-                status.innerHTML = `
-                    ⚠️ انتهت رسائلك المجانية. <a href="/dashboard.html" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.
-                `;
+                status.innerHTML = `⚠️ انتهت رسائلك المجانية. <a href="/dashboard.html" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.`;
             }
         }
     } catch (e) {
@@ -345,11 +319,9 @@ async function updateChatCredits() {
     }
 }
 
-// ===== فتح الدردشة تلقائياً =====
 function autoOpenChat() {
     const manualClosed = sessionStorage.getItem('chat_manual_closed');
-    if (manualClosed === 'true') return;
-    if (hasAutoOpened) return;
+    if (manualClosed === 'true' || hasAutoOpened) return;
     hasAutoOpened = true;
     setTimeout(() => {
         const chatWindow = document.getElementById('chatWindow');
@@ -380,7 +352,6 @@ async function loadArticles() {
         }
         container.innerHTML = articles.map(article => {
             const summary = article.summary || (article.content ? article.content.substring(0, 80) + '...' : '');
-            // تم تحويل أيقونة المقال الافتراضية إلى bi bi-book
             return `
                 <div class="article-card" data-id="${article.id}" style="cursor:pointer;">
                     <i class="${article.icon || 'bi bi-book'} icon"></i>
@@ -465,26 +436,29 @@ async function loadTestimonials() {
     }
 }
 
-// === كود عداد الأرقام التصاعدي المتطور والمحسن ===
+// === كود عداد الأرقام التصاعدي المتطور والمحسن (تم تصحيحه) ===
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
-    const speed = 30;
+    const speed = 150; // سرعة الأنيميشن الإجمالية
 
     counters.forEach(counter => {
         const target = +counter.getAttribute('data-target');
-        const count = +counter.innerText;
-        const inc = target / speed;
+        // قمنا بإنشاء دالة تحديث داخلية لكل عداد منفصل بدلاً من الريكيرجن الشامل المسبب للتعليق
+        const updateCount = () => {
+            const count = +counter.innerText.replace('+', '');
+            const inc = Math.ceil(target / speed);
 
-        if (count < target) {
-            counter.innerText = Math.ceil(count + inc);
-            setTimeout(animateCounters, 20);
-        } else {
-            counter.innerText = target + (target > 100 ? '+' : '');
-        }
+            if (count < target) {
+                counter.innerText = Math.min(count + inc, target);
+                setTimeout(updateCount, 15);
+            } else {
+                counter.innerText = target + (target > 100 ? '+' : '');
+            }
+        };
+        updateCount();
     });
 }
 
-// تشغيل العداد عند التمرير بشكل احترافي
 let countersAnimated = false;
 window.addEventListener('scroll', () => {
     const counterSection = document.querySelector('.trust-counter');
