@@ -313,4 +313,11 @@ router.get('/requests', authenticate, requireAdmin, (req, res) => {
             adminReply: (r.adminReplies && r.adminReplies.length > 0) ? r.adminReplies[r.adminReplies.length - 1].text : ""
         }));
 
-        res.
+        res.json({ success: true, requests: formattedRequests });
+    } catch (error) {
+        console.error('❌ خطأ أثناء جلب طلبات لوحة التحكم:', error.message);
+        res.status(500).json({ success: false, error: 'حدث خطأ في السيرفر أثناء جلب البيانات.' });
+    }
+});
+
+module.exports = router;
