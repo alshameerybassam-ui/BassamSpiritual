@@ -18,7 +18,6 @@
             line-height: 2;
             box-shadow: 0 25px 70px rgba(0,0,0,0.08);
             position: relative;
-            direction: rtl; /* ضمان الاتجاه الصحيح للغة العربية */
         }
         
         /* زخارف أركان كلاسيكية مذهبة */
@@ -53,35 +52,7 @@
             font-size: 1.2rem;
             margin: 0;
         }
-
-        /* تصميم رائع ومتواضع لإطار الصورة الشخصية */
-        .profile-image-container {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        .profile-image-wrapper {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            border: 3px solid #D4AF37; /* إطار مذهب ناعم */
-            padding: 5px;
-            background: #FCFBF7;
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .profile-image-wrapper img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            filter: sepia(20%) contrast(105%); 
-        }
         
-        /* فواصل مذهبة قياسية آمنة للمترجمات */
         .gold-divider {
             display: flex;
             align-items: center;
@@ -93,7 +64,7 @@
             content: "";
             flex: 1;
             height: 1px;
-            background: linear-gradient(to right, transparent, #D4AF37, transparent);
+            background: linear-gradient(to var(--direction, right), transparent, #D4AF37, transparent);
         }
         .gold-divider i {
             color: #D4AF37;
@@ -288,21 +259,12 @@
             .doc-header h2 { font-size: 1.9rem; }
             .lineage-node { min-width: 100%; font-size: 1rem; }
             .signature-meta { flex-direction: column; gap: 10px; }
-            .profile-image-wrapper { width: 120px; height: 120px; }
         }
     </style>
 
     <!-- ====== رأس الوثيقة ====== -->
     <div class="doc-header">
         <h2>📜 وثيقة النسب الشريف</h2>
-        
-        <!-- إطار الصورة الشخصية المسار المحلي الآمن والمباشر -->
-        <div class="profile-image-container">
-            <div class="profile-image-wrapper">
-                <img src="/sheikh-bassam.jpg" alt="الشيخ بسام الشميري">
-            </div>
-        </div>
-
         <p>للشيخ الفاضل <strong>بسام بن محمد بن هزاع الشميري</strong> (آل الكدهي)</p>
         
         <div class="gold-divider">
@@ -310,7 +272,7 @@
         </div>
     </div>
 
-    <!-- ====== البسملة والنص التقديمي ====== -->
+    <!-- ====== البسملة والمقدمة ====== -->
     <div class="basmala">بسم الله الرحمن الرحيم</div>
     
     <p class="intro-text">
@@ -320,7 +282,7 @@
         أما بعد، فإن النسب الشريف المحفوظ والمتصل للشيخ <strong>بسام بن محمد بن هزاع الشميري</strong>، والمُثبَت في مشجرات الأسرة وكتب الأنساب المعتمدة المعوّل عليها، ينتظم ويرتفع حلقة بحلقة على هذا الوجه المبارك:
     </p>
 
-    <!-- ====== شجرة النسب العمودية ====== -->
+    <!-- ====== شجرة النسب الهابطة السيادية ====== -->
     <h3 class="tree-title"><i class="bi bi-tree"></i> عمود النسب المتصل</h3>
     
     <div class="lineage-tree">
@@ -390,7 +352,7 @@
         <div class="lineage-connector"></div>
         <div class="lineage-node">بن أمير المؤمنين <strong>علي بن أبي طالب</strong></div>
         <div class="lineage-connector"></div>
-        <div class="lineage-node">وبن السيدة <strong>فاطمة الزهراء</strong> (بنت رسول الله)</div>
+        <div class="lineage-node">والسيدة <strong>فاطمة الزهراء</strong> (بنت رسول الله)</div>
         <div class="lineage-connector"></div>
         <div class="lineage-node prophet">سيدنا <strong>محمد</strong> رسول الله ﷺ</div>
     </div>
@@ -401,13 +363,13 @@
         ينحدر الشيخ <strong>بسام بن محمد بن هزاع الشميري</strong> من دوحة السادة <strong>آل الكدهي</strong>، وهم فرع علوي شريف من أفنان السادة آل أبي علوي، يرتفعون بنسبهم إلى الإمام <strong>علي بن محمد الفقيه المقدم</strong>.
     </p>
     <p class="intro-text">
-        هذا الإمام الجليل هو أول من انتقال من حضرموت إلى تعز، واستوطن منطقة عُرفت بـ <strong>الكدهية</strong>، فاشتهر بين الناس بلقب <strong>"صاحب الكده"</strong>، وبه عُرف هو وعقبه من بعده. ومن صلبه تفرع السادة <strong>آل الكدهي</strong> الذين أقاموا في تعز قرونًا متطاولة، وكان لهم شأن في العلم والصلاح، واشتهر منهم أعلام كالسيد <strong>برهان الدين إبراهيم الكدهي</strong>، وولده الفقيه <strong>عبيد الله</strong>، الذي تنتظم إليه سلسلة نسبنا مباشرة.
+        هذا الإمام الجليل هو أول من انتقل من حضرموت إلى تعز، واستوطن منطقة عُرفت بـ <strong>الكدهية</strong>، فاشتهر بين الناس بلقب <strong>"صاحب الكده"</strong>، وبه عُرف هو وعقبه من بعده. ومن صلبه تفرع السادة <strong>آل الكدهي</strong> الذين أقاموا في تعز قرونًا متطاولة، وكان لهم شأن في العلم والصلاح، واشتهر منهم أعلام كالسيد <strong>برهان الدين إبراهيم الكدهي</strong>، وولده الفقيه <strong>عبيد الله</strong>، الذي تنتظم إليه سلسلة نسبنا مباشرة.
     </p>
     <p class="intro-text">
-        أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً، فقد أضافه الوالد <strong>محمد بن هزاع</strong>، عندما اختار الانتساب إلى مخلاف شمير الأشمل بدلاً من النسبة إلى القرية الخاصة. وهذا الاجتهاد في الانتساب المكانى لا يعارض الأصل العلوي الثابت، بل هو مرحلة طارئة من مراحل الاستيطان، والدليل القاطع على ذلك أن عم الشيخ تخير لنفسه لقب <strong>(الخليدي)</strong>؛ فاختلاف الألقاب بين الإخوة هو البرهان الساطع على أن الأصل واحد، وأن النسب الشريف هو الجامع، ولا تعارض بين اللقبين، بل هما يُثبتان أن الأصل واحد، والرحم موصولة، والنسب محفوظ بحمد الله.
+        أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً، فقد أضافه الوالد <strong>محمد بن هزاع</strong>، عندما اختار الانتساب إلى مخلاف شمير الأشمل بدلاً من النسبة إلى القرية الخاصة. وهذا الاجتهاد في الانتساب المكاني لا يعارض الأصل العلوي الثابت، بل هو مرحلة طارئة من مراحل الاستيطان، والدليل القاطع على ذلك أن عم الشيخ تخير لنفسه لقب <strong>(الخليدي)</strong>؛ فاختلاف الألقاب بين الإخوة هو البرهان الساطع على أن الأصل واحد، وأن النسب الشريف هو الجامع، ولا تعارض بين اللقبين، بل هما يُثبتان أن الأصل واحد، والرحم موصولة، والنسب محفوظ بحمد الله.
     </p>
 
-    <!-- ====== مستندات التوثيق ====== -->
+    <!-- ====== مستند التوثيق ====== -->
     <h3 class="section-heading"><i class="bi bi-shield-check"></i> مستندات التوثيق والتحقيق التاريخي</h3>
     
     <ul class="docs-list">
@@ -422,7 +384,7 @@
             <div class="docs-index">٢</div>
             <div class="docs-content">
                 <strong>الجزء من السيد برهان الدين إبراهيم إلى الإمام علي صاحب كده:</strong><br>
-                ثابت بكتاب <strong>"المشرع الروي في مناقب السادة بني علوي"</strong> لمحمد بن أبي بكر الشلّي، وفيه النص على عقب أحمد بن علي صاحب كده وأن منهم "السيد بدر الدين حسن وولده برهان الدين إبراهيم, ولهم ذرية في نواحي تعز يعرفون بآل الكدهي". وكذلك هو مدون في مخطوط <strong>"البيان في أنساب آل الكدهي"</strong>.
+                ثابت بكتاب <strong>"المشرع الروي في مناقب السادة بني علوي"</strong> لمحمد بن أبي بكر الشلّي، وفيه النص على عقب أحمد بن علي صاحب كده وأن منهم "السيد بدر الدين حسن وولده برهان الدين إبراهيم، ولهم ذرية في نواحي تعز يعرفون بآل الكدهي". وكذلك هو مدون في مخطوط <strong>"البيان في أنساب آل الكدهي"</strong>.
             </div>
         </li>
         <li class="docs-item">
@@ -441,8 +403,8 @@
         </li>
     </ul>
 
-    <!-- ====== خاتمة وبطاقة التوقيع ====== -->
-    <div class="gold-divider" style="margin-top: 40px;">
+    <!-- ====== خاتمة وتوقيع ====== -->
+    <div class="gold-divider" style="--direction: left; margin-top: 40px;">
         <i class="bi bi-patch-check-fill"></i>
     </div>
     
