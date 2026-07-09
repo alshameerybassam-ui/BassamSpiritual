@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
         .auth-page {
@@ -84,6 +84,9 @@
             top: 50%;
             transform: translateY(-50%);
             color: #B0B8C8;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
         }
         .form-group .input-wrapper input {
             padding-right: 45px;
@@ -124,6 +127,10 @@
             transition: 0.3s;
             font-family: 'Cairo', sans-serif;
             margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .btn-submit:hover {
             transform: translateY(-3px);
@@ -133,6 +140,14 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+        /* كلاس الدوران الخاص بأيقونة التحميل لبوتستراب */
+        .spinner-rotate {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .auth-link {
             text-align: center;
@@ -186,7 +201,7 @@
                 <div class="form-group">
                     <label>الاسم الرباعي <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
-                        <i class="fas fa-user"></i>
+                        <i class="bi bi-person"></i>
                         <input type="text" id="fullName" name="fullName" autocomplete="name" placeholder="مثال: بسام محمد هزاع الشميري" required>
                     </div>
                 </div>
@@ -194,7 +209,7 @@
                 <div class="form-group">
                     <label>البريد الإلكتروني <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
-                        <i class="fas fa-envelope"></i>
+                        <i class="bi bi-envelope"></i>
                         <input type="email" id="email" name="email" autocomplete="email" placeholder="example@email.com" required>
                     </div>
                 </div>
@@ -202,7 +217,7 @@
                 <div class="form-group">
                     <label>رقم الهاتف (واتساب) <span class="optional">(اختياري)</span></label>
                     <div class="input-wrapper">
-                        <i class="fab fa-whatsapp"></i>
+                        <i class="bi bi-whatsapp"></i>
                         <input type="text" id="phone" name="phone" autocomplete="tel" placeholder="مثال: 777941366">
                     </div>
                 </div>
@@ -210,7 +225,7 @@
                 <div class="form-group">
                     <label>كلمة المرور <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
+                        <i class="bi bi-lock"></i>
                         <input type="password" id="password" name="password" autocomplete="new-password" placeholder="على الأقل 6 أحرف" required minlength="6">
                     </div>
                 </div>
@@ -218,7 +233,7 @@
                 <div class="form-group">
                     <label>تأكيد كلمة المرور <span style="color:#e74c3c;">*</span></label>
                     <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
+                        <i class="bi bi-lock-fill"></i>
                         <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" placeholder="أعد كتابة كلمة المرور" required>
                     </div>
                 </div>
@@ -231,7 +246,7 @@
                 </div>
 
                 <button type="submit" class="btn-submit" id="registerBtn">
-                    <i class="fas fa-user-plus"></i> إنشاء الحساب
+                    <i class="bi bi-person-plus"></i> إنشاء الحساب
                 </button>
             </form>
 
@@ -240,8 +255,8 @@
             </div>
 
             <div style="text-align:center; margin-top:15px;">
-                <a href="/" style="color:#6A7A8A; text-decoration:none; font-size:0.9rem;">
-                    <i class="fas fa-arrow-right"></i> العودة إلى الرئيسية
+                <a href="/" style="color:#6A7A8A; text-decoration:none; font-size:0.9rem; display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="bi bi-arrow-right"></i> العودة إلى الرئيسية
                 </a>
             </div>
         </div>
@@ -290,10 +305,10 @@
             }
 
             registerBtn.disabled = true;
-            registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
+            // تم استبدال fa-spinner بأيقونة بوتستراب بيضاء متحركة بشكل دائري متناسق
+            registerBtn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري إنشاء الحساب...';
 
             try {
-                // 1. تسجيل الحساب بالسيرفر
                 const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -302,9 +317,6 @@
                 const json = await res.json();
 
                 if (json.success) {
-                    
-                    // 🔥 الحل الاحترافي والذكي لمنع الطرد:
-                    // إذا كان السيرفر لم يرسل التوكن في دالة التسجيل، نقوم بعمل تسجيل دخول صامت فوراً في الخلفية لجلب التوكن
                     let finalToken = json.token;
                     let finalUser = json.user;
 
@@ -325,7 +337,6 @@
                         }
                     }
 
-                    // حفظ البيانات المؤكدة بنسبة 100%
                     if (finalToken) {
                         localStorage.setItem('token', finalToken);
                         localStorage.setItem('user', JSON.stringify(finalUser || { fullName, email }));
@@ -335,7 +346,6 @@
                             window.location.href = '/dashboard.html';
                         }, 1500);
                     } else {
-                        // إذا فشل جلب التوكن تماماً، نوجهه لصفحة تسجيل الدخول العادية ليدخل بأمان بدلاً من طرده المفاجئ
                         showNotification('✅ تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول لأول مرة.', 'success');
                         setTimeout(() => {
                             window.location.href = '/login.html';
@@ -345,12 +355,12 @@
                 } else {
                     showNotification('❌ ' + (json.error || 'حدث خطأ في التسجيل. يرجى المحاولة مرة أخرى.'), 'error');
                     registerBtn.disabled = false;
-                    registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب';
+                    registerBtn.innerHTML = '<i class="bi bi-person-plus"></i> إنشاء الحساب';
                 }
             } catch (e) {
                 showNotification('⚠️ خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.', 'error');
                 registerBtn.disabled = false;
-                registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب';
+                registerBtn.innerHTML = '<i class="bi bi-person-plus"></i> إنشاء الحساب';
             }
         });
     </script>
