@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs-extra');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 
@@ -25,26 +26,35 @@ const readRequests = () => JSON.parse(fs.readFileSync(REQUESTS_FILE));
 const writeRequests = (data) => fs.writeFileSync(REQUESTS_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// الوسيط: التحقق من صحة المستخدم
+// الوسيط: التحقق من صحة المستخدم ورتبته
 // ==============================================
 const authenticate = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'غير مصرح' });
+        return res.status(401).json({ success: false, error: 'رمز الجلسة مفقود، يرجى تسجيل الدخول.' });
     }
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         const users = readUsers();
         const user = users.find(u => u.id === decoded.id);
         if (!user || !user.isActive) {
-            return res.status(401).json({ error: 'الحساب غير نشط' });
+            return res.status(401).json({ success: false, error: 'الحساب غير نشط أو تم حظره.' });
         }
         req.user = user;
         req.userId = decoded.id;
         next();
     } catch (e) {
         console.error('❌ خطأ في التحقق من الرمز:', e.message);
-        res.status(401).json({ error: 'رمز غير صالح' });
+        res.status(401).json({ success: false, error: 'جلسة منتهية الصلاحية.' });
+    }
+};
+
+// وسيط حماية إضافي خاص بالشيخ بسام (الإدارة فقط)
+const requireAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ success: false, error: 'صلاحيات مرفوضة. هذا القسم مخصص للشيخ بسام فقط.' });
     }
 };
 
@@ -54,7 +64,10 @@ const authenticate = (req, res, next) => {
 router.get('/me', authenticate, (req, res) => {
     const user = req.user;
     const requests = readRequests().filter(r => r.userId === user.id);
-    requests.sort((a, b) => b.createdAt - a.createdAt);
+    
+    // إصلاح فرز التاريخ للنصوص
+    requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
     res.json({
         success: true,
         user: {
@@ -64,17 +77,21 @@ router.get('/me', authenticate, (req, res) => {
             phone: user.phone,
             createdAt: user.createdAt
         },
-        requests: requests.map(r => ({
-            id: r.id,
-            serviceType: r.serviceType,
-            status: r.status,
-            paymentStatus: r.paymentStatus,
-            createdAt: r.createdAt,
-            description: r.description || '',
-            diagnosis: r.diagnosis || null,
-            treatment: r.treatment || null,
-            treatmentDetails: r.treatmentDetails || null
-        })),
+        requests: requests.map(r => {
+            // مزامنة حقل الرد لضمان ظهوره للمريض فوراً بكافة التسميات المتوقعة
+            const latestReply = (r.adminReplies && r.adminReplies.length > 0) ? r.adminReplies[r.adminReplies.length - 1].text : null;
+            return {
+                id: r.id,
+                serviceType: r.serviceType,
+                status: r.status,
+                paymentStatus: r.paymentStatus,
+                createdAt: r.createdAt,
+                description: r.description || '',
+                diagnosis: r.diagnosis || null,
+                treatment: r.treatment || latestReply,
+                treatmentDetails: r.treatmentDetails || latestReply // حماية مزدوجة ليقرأها ملف dashboard.js بنجاح
+            };
+        }),
         notifications: user.spiritualProfile?.notifications || []
     });
 });
@@ -139,18 +156,23 @@ router.post('/request',
 );
 
 // ==============================================
-// 3. الحصول على تفاصيل طلب معين
+// 3. الحصول على تفاصيل طلب معين للمستفيد
 // ==============================================
 router.get('/request/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const requests = readRequests();
     const request = requests.find(r => r.id == id);
     if (!request) {
-        return res.status(404).json({ error: 'الطلب غير موجود' });
+        return res.status(404).json({ success: false, error: 'الطلب غير موجود' });
     }
     if (request.userId !== req.user.id) {
-        return res.status(403).json({ error: 'غير مصرح' });
+        return res.status(403).json({ success: false, error: 'غير مصرح لك باستعراض هذا الملف' });
     }
+    
+    // تأمين جلب الرد وحقنه في الخانتين ليتعرف عليه المودال بملف الجافا سكريبت
+    const latestReply = (request.adminReplies && request.adminReplies.length > 0) ? request.adminReplies[request.adminReplies.length - 1].text : null;
+    request.treatmentDetails = request.treatmentDetails || latestReply;
+
     res.json({ success: true, request });
 });
 
@@ -231,7 +253,7 @@ router.post('/treatment/agree/:id', authenticate, (req, res) => {
 });
 
 // ==============================================
-// 6. إرسال رسالة استفسار
+// 6. إرسال رسالة استفسار للمريض بعد العلاج
 // ==============================================
 router.post('/message/:id', authenticate, (req, res) => {
     const { id } = req.params;
@@ -248,7 +270,7 @@ router.post('/message/:id', authenticate, (req, res) => {
         return res.status(403).json({ error: 'غير مصرح' });
     }
     if (requests[index].status !== 'completed') {
-        return res.status(400).json({ error: 'لا يمكن إرسال رسالة إلا بعد اكتمال العلاج' });
+        return res.status(400).json({ error: 'لا يمكن إرسال رسالة إلا بعد اكتمال العلاج واكتمال الخطة الروحية' });
     }
     if (!requests[index].messages) requests[index].messages = [];
     requests[index].messages.push({
@@ -264,23 +286,21 @@ router.post('/message/:id', authenticate, (req, res) => {
     });
 });
 
-module.exports = router;
 // ==============================================================================
-// مسارات لوحة التحكم (Admin Dashboard Routes) - مخصصة لـ admin.html و admin.js
+// مسارات لوحة التحكم (Admin Dashboard Routes) - مؤمنة ومخصصة للشيخ بسام
 // ==============================================================================
 
-// 1. جلب جميع طلبات المستفيدين للوحة التحكم
-router.get('/requests', (req, res) => {
+// 1. جلب جميع طلبات المستفيدين للوحة التحكم (مؤمن بـ authenticate و requireAdmin)
+router.get('/requests', authenticate, requireAdmin, (req, res) => {
     try {
         const requests = readRequests();
         
-        // ترتيب الطلبات تلقائياً من الأحدث إلى الأقدم بناءً على تاريخ الإنشاء
+        // ترتيب تصاعدي منطقي للتواريخ المكتوبة
         requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
-        // تحويل الحقول لتطابق تماماً المسميات المتوقعة في كود admin.js
         const formattedRequests = requests.map(r => ({
             id: r.id,
-            _id: r.id, // لضمان التوافق التام مع الكود المصحح لـ admin.js
+            _id: r.id, 
             fullName: r.userFullName || "مستفيد غير معروف",
             email: r.userEmail || "—",
             phone: r.userPhone || "—",
@@ -296,12 +316,12 @@ router.get('/requests', (req, res) => {
         res.json(formattedRequests);
     } catch (error) {
         console.error('❌ خطأ في جلب جميع الطلبات للإدارة:', error.message);
-        res.status(500).json({ error: 'خطأ داخلي في السيرفر أثناء جلب البيانات' });
+        res.status(500).json({ error: 'خطأ داخلي في السيرفر أثناء جلب البيانات الإدارية' });
     }
 });
 
-// 2. تحديث حالة الطلب وإضافة رد المسؤول (PATCH)
-router.patch('/request/:id', (req, res) => {
+// 2. تحديث حالة الطلب وكتابة الخطة العلاجية من الشيخ بسام (PATCH - مؤمن بالكامل)
+router.patch('/request/:id', authenticate, requireAdmin, (req, res) => {
     const { id } = req.params;
     const { status, adminReply } = req.body;
 
@@ -313,13 +333,15 @@ router.patch('/request/:id', (req, res) => {
             return res.status(404).json({ error: 'الطلب غير موجود بنظام البيانات' });
         }
 
-        // تحديث الحالة إن أُرسلت
         if (status) {
             requests[index].status = status;
         }
 
-        // إضافة الرد الإداري إلى مصفوفة adminReplies
         if (adminReply !== undefined) {
+            // تحديث الحقلين معاً لمنع أي مشكلة في واجهة المستخدم
+            requests[index].treatmentDetails = adminReply;
+            requests[index].treatment = adminReply;
+            
             if (!requests[index].adminReplies) requests[index].adminReplies = [];
             requests[index].adminReplies.push({
                 text: adminReply,
@@ -328,15 +350,15 @@ router.patch('/request/:id', (req, res) => {
         }
 
         writeRequests(requests);
-        res.json({ success: true, message: '✅ تم تحديث بيانات المستفيد بنجاح' });
+        res.json({ success: true, message: '✅ تم تحديث بيانات المستفيد وكتابة البرنامج العلاجي بنجاح' });
     } catch (error) {
         console.error('❌ خطأ في تحديث الطلب من الإدارة:', error.message);
-        res.status(500).json({ error: 'فشل السيرفر في تحديث البيانات' });
+        res.status(500).json({ error: 'فشل السيرفر في معالجة تحديثات الشيخ بسام' });
     }
 });
 
-// 3. حذف طلب مستفيد نهائياً (DELETE)
-router.delete('/request/:id', (req, res) => {
+// 3. حذف طلب مستفيد نهائياً من السجلات (DELETE - مؤمن بالكامل)
+router.delete('/request/:id', authenticate, requireAdmin, (req, res) => {
     const { id } = req.params;
 
     try {
@@ -351,6 +373,8 @@ router.delete('/request/:id', (req, res) => {
         res.json({ success: true, message: '🗑 تم حذف الطلب من السجلات بنجاح' });
     } catch (error) {
         console.error('❌ خطأ في حذف الطلب من السجلات:', error.message);
-        res.status(500).json({ error: 'فشل السيرفر في معالجة طلب الحذف' });
+        res.status(500).json({ error: 'فشل السيرفر في معالجة طلب الحذف الإداري' });
     }
 });
+
+module.exports = router;
