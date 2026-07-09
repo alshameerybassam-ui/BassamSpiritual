@@ -1,141 +1,66 @@
-require('dotenv').config();
 const express = require('express');
-const compression = require('compression');
-const bodyParser = require('body-parser');
-const fs = require('fs-extra');
-const path = require('path');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const path = require('path');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// إعداد الـ Proxy (لـ Render)
-app.set('trust proxy', 1);
+const PORT = process.env.PORT || 5000;
 
 // ==============================================
-// الإعدادات الأمنية والأداء
+// 1. البرمجيات الوسيطة الأساسية (Middlewares)
 // ==============================================
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            "default-src": ["'self'"],
-            "script-src-attr": ["'unsafe-inline'"],
-            "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-            "font-src": ["'self'", "https:", "data:", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
-            "style-src": ["'self'", "'unsafe-inline'", "https:", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-            "img-src": ["'self'", "data:", "https:"],
-            "connect-src": ["'self'", "https://generativelanguage.googleapis.com"],
-        },
-    },
-}));
-
 app.use(cors());
-app.use(compression());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: { error: 'تم تجاوز عدد الطلبات المسموح بها.' },
-    trustProxy: true,
-});
-app.use('/api/', limiter);
-
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+// تشغيل الملفات الساكنة (الواجهات الأمامية HTML, CSS, JS) من مجلد public
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ==============================================
-// إنشاء مجلدات البيانات
+// 2. استدعاء وربط المسارات (Routes)
 // ==============================================
-const DATA_DIR = path.join(__dirname, 'data');
-fs.ensureDirSync(DATA_DIR);
+const authRouter = require('./routes/auth');
+const dashboardRouter = require('./routes/dashboard');
+
+// تفعيل المسارات وضخها خلف بادئة واجهة برمجة التطبيقات (/api)
+app.use('/api/auth', authRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // ==============================================
-// استيراد المسارات
+// 3. التوجيه الذكي للواجهات (SPA Routing)
 // ==============================================
-const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
-const chatRoutes = require('./routes/chat');
-
-// ==============================================
-// المسارات العامة
-// ==============================================
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/chat', chatRoutes);
-
-// ==============================================
-// مسارات المقالات والشهادات (للواجهة الرئيسية)
-// ==============================================
-app.get('/api/articles', (req, res) => {
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json')));
-        res.json(data.articles || []);
-    } catch (e) {
-        res.json([]);
-    }
+// لضمان عمل الصفحات الفرعية وتحديث المتصفح دون ظهور أخطاء 404
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
 
-app.get('/api/testimonials', (req, res) => {
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json')));
-        res.json(data.testimonials || []);
-    } catch (e) {
-        res.json([]);
-    }
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/dashboard.html'));
+});
+
+// أي مسار آخر غير معرف يتم تحويله لصفحة الرئيسية أو صفحة الدخول تلقائياً
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 // ==============================================
-// تقديم الملفات الثابتة
+// 4. معالجة الأخطاء العامة بالسيرفر
 // ==============================================
-app.use(express.static('public', {
-    maxAge: '1d',
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
-            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        }
-        if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
-            res.setHeader('Cache-Control', 'public, max-age=86400');
-        }
-    }
-}));
-
-// صفحة النسب الشريف
-app.get('/about-sheikh.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'about-sheikh.html'));
+app.use((err, req, res, next) => {
+    console.error('❌ خطأ غير متوقع في النظام:', err.stack);
+    res.status(500).json({
+        success: false,
+        error: 'حدث خطأ داخلي في الخادم، جاري العمل على صيانته.'
+    });
 });
 
 // ==============================================
-// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام
-// ==============================================
-setInterval(() => {
-    try {
-        const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-        if (fs.existsSync(USERS_FILE)) {
-            let fileContent = fs.readFileSync(USERS_FILE, 'utf8');
-            if (fileContent.trim().length > 0) {
-                let users = JSON.parse(fileContent);
-                let myAccount = users.find(u => u.email === "alshameerybassam@gmail.com");
-                
-                if (myAccount && myAccount.role !== "admin") {
-                    myAccount.role = "admin";
-                    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-                    console.log("✅ [نظام النور الرباني] تم العثور على حسابك وترقيته برمجياً إلى رتبة مدير (Admin) بنجاح!");
-                }
-            }
-        }
-    } catch (e) {
-        console.log("❌ [نظام النور الرباني] خطأ أثناء التحقق من رتبة المدير:", e.message);
-    }
-}, 5000); // يفحص الملف كل 5 ثوانٍ تلقائياً لضمان استقرار الصلاحية
-
-// ==============================================
-// تشغيل الخادم
+// 5. إطلاق السيرفر وتدشين العمل الميداني
 // ==============================================
 app.listen(PORT, () => {
-    console.log(`🔒 مركز النور الرباني والنفس الرحماني يعمل على http://localhost:${PORT}`);
-    console.log(`📊 لوحة التحكم: http://localhost:${PORT}/admin.html`);
+    console.log(`====================================================`);
+    console.log(`🚀 السيرفر يعمل بنجاح وكفاءة تامة على المنفذ: ${PORT}`);
+    console.log(`🔒 مفتاح التشفير النشط: ${process.env.JWT_SECRET ? 'مؤمن عبر الـ Environment' : 'مفتاح افتراضي مؤقت'}`);
+    console.log(`📅 توقيت النظام الحلي: ${new Date().toLocaleString('ar-SA')}`);
+    console.log(`====================================================`);
 });
