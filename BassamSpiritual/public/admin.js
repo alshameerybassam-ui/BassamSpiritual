@@ -1,220 +1,323 @@
-let currentRequests = [];
+// ==================================================
+// ملف النواة البرمجية لإدارة لوحة تحكم مركز النور الرباني
+// ==================================================
+
+let allRequests = [];
 let selectedRequestId = null;
 
-// ===== 1. جلب الطلبات من الذاكرة المحلية (LocalStorage) =====
-function loadRequests() {
-    const tableBody = document.getElementById('requestsBody');
-    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#6A7A8A;"><i class="fas fa-spinner fa-spin"></i> جاري جلب البيانات وتحديث اللوحة...</td></tr>`;
+// ===== 1. محرك الإشعارات =====
+function showNotification(msg, type = 'success') {
+    const n = document.getElementById('notification');
+    if (!n) return;
+    n.textContent = msg;
+    n.className = `notification ${type}`;
+    n.style.display = 'block';
+    if(type === 'success') n.style.background = '#27ae60';
+    if(type === 'error') n.style.background = '#e74c3c';
     
-    try {
-        // جلب البيانات المخزنة محلياً، وإذا كانت فارغة نقوم بإنشاء طلبات تجريبية للمعاينة
-        const storedRequests = localStorage.getItem('site_requests');
-        
-        if (storedRequests) {
-            currentRequests = JSON.parse(storedRequests);
-        } else {
-            // بيانات تجريبية تظهر لك لأول مرة فقط لتجربة اللوحة وسير العمل
-            currentRequests = [
-                {
-                    id: "req_1",
-                    fullName: "أحمد عبدالله الشمري",
-                    email: "ahmed@example.com",
-                    phone: "966500000000",
-                    country: "السعودية",
-                    beneficiary: "نفسي",
-                    serviceType: "كشف روحي وتطهير",
-                    description: "أعاني من صداع مستمر وخمول شديد وقت قراءة القرآن الكريم وضيق في الصدر منذ عدة أشهر.",
-                    status: "pending",
-                    adminReply: "",
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            localStorage.setItem('site_requests', JSON.stringify(currentRequests));
-        }
+    setTimeout(() => {
+        n.style.display = 'none';
+    }, 5000);
+}
 
-        renderTable(currentRequests);
-        updateStats(currentRequests);
-    } catch (e) {
-        console.error("Error loading requests:", e);
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#e74c3c;">⚠️ حدث خطأ أثناء قراءة الذاكرة المحلية للمتصفح.</td></tr>';
+// ===== 2. التحقق التلقائي من هوية المسؤول =====
+async function checkAdminAuth() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return false;
+    }
+    return true;
+}
+
+// ===== 3. جلب الطلبات الشاملة للنظام من السيرفر =====
+async function loadRequests() {
+    const token = localStorage.getItem('token');
+    const tbody = document.getElementById('requestsBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> جاري تحديث ومزامنة البيانات مع السيرفر...</td></tr>';
+
+    try {
+        // الاتصال بمسار جلب جميع طلبات السيرفر المخصص للمسؤول
+        const res = await fetch('/api/admin/requests', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            allRequests = data.requests || [];
+            updateStats(allRequests);
+            renderTable(allRequests);
+        } else {
+            showNotification('⚠️ فشل السيرفر في التعرف على صلاحيات المدير.', 'error');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">فشل تحميل البيانات. تأكد من صلاحيات حسابك.</td></tr>';
+        }
+    } catch (error) {
+        console.error(error);
+        showNotification('❌ خطأ في الاتصال بالسيرفر. تأكد أن سيرفر ريندر مستيقظ.', 'error');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">خطأ في الاتصال بقاعدة البيانات.</td></tr>';
     }
 }
 
-// ===== 2. رندرة وعرض جدول الطلبات بشكل تفاعلي =====
+// ===== 4. معالجة الإحصائيات والأرقام في الكروت العلوية =====
+function updateStats(requests) {
+    if(!document.getElementById('totalCount')) return;
+    
+    const total = requests.length;
+    const pending = requests.filter(r => r.status === 'pending' || r.status === 'processing').length;
+    const completed = requests.filter(r => r.status === 'completed').length;
+    const rejected = requests.filter(r => r.status === 'rejected').length;
+
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('completedCount').textContent = completed;
+    document.getElementById('rejectedCount').textContent = rejected;
+}
+
+// ===== 5. طباعة وعرض الطلبات في الجدول الرئيسي مع الروابط =====
 function renderTable(requests) {
     const tbody = document.getElementById('requestsBody');
-    if (!requests || requests.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#6A7A8A;">📭 لا توجد طلبات متطابقة حالياً في الذاكرة</td></tr>';
+    if (!tbody || !requests) return;
+
+    if (requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:#6A7A8A;">لا توجد طلبات جديدة مرسلة من المستفيدين حتى الآن.</td></tr>';
         return;
     }
-    
+
+    const statusMap = {
+        'pending': '<span style="background:#FEF3C7; color:#D97706; padding:4px 8px; border-radius:6px; font-size:0.85rem; font-weight:600;">⏳ قيد الانتظار</span>',
+        'processing': '<span style="background:#DBEAFE; color:#2563EB; padding:4px 8px; border-radius:6px; font-size:0.85rem; font-weight:600;">⚙️ قيد المعالجة</span>',
+        'completed': '<span style="background:#D1FAE5; color:#059669; padding:4px 8px; border-radius:6px; font-size:0.85rem; font-weight:600;">✅ مكتمل</span>',
+        'rejected': '<span style="background:#FEE2E2; color:#DC2626; padding:4px 8px; border-radius:6px; font-size:0.85rem; font-weight:600;">❌ مرفوض</span>'
+    };
+
+    const paymentMap = {
+        'verified': '<span style="color:#059669; font-weight:700;">🟢 مؤكد</span>',
+        'paid': '<span style="color:#D97706; font-weight:700;">🟡 قيد المراجعة</span>',
+        'unpaid': '<span style="color:#DC2626; font-weight:700;">🔴 غير مدفوع</span>'
+    };
+
     tbody.innerHTML = requests.map((req, index) => {
-        const statusMap = {
-            'pending': '<span class="status-badge status-pending" style="background:#fef9e7; color:#f5b041; padding:5px 10px; border-radius:20px; font-size:0.85rem; font-weight:600;"><i class="fas fa-clock"></i> قيد الانتظار</span>',
-            'processing': '<span class="status-badge status-processing" style="background:#ebf5fb; color:#2980b9; padding:5px 10px; border-radius:20px; font-size:0.85rem; font-weight:600;"><i class="fas fa-spinner fa-spin"></i> قيد العلاج</span>',
-            'completed': '<span class="status-badge status-completed" style="background:#e8f8f5; color:#27ae60; padding:5px 10px; border-radius:20px; font-size:0.85rem; font-weight:600;"><i class="fas fa-check-circle"></i> مكتمل</span>',
-            'rejected': '<span class="status-badge status-rejected" style="background:#fdedec; color:#e74c3c; padding:5px 10px; border-radius:20px; font-size:0.85rem; font-weight:600;"><i class="fas fa-times-circle"></i> مستبعد</span>'
-        };
-        
-        const status = statusMap[req.status] || statusMap.pending;
-        const date = req.createdAt ? new Date(req.createdAt).toLocaleDateString('ar-YE', {year: 'numeric', month: 'short', day: 'numeric'}) : '—';
-        const idToUse = req.id || req._id;
+        const uName = req.userId?.fullName || req.fullName || 'مستفيد غير مسجل';
+        const uEmail = req.userId?.email || req.email || 'لا يوجد بريد';
+        const reqId = req._id || req.id;
 
         return `
-            <tr style="transition: 0.2s; border-bottom: 1px solid #f1f5f9;">
-                <td>${index + 1}</td>
-                <td><strong style="color:#0A1628;">${req.fullName || 'بدون اسم'}</strong></td>
-                <td style="color:#4A5A6A;">${req.email || '—'}</td>
-                <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:8px; font-size:0.9rem; color:#0A1628;">${req.serviceType || 'استشارة عامة'}</span></td>
-                <td>${status}</td>
-                <td style="font-size:0.85rem; color:#6A7A8A;">${date}</td>
+            <tr>
+                <td><strong>${index + 1}</strong></td>
                 <td>
-                    <button class="action-btn view" onclick="viewDetails('${idToUse}')" style="background:#F5B041; color:#0A1628; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; margin-left:4px;" title="قراءة وتعديل الطلب"><i class="fas fa-folder-open"></i> معالجة</button>
-                    <button class="action-btn delete" onclick="deleteRequest('${idToUse}')" style="background:#fdedec; color:#e74c3c; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;" title="حذف نهائي"><i class="fas fa-trash-alt"></i></button>
+                    <span style="color:#E67E22; font-weight:700; cursor:pointer; text-decoration:underline;" onclick="openRequestDetails('${reqId}')">
+                        👤 ${uName}
+                    </span>
+                </td>
+                <td><span style="color:#4A5A6A; font-size:0.9rem;">${uEmail}</span></td>
+                <td><span style="font-weight:600; color:#0A1628;">${req.serviceType}</span></td>
+                <td>${statusMap[req.status] || req.status}</td>
+                <td>${paymentMap[req.paymentStatus] || paymentMap['unpaid']}</td>
+                <td><span style="font-size:0.85rem; color:#6A7A8A;">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</span></td>
+                <td>
+                    <button onclick="openRequestDetails('${reqId}')" style="background:#0A1628; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-family:'Cairo'; font-size:0.85rem;">
+                        <i class="fas fa-folder-open"></i> مراجعة واتخاذ إجراء
+                    </button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-// ===== 3. تحديث بطاقات الإحصائيات العلوية =====
-function updateStats(requests) {
-    document.getElementById('totalCount').innerText = requests.length;
-    document.getElementById('pendingCount').innerText = requests.filter(r => r.status === 'pending').length;
-    document.getElementById('completedCount').innerText = requests.filter(r => r.status === 'completed' || r.status === 'processing').length;
-    document.getElementById('rejectedCount').innerText = requests.filter(r => r.status === 'rejected').length;
-}
-
-// ===== 4. البحث الذكي الفوري وعمل الفلترة =====
-function filterTable() {
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    if (!query) {
-        renderTable(currentRequests);
-        return;
-    }
-    
-    const filtered = currentRequests.filter(r => {
-        return (r.fullName || '').toLowerCase().includes(query) || 
-               (r.email || '').toLowerCase().includes(query) || 
-               (r.phone || '').toLowerCase().includes(query) ||
-               (r.serviceType || '').toLowerCase().includes(query);
-    });
-    renderTable(filtered);
-}
-
-// ===== 5. نافذة تفاصيل الطلب المتكاملة وسير العمل الإداري =====
-function viewDetails(id) {
+// ===== 6. فتح المودال وحقن استمارة التحكم وعلاج المريض وعرض هاتفه =====
+async function openRequestDetails(id) {
     selectedRequestId = id;
-    const req = currentRequests.find(r => (r.id == id || r._id == id));
-    if (!req) return alert('خطأ: تعذر العثور على بيانات هذا الطلب.');
-
+    const token = localStorage.getItem('token');
     const modal = document.getElementById('detailsModal');
-    
-    let whatsappSection = '';
-    if (req.phone) {
-        const cleanPhone = req.phone.replace(/\D/g, '');
-        const encodedText = encodeURIComponent(`أهلاً بك يا ${req.fullName}، معك الشيخ بسام الشميري من مركز النور الرباني بخصوص طلبك لخدمة (${req.serviceType || 'الاستشارة'}).`);
-        whatsappSection = `
-            <a href="https://wa.me/${cleanPhone}?text=${encodedText}" target="_blank" style="display:inline-block; background:#25D366; color:#fff; text-decoration:none; padding:8px 15px; border-radius:8px; font-weight:600; margin-top:5px; font-size:0.9rem;">
-                <i class="fab fa-whatsapp"></i> تواصل سريع عبر الواتساب (${req.phone})
-            </a>
+    const mBody = document.getElementById('modalBody');
+    if (!modal || !mBody) return;
+
+    mBody.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin fa-2x"></i> جاري استحضار بيانات المستفيد العميقة...</div>';
+    modal.style.display = 'flex';
+
+    try {
+        const res = await fetch(`/api/admin/request/${id}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            showNotification('⚠️ فشل جلب تفاصيل الطلب من الخادم.', 'error');
+            closeModal();
+            return;
+        }
+
+        const req = data.request;
+        const uName = req.userId?.fullName || req.fullName || 'مستفيد عابر';
+        const uEmail = req.userId?.email || req.email || 'لا يوجد';
+        const uPhone = req.userId?.phone || req.phone || 'غير مدرج';
+
+        mBody.innerHTML = `
+            <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:15px; font-size:0.95rem; line-height:1.8; text-align: right;">
+                <h4 style="margin-top:0; color:#0A1628; border-bottom:2px solid #E2E8F0; padding-bottom:5px;">📋 معلومات التواصل والملف الشخصي</h4>
+                <p><strong>👤 اسم المستفيد الرباعي:</strong> ${uName}</p>
+                <p><strong>📞 هاتف الواتساب:</strong> <a href="https://wa.me/${uPhone}" target="_blank" style="color:#27ae60; font-weight:700; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${uPhone} (اضغط لمراسلته مباشرة)</a></p>
+                <p><strong>✉️ البريد الإلكتروني:</strong> ${uEmail}</p>
+                <p><strong>🛠 الخدمة المشتراة:</strong> ${req.serviceType}</p>
+                <p><strong>📅 تاريخ تقديم الطلب:</strong> ${new Date(req.createdAt).toLocaleString('ar-EG')}</p>
+            </div>
+
+            <div style="background:#FFFBF0; padding:15px; border-radius:12px; border-right:4px solid #F5B041; margin-bottom:15px; text-align: right;">
+                <strong>📝 شرح الحالة الروحية والنفسية كما كتبها المستفيد:</strong>
+                <p style="margin-top:8px; line-height:1.8; white-space:pre-wrap; color:#334155;">${req.description || 'لم يكتب المستفيد أي تفاصيل إضافية.'}</p>
+            </div>
+
+            <div style="background:#F1F5F9; padding:15px; border-radius:12px; margin-bottom:15px; text-align: right;">
+                <h4 style="margin-top:0; color:#0A1628; margin-bottom:10px;">⚙️ الإجراءات الإدارية للشيخ بسام</h4>
+                
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-weight:600; margin-bottom:5px;">💰 تحديث حالة الدفع المالي للمركز:</label>
+                    <select id="modalPaymentStatus" style="width:100%; padding:10px; border-radius:8px; border:2px solid #CBD5E1; font-family:'Cairo';">
+                        <option value="unpaid" ${req.paymentStatus === 'unpaid' ? 'selected' : ''}>🔴 غير مدفوع</option>
+                        <option value="paid" ${req.paymentStatus === 'paid' ? 'selected' : ''}>🟡 قيد المراجعة (أرسل إيصال الدفع)</option>
+                        <option value="verified" ${req.paymentStatus === 'verified' ? 'selected' : ''}>🟢 تم التأكيد والتحقق المالي</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-weight:600; margin-bottom:5px;">📊 تحديث حالة الطلب والتشخيص العام:</label>
+                    <select id="modalRequestStatus" style="width:100%; padding:10px; border-radius:8px; border:2px solid #CBD5E1; font-family:'Cairo';">
+                        <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار</option>
+                        <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>⚙️ قيد المعالجة والدراسة الشرعية</option>
+                        <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>✅ مكتمل (تم صرف البرنامج العلاجي)</option>
+                        <option value="rejected" ${req.status === 'rejected' ? 'selected' : ''}>❌ رفض وإلغاء الطلب</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom:15px; text-align: right;">
+                <label style="display:block; font-weight:700; color:#0A1628; margin-bottom:5px;">🌿 البرنامج العلاجي الموجه للمستفيد (الروشتة الشرعية):</label>
+                <textarea id="modalTreatmentDetails" rows="6" placeholder="اكتب هنا الآيات الكريمة، الأذكار، والتعليمات الغذائية أو الروحية المخصصة ليراها المريض في حساب لوحة تحكمه فوراً..." style="width:100%; padding:12px; border-radius:12px; border:2px solid #CBD5E1; font-family:'Cairo', sans-serif; resize:vertical; font-size:0.95rem;">${req.treatmentDetails || ''}</textarea>
+            </div>
+
+            <div style="text-align:left; display:flex; gap:10px; justify-content:flex-end; padding-top:10px; border-top:1px solid #E2E8F0;">
+                <button onclick="closeModal()" style="padding:10px 20px; border-radius:8px; border:none; background:#94A3B8; color:#fff; cursor:pointer; font-family:'Cairo'; font-weight:600;">إلغاء</button>
+                <button onclick="submitAdminAction()" style="padding:10px 25px; border-radius:8px; border:none; background:linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; font-weight:800; cursor:pointer; font-family:'Cairo'; box-shadow:0 4px 12px rgba(230,126,34,0.2);">💾 حفظ البيانات وإرسال العلاج</button>
+            </div>
         `;
-    }
 
-    document.getElementById('modalBody').innerHTML = `
-        <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:15px; border-right:4px solid #F5B041;">
-            <p style="margin:5px 0;"><strong>👤 اسم العميل الكامل:</strong> ${req.fullName || 'غير محدد'}</p>
-            <p style="margin:5px 0;"><strong>📧 البريد الإلكتروني:</strong> ${req.email || 'غير محدد'}</p>
-            <p style="margin:5px 0;"><strong>🌍 الدولة / الجنسية:</strong> ${req.country || 'غير محدد'}</p>
-            <p style="margin:5px 0;"><strong>🧑‍🤝‍🧑 المستفيد من الخدمة:</strong> ${req.beneficiary || 'نفسي'}</p>
-            <p style="margin:5px 0;"><strong>🛠 نوع الخدمة المطلوبة:</strong> <span style="background:#0A1628; color:#fff; padding:2px 8px; border-radius:6px; font-size:0.85rem;">${req.serviceType || 'غير محدد'}</span></p>
-            ${whatsappSection}
-        </div>
-
-        <div style="margin-bottom:15px;">
-            <strong style="color:#0A1628; display:block; margin-bottom:5px;"><i class="fas fa-align-right"></i> شرح المشكلة أو الحالة الروحية المعروضة:</strong>
-            <div style="background:#fff; border:2px solid #e2e8f0; padding:12px; border-radius:12px; max-height:150px; overflow-y:auto; white-space:pre-wrap; color:#4A5A6A; line-height:1.6;">${req.description || 'لا يوجد تفاصيل أو وصف للطلب.'}</div>
-        </div>
-
-        <hr style="margin:20px 0; border:0; border-top:2px dashed #e2e8f0;">
-
-        <!-- سير العمل واتخاذ القرار -->
-        <div style="margin-bottom:15px;">
-            <label for="statusSelect" style="font-weight:700; color:#0A1628; display:block; margin-bottom:8px;"><i class="fas fa-tasks"></i> تحديث خطة سير العمل (الحالة الحالية):</label>
-            <select id="statusSelect" style="width:100%; padding:10px; border-radius:10px; border:2px solid #E2E8F0; font-family:'Cairo', sans-serif; font-size:1rem; color:#0A1628;">
-                <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار والمراجعة الأولية</option>
-                <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>⚙️ قيد العلاج والمتابعة الروحية</option>
-                <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>✅ تم الانتهاء وإرسال الخطة العلاجية للمستخدم</option>
-                <option value="rejected" ${req.status === 'rejected' ? 'selected' : ''}>❌ طلب مستبعد / غير مطابق للمشكلة الروحية</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom:15px;">
-            <label for="replyText" style="font-weight:700; color:#0A1628; display:block; margin-bottom:8px;"><i class="fas fa-hand-holding-heart"></i> البرنامج العلاجي والرد الروحي للعميل:</label>
-            <textarea id="replyText" rows="5" style="width:100%; padding:12px; border-radius:10px; border:2px solid #E2E8F0; font-family:'Cairo', sans-serif; line-height:1.6;" placeholder="اكتب الخطة العلاجية أو التوجيهات الروحية هنا...">${req.adminReply || ''}</textarea>
-        </div>
-
-        <div style="text-align:left; margin-top:20px;">
-            <button onclick="saveChanges()" id="saveChangeBtn" style="width:100%; padding:12px; background:linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; border:none; border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; transition:0.3s;">
-                <i class="fas fa-save"></i> حفظ التغييرات في الذاكرة المحلية
-            </button>
-        </div>
-    `;
-    modal.classList.add('show');
-}
-
-// ===== 6. حفظ التغييرات محلياً وتحديث اللوحة فوراً =====
-function saveChanges() {
-    const status = document.getElementById('statusSelect').value;
-    const reply = document.getElementById('replyText').value.trim();
-    
-    // البحث عن الفهرس وتحديث العنصر داخل المصفوفة
-    const index = currentRequests.findIndex(r => (r.id == selectedRequestId || r._id == selectedRequestId));
-    
-    if (index !== -1) {
-        currentRequests[index].status = status;
-        currentRequests[index].adminReply = reply;
-        
-        // المزامنة والحفظ في LocalStorage لتثبيت التعديل
-        localStorage.setItem('site_requests', JSON.stringify(currentRequests));
-        
-        alert('✅ تم حفظ تعديل الحالة والبرنامج العلاجي بنجاح.');
-        closeModal();
-        renderTable(currentRequests);
-        updateStats(currentRequests);
-    } else {
-        alert('❌ خطأ: لم يتم العثور على الطلب لتحديثه.');
+    } catch (e) {
+        mBody.innerHTML = '<div style="text-align:center; color:#e74c3c; padding:20px;">حدث خطأ غير متوقع أثناء رندرة البيانات.</div>';
     }
 }
 
-// ===== 7. حذف طلب نهائياً من الذاكرة المحلية =====
-function deleteRequest(id) {
-    if (!confirm('⚠️ هل أنت متأكد من حذف هذا الطلب نهائياً من المتصفح؟')) return;
-    
-    currentRequests = currentRequests.filter(r => (r.id != id && r._id != id));
-    localStorage.setItem('site_requests', JSON.stringify(currentRequests));
-    
-    alert('🗑️ تم حذف السجل بنجاح.');
-    renderTable(currentRequests);
-    updateStats(currentRequests);
+// ===== 7. إرسال إجراءات وتفاصيل علاج المدير إلى السيرفر وحفظها =====
+async function submitAdminAction() {
+    const token = localStorage.getItem('token');
+    const status = document.getElementById('modalRequestStatus').value;
+    const paymentStatus = document.getElementById('modalPaymentStatus').value;
+    const treatmentDetails = document.getElementById('modalTreatmentDetails').value.trim();
+
+    try {
+        const res = await fetch(`/api/admin/request/${selectedRequestId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status, paymentStatus, treatmentDetails })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            showNotification('✅ تم حفظ التعديلات وإدراج الخطة العلاجية في حساب المستفيد بنجاح!', 'success');
+            closeModal();
+            loadRequests(); // إعادة تحديث الجدول والعدادات تلقائياً
+        } else {
+            showNotification('❌ ' + (data.error || 'فشل حفظ التعديلات على السيرفر.'), 'error');
+        }
+    } catch (e) {
+        showNotification('⚠️ خطأ في الاتصال بالخادم عند معالجة طلب الإرسال.', 'error');
+    }
 }
 
-// ===== 8. إغلاق النافذة المنبثقة =====
+// ===== 8. إغلاق المودال المنبثق =====
 function closeModal() {
-    document.getElementById('detailsModal').classList.remove('show');
+    const modal = document.getElementById('detailsModal');
+    if (modal) modal.style.display = 'none';
 }
 
-// ===== 9. تحديث الساعة بشكل متزامن =====
-function updateClock() {
-    const clockEl = document.getElementById('currentTime');
-    if(clockEl) {
-        clockEl.innerText = new Date().toLocaleString('ar-YE', { hour12: true, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+// ===== 9. محرك البحث والفلترة السريعة في الجدول =====
+function filterTable() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const table = document.getElementById('requestsTable');
+    const tr = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < tr.length; i++) {
+        let nameTd = tr[i].getElementsByTagName('td')[1];
+        let emailTd = tr[i].getElementsByTagName('td')[2];
+        if (nameTd || emailTd) {
+            let nameTxt = nameTd.textContent || nameTd.innerText;
+            let emailTxt = emailTd.textContent || emailTd.innerText;
+            if (nameTxt.toLowerCase().indexOf(input) > -1 || emailTxt.toLowerCase().indexOf(input) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
     }
 }
-setInterval(updateClock, 1000);
 
-// ===== 10. إقلاع اللوحة والبدء المباشر =====
-document.addEventListener('DOMContentLoaded', () => {
-    updateClock();
-    loadRequests();
-});
+// ===== 10. تدوير الأقسام والتبويبات السريعة =====
+function switchSection(section) {
+    if(section === 'requests') {
+        document.getElementById('btnRequests').classList.add('active');
+        document.getElementById('btnStats').classList.remove('active');
+        document.getElementById('requestsSection').scrollIntoView({ behavior: 'smooth' });
+    } else {
+        document.getElementById('btnStats').classList.add('active');
+        document.getElementById('btnRequests').classList.remove('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// ===== 11. تسجيل الخروج الآمن والنهائي للمدير =====
+function logout() {
+    if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج من لوحة تحكم الإدارة؟')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+}
+
+// ===== 12. تفعيل الساعة التلقائية بالموقع =====
+function startClock() {
+    const timeEl = document.getElementById('currentTime');
+    if(!timeEl) return;
+    setInterval(() => {
+        const now = new Date();
+        timeEl.innerHTML = `<i class="far fa-clock"></i> ${now.toLocaleTimeString('ar-EG')} - ${now.toLocaleDateString('ar-EG')}`;
+    }, 1000);
+}
+
+// ===== 13. نقطة انطلاق الصفحة الاستهلالية (Initialization) =====
+(async function init() {
+    startClock();
+    const isAuth = await checkAdminAuth();
+    if (isAuth) {
+        // تحديث بيانات اسم المدير في الفوتر الجانبي
+        const user = JSON.parse(localStorage.getItem('user')) || {};
+        if (user.fullName && document.getElementById('sidebarAdminName')) {
+            document.getElementById('sidebarAdminName').innerHTML = `<i class="fas fa-lock"></i> إشراف: ${user.fullName}`;
+            document.getElementById('adminWelcome').innerHTML = `لوحة تحكم الشيخ | <span>${user.fullName}</span>`;
+        }
+        await loadRequests();
+    }
+    
+    // إغلاق المودال عند النقر خارج مساحة المحتوى البيضاء
+    window.onclick = function(event) {
+        const modal = document.getElementById('detailsModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+})();
