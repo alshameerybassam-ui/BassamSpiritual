@@ -4,11 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم المركز - النور الرباني</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <link rel="icon" type="image/x-icon" href="https://img.icons8.com/fluency/48/crescent-moon.png">
+    
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
+    <div id="notification" class="notification" style="position:fixed; top:20px; left:50%; transform:translateX(-50%); padding:15px 25px; border-radius:12px; color:#fff; font-weight:600; z-index:9999; display:none; min-width:300px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.15);"></div>
+
     <div class="admin-wrapper">
         <aside class="sidebar">
             <div class="logo">
@@ -17,26 +25,25 @@
             </div>
             <nav>
                 <ul>
-                    <li class="active"><i class="fas fa-tachometer-alt"></i> الإحصائيات</li>
-                    <li onclick="loadRequests()"><i class="fas fa-list-ul"></i> جميع الطلبات</li>
-                    <li><i class="fas fa-users"></i> العملاء</li>
+                    <li class="active" id="btnStats" onclick="switchSection('stats')"><i class="fas fa-tachometer-alt"></i> الإحصائيات</li>
+                    <li id="btnRequests" onclick="switchSection('requests')"><i class="fas fa-list-ul"></i> جميع الطلبات</li>
+                    <li onclick="logout()" style="color:#e74c3c; cursor:pointer; margin-top:20px;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
+            <div class="sidebar-footer" id="sidebarAdminName">
                 <i class="fas fa-lock"></i> إشراف: بسام الشميري
             </div>
         </aside>
 
         <main class="main-content">
             <header>
-                <h1>لوحة تحكم المركز</h1>
+                <h1 id="adminWelcome">لوحة تحكم المركز</h1>
                 <div class="header-actions">
                     <span id="currentTime"></span>
                     <a href="/" target="_blank" class="btn-view-site"><i class="fas fa-external-link-alt"></i> زيارة الموقع</a>
                 </div>
             </header>
 
-            <!-- بطاقات الإحصائيات -->
             <section class="stats-grid">
                 <div class="stat-card gold">
                     <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
@@ -68,13 +75,12 @@
                 </div>
             </section>
 
-            <!-- جدول الطلبات -->
-            <section class="table-section">
+            <section class="table-section" id="requestsSection">
                 <div class="table-header">
-                    <h2><i class="fas fa-list"></i> قائمة الطلبات</h2>
+                    <h2><i class="fas fa-list"></i> قائمة طلبات المستفيدين</h2>
                     <div class="table-controls">
-                        <input type="text" id="searchInput" placeholder="ابحث باسم أو بريد..." onkeyup="filterTable()">
-                        <button onclick="loadRequests()" class="btn-refresh"><i class="fas fa-sync-alt"></i></button>
+                        <input type="text" id="searchInput" placeholder="ابحث باسم المستفيد أو البريد..." onkeyup="filterTable()">
+                        <button onclick="loadRequests()" class="btn-refresh" title="تحديث البيانات"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -82,16 +88,17 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>الاسم</th>
-                                <th>البريد</th>
-                                <th>الخدمة</th>
-                                <th>الحالة</th>
+                                <th>الاسم الرباعي</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>نوع الخدمة</th>
+                                <th>حالة الطلب</th>
+                                <th>حالة الدفع</th>
                                 <th>التاريخ</th>
                                 <th>الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="requestsBody">
-                            <tr><td colspan="7" style="text-align:center; padding:30px; color:#888;">جاري تحميل الطلبات...</td></tr>
+                            <tr><td colspan="8" style="text-align:center; padding:30px; color:#888;">جاري جلب ملفات المستفيدين وتحديث البيانات...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -99,19 +106,14 @@
         </main>
     </div>
 
-    <!-- نافذة التفاصيل المنبثقة (مودال) -->
-    <div id="detailsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-file-alt"></i> تفاصيل الطلب</h3>
-                <span class="close-modal" onclick="closeModal()">&times;</span>
+    <div id="detailsModal" class="modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-content" style="background:#fff; max-width:650px; width:100%; border-radius:18px; padding:25px; box-shadow:0 15px 40px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto;">
+            <div class="modal-header" style="display:flex; justify-content:between; align-items:center; border-bottom:2px solid #E2E8F0; padding-bottom:12px; margin-bottom:15px; justify-content: space-between;">
+                <h3 style="margin:0; color:#0A1628;"><i class="fas fa-file-alt" style="color:#F5B041;"></i> مراجعة طلب المستفيد وإدارته</h3>
+                <span class="close-modal" onclick="closeModal()" style="font-size:1.8rem; cursor:pointer; color:#94A3B8;">&times;</span>
             </div>
             <div id="modalBody" class="modal-body">
-                <!-- سيتم ملؤها بواسطة JavaScript -->
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeModal()" class="btn-close-modal">إغلاق</button>
-            </div>
+                </div>
         </div>
     </div>
 
