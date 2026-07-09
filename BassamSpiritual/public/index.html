@@ -261,8 +261,9 @@
             </div>
         </div>
         <div class="chat-footer">
-            <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
+            <!-- تم تعديل اسم الدالة هنا لتعمل بشكل صحيح مع ملف السكريبت النشط لديك -->
+            <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()"><i class="bi bi-send-fill"></i></button>
         </div>
     </div>
 
@@ -276,8 +277,6 @@
             const animateCounter = (counter) => {
                 const target = +counter.getAttribute('data-target');
                 let count = 0;
-                
-                // تحديد سرعة القفزة الرقمية بناءً على حجم الرقم الأصلي لإيجاد اتزان حركي ناعم
                 const speed = target / 80; 
 
                 const updateCount = () => {
@@ -286,14 +285,13 @@
                         counter.innerText = Math.floor(count);
                         requestAnimationFrame(updateCount);
                     } else {
-                        counter.innerText = target; // الثبات على الرقم النهائي المستهدف
+                        counter.innerText = target; 
                     }
                 };
                 
                 updateCount();
             };
 
-            // تشغيل محرك تحريك الأرقام فوراً عند تحميل الواجهة
             counters.forEach(counter => animateCounter(counter));
         });
     </script>
