@@ -6,7 +6,10 @@ let currentRequestId = null;
 // ===== الإشعارات =====
 function showNotification(msg, type = 'success') {
     const n = document.getElementById('notification');
-    if (!n) return;
+    if (!n) {
+        alert(msg); // حماية بديلة في حال غياب عنصر الـ HTML
+        return;
+    }
     n.textContent = msg;
     n.className = `notification ${type} show`;
     setTimeout(() => n.classList.remove('show'), 6000);
@@ -23,12 +26,10 @@ async function checkAuth() {
     }
     
     try {
-        // نرسل طلب التحقق للخلفية
         const res = await fetch('/api/auth/verify', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        // إذا كان السيرفر مستيقظاً وأعطى استجابة صريحة بالفشل، نطرد المستخدم
         if (res.status === 401 || res.status === 403) {
             const data = await res.json();
             if (!data.success) {
@@ -38,12 +39,9 @@ async function checkAuth() {
                 return false;
             }
         }
-        
         return true; 
     } catch (e) {
-        // في حال حدوث خطأ اتصال (مثل تأخر سيرفر Render في الاستيقاظ)، 
-        // لا نطرد المستخدم! نتركه يرى لوحة التحكم والتوكن سيتولى جلب البيانات لاحقاً.
-        console.warn("⚠️ الخادم يستغرق وقتاً للاستجابة، تم تجاوز الفحص المؤقت.");
+        console.warn("⚠️ الخادم يستغرق وقتاً للاستجابة، تم تجاوز الفحص المؤقت لضمان استمرارية الخدمة للمستفيد.");
         return true; 
     }
 }
@@ -57,33 +55,34 @@ async function loadDashboard() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!data.success) { showNotification('⚠️ حدث خطأ في تحميل البيانات.', 'error'); return; }
+        if (!data.success) { showNotification('⚠️ حدث خطأ في تحميل البيانات من السيرفر.', 'error'); return; }
 
         currentUser = data.user;
         userRequests = data.requests || [];
 
-        document.getElementById('userName').innerHTML = `مرحباً، <span>${data.user.fullName}</span>`;
-        document.getElementById('userEmail').textContent = data.user.email;
-        document.getElementById('sidebarName').textContent = data.user.fullName;
-        document.getElementById('sidebarEmail').textContent = data.user.email;
-        document.getElementById('sidebarPhone').textContent = data.user.phone || 'غير مضاف';
-        document.getElementById('sidebarJoined').textContent = new Date(data.user.createdAt).toLocaleDateString('ar-EG');
-        document.getElementById('userInitial').textContent = data.user.fullName.charAt(0);
+        if(document.getElementById('userName')) document.getElementById('userName').innerHTML = `مرحباً، <span>${data.user.fullName}</span>`;
+        if(document.getElementById('userEmail')) document.getElementById('userEmail').textContent = data.user.email;
+        if(document.getElementById('sidebarName')) document.getElementById('sidebarName').textContent = data.user.fullName;
+        if(document.getElementById('sidebarEmail')) document.getElementById('sidebarEmail').textContent = data.user.email;
+        if(document.getElementById('sidebarPhone')) document.getElementById('sidebarPhone').textContent = data.user.phone || 'غير مضاف';
+        if(document.getElementById('sidebarJoined') && data.user.createdAt) document.getElementById('sidebarJoined').textContent = new Date(data.user.createdAt).toLocaleDateString('ar-EG');
+        if(document.getElementById('userInitial')) document.getElementById('userInitial').textContent = data.user.fullName.charAt(0);
 
         const total = userRequests.length;
         const pending = userRequests.filter(r => r.status === 'pending' || r.status === 'processing').length;
         const completed = userRequests.filter(r => r.status === 'completed').length;
         const rejected = userRequests.filter(r => r.status === 'rejected').length;
-        document.getElementById('statTotal').textContent = total;
-        document.getElementById('statPending').textContent = pending;
-        document.getElementById('statCompleted').textContent = completed;
-        document.getElementById('statRejected').textContent = rejected;
+        
+        if(document.getElementById('statTotal')) document.getElementById('statTotal').textContent = total;
+        if(document.getElementById('statPending')) document.getElementById('statPending').textContent = pending;
+        if(document.getElementById('statCompleted')) document.getElementById('statCompleted').textContent = completed;
+        if(document.getElementById('statRejected')) document.getElementById('statRejected').textContent = rejected;
 
         renderRequests(userRequests);
-    } catch (e) { showNotification('⚠️ خطأ في تحميل البيانات.', 'error'); }
+    } catch (e) { showNotification('⚠️ خطأ في الاتصال بالخادم وتحميل بيانات اللوحة.', 'error'); }
 }
 
-// ===== عرض الطلبات =====
+// ===== عرض الطلبات بالاعتماد على التمييز الذكي للمعرف المتاح =====
 function renderRequests(requests) {
     const container = document.getElementById('requestsList');
     if (!container) return;
@@ -92,7 +91,7 @@ function renderRequests(requests) {
         container.innerHTML = `
             <div style="text-align:center; padding:30px; color:#6A7A8A;">
                 <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                لا توجد طلبات حتى الآن. اضغط على "طلب جديد" لتقديم طلب.
+                لا توجد طلبات حتى الآن. اضغط على "طلب جديد" لتقديم طلبك للشيخ بسام.
             </div>
         `;
         return;
@@ -100,72 +99,87 @@ function renderRequests(requests) {
 
     const statusMap = {
         'pending': '<span class="status-badge status-pending">⏳ قيد الانتظار</span>',
-        'processing': '<span class="status-badge status-processing">⚙️ قيد المعالجة</span>',
-        'completed': '<span class="status-badge status-completed">✅ مكتمل</span>',
-        'rejected': '<span class="status-badge status-rejected">❌ مرفوض</span>'
+        'processing': '<span class="status-badge status-processing">⚙️ قيد المعالجة الروحية</span>',
+        'completed': '<span class="status-badge status-completed">✅ مكتمل (تم الرد)</span>',
+        'rejected': '<span class="status-badge status-rejected">❌ مستبعد</span>'
     };
 
-    container.innerHTML = requests.map(req => `
-        <div class="request-item">
-            <div class="top-row">
-                <span class="service">${req.serviceType}</span>
-                <span class="date">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
+    container.innerHTML = requests.map(req => {
+        // حماية ذكية لاختيار المعرف الصحيح المسترجع سواء كان id أو _id لضمان عدم توقف الزر
+        const targetId = req._id || req.id;
+        
+        return `
+            <div class="request-item" style="border-right: 4px solid var(--gold, #D4AF37); margin-bottom: 12px; padding: 15px; background: #fff; border-radius: 8px;">
+                <div class="top-row">
+                    <strong class="service" style="color: #0A1628;">🌿 ${req.serviceType}</strong>
+                    <span class="date" style="font-size: 0.85rem; color: #6A7A8A;">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</span>
+                </div>
+                <div class="top-row" style="margin-top:8px; font-size: 0.9rem;">
+                    <span>الحالة: ${statusMap[req.status] || req.status}</span>
+                    <span>الدفع: ${req.paymentStatus === 'verified' ? '<span style="color:#22C55E; font-weight:700;">🟢 مؤكد</span>' : req.paymentStatus === 'paid' ? '<span style="color:#F5B041; font-weight:700;">🟡 قيد المراجعة</span>' : '<span style="color:#EF4444; font-weight:700;">🔴 غير مدفوع</span>'}</span>
+                </div>
+                <div class="description" style="margin-top: 10px; color: #4A5A6A; font-size: 0.9rem;">${req.description ? req.description.substring(0, 100) + (req.description.length > 100 ? '...' : '') : ''}</div>
+                <div class="actions" style="margin-top: 12px; text-align: left;">
+                    <button onclick="viewRequest('${targetId}')" class="btn-sm btn-sm-gold"><i class="bi bi-eye"></i> عرض وتتبع الخطة</button>
+                </div>
             </div>
-            <div class="top-row" style="margin-top:5px;">
-                <span>الحالة: ${statusMap[req.status] || req.status}</span>
-                <span>الدفع: ${req.paymentStatus === 'verified' ? '✅ مؤكد' : req.paymentStatus === 'paid' ? '🟡 قيد المراجعة' : '🔴 غير مدفوع'}</span>
-            </div>
-            <div class="description">${req.description ? req.description.substring(0, 100) + (req.description.length > 100 ? '...' : '') : ''}</div>
-            <div class="actions">
-                <button onclick="viewRequest('${req.id}')" class="btn-sm btn-sm-gold"><i class="bi bi-eye"></i> عرض</button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-// ===== عرض تفاصيل الطلب =====
+// ===== عرض تفاصيل الطلب وحقن البرنامج العلاجي الحقيقي للمريض =====
 async function viewRequest(id) {
+    if (!id || id === 'undefined') {
+        showNotification('⚠️ خطأ داخلي في معرف الطلب المسترجع.', 'error');
+        return;
+    }
+    
     currentRequestId = id;
     const token = localStorage.getItem('token');
     try {
+        // الاتصال بالمسار لطلب تفاصيل الكود من السيرفر
         const res = await fetch(`/api/dashboard/request/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!data.success) { showNotification('⚠️ فشل تحميل التفاصيل.', 'error'); return; }
+        if (!data.success) { showNotification('⚠️ فشل تحميل تفاصيل الرد من الخادم الإلكتروني.', 'error'); return; }
 
         const req = data.request;
         const modal = document.getElementById('requestDetailsModal');
         if (!modal) return;
         
         document.getElementById('requestDetailsContent').innerHTML = `
-            <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:15px;">
-                <p><strong>📅 التاريخ:</strong> ${new Date(req.createdAt).toLocaleString('ar-EG')}</p>
-                <p><strong>🛠 الخدمة:</strong> ${req.serviceType}</p>
-                <p><strong>📩 طريقة التواصل:</strong> ${req.contactMethod === 'whatsapp' ? 'واتساب' : 'بريد إلكتروني'}</p>
-                <p><strong>💰 حالة الدفع:</strong> ${req.paymentStatus || 'غير مدفوع'}</p>
+            <div style="background:#F8FAFC; padding:15px; border-radius:12px; margin-bottom:15px; text-align: right;">
+                <p><strong>📅 تاريخ تقديم الطلب:</strong> ${new Date(req.createdAt).toLocaleString('ar-EG')}</p>
+                <p><strong>🛠 نوع الخدمة:</strong> ${req.serviceType}</p>
+                <p><strong>📩 طريقة التواصل المعتمدة:</strong> ${req.contactMethod === 'whatsapp' ? 'الواتساب المباشر' : 'البريد الإلكتروني'}</p>
+                <p><strong>💰 حالة التدقيق المالي للوصول:</strong> ${req.paymentStatus === 'verified' ? '🟢 تم التأكيد مالياً' : '🔴 في انتظار التحقق'}</p>
             </div>
-            <div style="background:#FFFBF0; padding:15px; border-radius:12px; border-right:4px solid #F5B041; margin-bottom:15px;">
-                <strong>📝 وصف المشكلة:</strong>
-                <p style="margin-top:8px; line-height:1.8;">${req.description || 'لا يوجد وصف'}</p>
+            <div style="background:#FFFBF0; padding:15px; border-radius:12px; border-right:4px solid #F5B041; margin-bottom:15px; text-align: right;">
+                <strong>📝 شرح الحالة المعروضة للشيخ بسام:</strong>
+                <p style="margin-top:8px; line-height:1.8; white-space: pre-wrap; color: #4A5A6A;">${req.description || 'لا يوجد وصف متاح'}</p>
             </div>
             ${req.status === 'rejected' ? `
-                <div style="background:#FEE2E2; padding:15px; border-radius:12px; border-right:4px solid #e74c3c;">
-                    <p style="color:#991B1B;">❌ تم رفض الطلب من قبل الشيخ بسام.</p>
+                <div style="background:#FEE2E2; padding:15px; border-radius:12px; border-right:4px solid #e74c3c; text-align: right;">
+                    <p style="color:#991B1B; font-weight:700;">❌ تم استبعاد هذا الملف من قبل الإدارة لعدم اكتمال الشروط الماليّة أو البيانات.</p>
                 </div>
             ` : ''}
-            ${req.status === 'completed' && req.treatmentDetails ? `
-                <div style="background:#D1FAE5; padding:15px; border-radius:12px; border-right:4px solid #27ae60; margin-top:15px;">
-                    <strong>✅ العلاج:</strong>
-                    <p style="margin-top:8px; line-height:1.8;">${req.treatmentDetails.replace(/\n/g, '<br>')}</p>
+            ${(req.status === 'completed' || req.treatmentDetails || req.adminReply) ? `
+                <div style="background:#D1FAE5; padding:20px; border-radius:12px; border-right:4px solid #22C55E; margin-top:15px; text-align: right;">
+                    <strong style="color: #065F46; font-size: 1.1rem;"><i class="bi bi-patch-check"></i> الخطة الروحية والعلاج الشرعي المخصص لك:</strong>
+                    <p style="margin-top:10px; line-height:1.8; font-weight: 600; color: #111; white-space: pre-wrap;">${req.treatmentDetails || req.adminReply || 'جاري كتابة السطور والآيات المخصصة لك، يرجى مراجعة اللوحة لاحقاً...'}</p>
                 </div>
-            ` : ''}
+            ` : `
+                <div style="background:#E0F2FE; padding:15px; border-radius:12px; border-right:4px solid #0EA5E9; margin-top:15px; text-align: right;">
+                    <p style="color:#0369A1; font-weight:600;"><i class="bi bi-info-circle"></i> طلبك معروض حالياً على فضيلة الشيخ بسام الشميري للمراجعة والكشف الشرعي.</p>
+                </div>
+            `}
         `;
         modal.classList.add('show');
-    } catch (e) { showNotification('⚠️ خطأ في تحميل التفاصيل.', 'error'); }
+    } catch (e) { showNotification('⚠️ خطأ تقني غير معروف عند استحضار تفاصيل الخطة.', 'error'); }
 }
 
-// ===== فتح وإغلاق مودال الطلب الجديد =====
+// ===== فتح وإغلاق المودالات =====
 function openNewRequestModal() {
     const modal = document.getElementById('newRequestModal');
     if (modal) modal.classList.add('show');
@@ -179,7 +193,7 @@ function closeDetailsModal() {
     if (modal) modal.classList.remove('show');
 }
 
-// ===== تقديم طلب جديد =====
+// ===== تقديم طلب جديد مؤمن وحي ومربوط بالهيدرز المعتمدة =====
 document.getElementById('newRequestForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const token = localStorage.getItem('token');
@@ -188,16 +202,17 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
     const description = document.getElementById('reqDescription').value.trim();
 
     if (!description || description.length < 5) {
-        showNotification('⚠️ وصف المشكلة قصير جداً (5 أحرف على الأقل).', 'error');
+        showNotification('⚠️ يرجى تفصيل المشكلة بوصف لا يقل عن 5 أحرف.', 'error');
         return;
     }
 
     const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> جاري الإرسال...';
+    if(btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> جاري إرسال البيانات للسيرفر الحركي...';
+    }
 
     try {
-        // تم تأمين الطلب وإرسال الـ Authorization هيدر لمنع خطأ 401
         const res = await fetch('/api/dashboard/request', {
             method: 'POST',
             headers: { 
@@ -208,30 +223,33 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
         });
         const data = await res.json();
         if (data.success) {
-            showNotification('✅ ' + data.message, 'success');
+            showNotification('✅ ' + (data.message || 'تم رفع طلبك للمركز بنجاح!'), 'success');
             closeNewRequestModal();
-            loadDashboard();
-            this.reset(); // تفريغ الحقول بعد النجاح
+            await loadDashboard(); // إعادة تحميل حي وفوري للبيانات
+            this.reset(); 
         } else {
-            showNotification('❌ ' + (data.error || 'فشل إرسال الطلب'), 'error');
+            showNotification('❌ ' + (data.error || 'يرجى مراجعة مسؤول الموقع لفحص صلاحيات الإرسال.'), 'error');
         }
     } catch (e) {
-        showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
+        showNotification('⚠️ انقطع الاتصال اللحظي بالسيرفر الرئيسي، يرجى المحاولة مرة أخرى.', 'error');
     }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-send"></i> إرسال الطلب';
+    
+    if(btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i> إرسال الطلب الشرعي';
+    }
 });
 
-// ===== تسجيل الخروج =====
+// ===== تسجيل الخروج الآمن وبدء تنظيف التوكن المتقادم =====
 function logout() {
-    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+    if (confirm('هل أنت متأكد من تسجيل الخروج من مركز النور الروحاني؟')) {
         localStorage.removeItem('token'); 
         localStorage.removeItem('user');
         window.location.href = '/login.html';
     }
 }
 
-// ===== تبويبات =====
+// ===== تبويبات اللوحة الرسمية =====
 function showTab(tab) {
     const tabReq = document.getElementById('tabRequests');
     const tabBtn = document.getElementById('tabRequestsBtn');
@@ -239,7 +257,7 @@ function showTab(tab) {
     if (tabBtn) tabBtn.className = 'btn-primary';
 }
 
-// ===== تهيئة الصفحة =====
+// ===== تهيئة وإقلاع اللوحة البرمجية تلقائياً فور التحميل الأول =====
 (async function init() {
     const isAuth = await checkAuth();
     if (!isAuth) return;
