@@ -10,7 +10,7 @@ const USERS_FILE = path.join(__dirname, '../data/users.json');
 const REQUESTS_FILE = path.join(__dirname, '../data/requests.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
 
-// التأكد من وجود الملفات
+// التأكد من وجود الملفات وإنشائها إذا لم تكن موجودة
 fs.ensureFileSync(USERS_FILE);
 fs.ensureFileSync(REQUESTS_FILE);
 if (!fs.existsSync(USERS_FILE) || fs.readFileSync(USERS_FILE).length === 0) {
@@ -65,7 +65,7 @@ router.get('/me', authenticate, (req, res) => {
     const user = req.user;
     const requests = readRequests().filter(r => r.userId === user.id);
     
-    // إصلاح فرز التاريخ للنصوص
+    // إصلاح فرز التاريخ للنصوص البرمجية لترتيبها بشكل صحيح
     requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     res.json({
@@ -78,7 +78,7 @@ router.get('/me', authenticate, (req, res) => {
             createdAt: user.createdAt
         },
         requests: requests.map(r => {
-            // مزامنة حقل الرد لضمان ظهوره للمريض فوراً بكافة التسميات المتوقعة
+            // مزامنة حقل الرد لضمان ظهوره للمريض فوراً بكافة التسميات المتوقعة في الواجهات
             const latestReply = (r.adminReplies && r.adminReplies.length > 0) ? r.adminReplies[r.adminReplies.length - 1].text : null;
             return {
                 id: r.id,
@@ -97,7 +97,7 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // ==============================================
-// 2. تقديم طلب جديد
+// 2. تقديم طلب جديد للمستفيدين
 // ==============================================
 router.post('/request',
     authenticate,
@@ -169,7 +169,7 @@ router.get('/request/:id', authenticate, (req, res) => {
         return res.status(403).json({ success: false, error: 'غير مصرح لك باستعراض هذا الملف' });
     }
     
-    // تأمين جلب الرد وحقنه في الخانتين ليتعرف عليه المودال بملف الجافا سكريبت
+    // تأمين جلب الرد وحقنه في الخانتين ليتعرف عليه المودال بملف الجافا سكريبت للعميل
     const latestReply = (request.adminReplies && request.adminReplies.length > 0) ? request.adminReplies[request.adminReplies.length - 1].text : null;
     request.treatmentDetails = request.treatmentDetails || latestReply;
 
@@ -177,7 +177,7 @@ router.get('/request/:id', authenticate, (req, res) => {
 });
 
 // ==============================================
-// 4. تأكيد الدفع (المرحلة الأولى - 100 ريال)
+// 4. تأكيد الدفع (المرحلة الأولى - الكشف)
 // ==============================================
 router.post('/payment/confirm/:id', authenticate, (req, res) => {
     const { id } = req.params;
@@ -287,15 +287,15 @@ router.post('/message/:id', authenticate, (req, res) => {
 });
 
 // ==============================================================================
-// مسارات لوحة التحكم (Admin Dashboard Routes) - مؤمنة ومخصصة للشيخ بسام
+// مسارات لوحة التحكم (Admin Dashboard Routes) - مؤمنة ومخصصة للشيخ بسام الشميري
 // ==============================================================================
 
-// 1. جلب جميع طلبات المستفيدين للوحة التحكم (مؤمن بـ authenticate و requireAdmin)
+// 1. جلب جميع طلبات المستفيدين للوحة التحكم (مؤمن بـ authenticate و requireAdmin لمنع التسريب)
 router.get('/requests', authenticate, requireAdmin, (req, res) => {
     try {
         const requests = readRequests();
         
-        // ترتيب تصاعدي منطقي للتواريخ المكتوبة
+        // ترتيب التواريخ من الأحدث للأقدم
         requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
         const formattedRequests = requests.map(r => ({
@@ -313,68 +313,4 @@ router.get('/requests', authenticate, requireAdmin, (req, res) => {
             adminReply: (r.adminReplies && r.adminReplies.length > 0) ? r.adminReplies[r.adminReplies.length - 1].text : ""
         }));
 
-        res.json(formattedRequests);
-    } catch (error) {
-        console.error('❌ خطأ في جلب جميع الطلبات للإدارة:', error.message);
-        res.status(500).json({ error: 'خطأ داخلي في السيرفر أثناء جلب البيانات الإدارية' });
-    }
-});
-
-// 2. تحديث حالة الطلب وكتابة الخطة العلاجية من الشيخ بسام (PATCH - مؤمن بالكامل)
-router.patch('/request/:id', authenticate, requireAdmin, (req, res) => {
-    const { id } = req.params;
-    const { status, adminReply } = req.body;
-
-    try {
-        const requests = readRequests();
-        const index = requests.findIndex(r => r.id == id);
-
-        if (index === -1) {
-            return res.status(404).json({ error: 'الطلب غير موجود بنظام البيانات' });
-        }
-
-        if (status) {
-            requests[index].status = status;
-        }
-
-        if (adminReply !== undefined) {
-            // تحديث الحقلين معاً لمنع أي مشكلة في واجهة المستخدم
-            requests[index].treatmentDetails = adminReply;
-            requests[index].treatment = adminReply;
-            
-            if (!requests[index].adminReplies) requests[index].adminReplies = [];
-            requests[index].adminReplies.push({
-                text: adminReply,
-                date: new Date().toISOString()
-            });
-        }
-
-        writeRequests(requests);
-        res.json({ success: true, message: '✅ تم تحديث بيانات المستفيد وكتابة البرنامج العلاجي بنجاح' });
-    } catch (error) {
-        console.error('❌ خطأ في تحديث الطلب من الإدارة:', error.message);
-        res.status(500).json({ error: 'فشل السيرفر في معالجة تحديثات الشيخ بسام' });
-    }
-});
-
-// 3. حذف طلب مستفيد نهائياً من السجلات (DELETE - مؤمن بالكامل)
-router.delete('/request/:id', authenticate, requireAdmin, (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const requests = readRequests();
-        const filtered = requests.filter(r => r.id != id);
-
-        if (requests.length === filtered.length) {
-            return res.status(404).json({ error: 'الطلب غير موجود أو تم حذفه مسبقاً' });
-        }
-
-        writeRequests(filtered);
-        res.json({ success: true, message: '🗑 تم حذف الطلب من السجلات بنجاح' });
-    } catch (error) {
-        console.error('❌ خطأ في حذف الطلب من السجلات:', error.message);
-        res.status(500).json({ error: 'فشل السيرفر في معالجة طلب الحذف الإداري' });
-    }
-});
-
-module.exports = router;
+        res.
