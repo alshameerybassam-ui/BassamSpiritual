@@ -142,21 +142,31 @@ router.post('/login',
 );
 
 // ==============================================
-// 3. التحقق من صحة الرمز للحفاظ على الجلسة
+// 3. التحقق من صحة الرمز للحفاظ على الجلسة (نسخة مصلحة تدعم GET لمنع الـ 404)
 // ==============================================
-router.post('/verify', (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1];
+router.get('/verify', (req, res) => {
+    // قراءة التوكن بأمان من الهيدر
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
     if (!token) {
-        return res.status(401).json({ error: 'غير مصرح' });
+        return res.status(401).json({ success: false, error: 'رمز الجلسة مفقود وغير متاح.' });
     }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         const users = readUsers();
         const user = users.find(u => u.id === decoded.id);
-        if (!user || !user.isActive) {
-            return res.status(401).json({ error: 'الحساب غير نشط' });
+        
+        if (!user) {
+            return res.status(401).json({ success: false, error: 'المستفيد غير مسجل بقاعدة البيانات.' });
         }
+        
+        if (!user.isActive) {
+            return res.status(403).json({ success: false, error: 'هذا الحساب تم توقيفه مؤقتاً من قبل الإدارة.' });
+        }
+
+        // إرجاع استجابة نجاح متوافقة 100% مع متطلبات dashboard.js و admin.js
         res.json({
             success: true,
             user: {
@@ -168,7 +178,27 @@ router.post('/verify', (req, res) => {
             }
         });
     } catch (e) {
-        res.status(401).json({ error: 'رمز غير صالح' });
+        res.status(401).json({ success: false, error: 'انتهت صلاحية الرمز، يرجى إعادة تسجيل الدخول.' });
+    }
+});
+
+// دعم احتياطي لـ POST أيضاً لضمان عدم تأثر أي ملفات أخرى بالمشروع
+router.post('/verify', (req, res) => {
+    const token = req.body.token || req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, error: 'غير مصرح' });
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const users = readUsers();
+        const user = users.find(u => u.id === decoded.id);
+        if (!user || !user.isActive) return res.status(401).json({ success: false, error: 'الحساب غير نشط' });
+        
+        res.json({
+            success: true,
+            user: { id: user.id, fullName: user.fullName, email: user.email, phone: user.phone, role: user.role || 'user' }
+        });
+    } catch (e) {
+        res.status(401).json({ success: false, error: 'رمز غير صالح' });
     }
 });
 
