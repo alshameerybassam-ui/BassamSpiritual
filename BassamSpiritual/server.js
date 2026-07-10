@@ -32,6 +32,9 @@ pool.connect()
     .then(() => console.log("🐘 [نظام النور] تم الاتصال بقاعدة بيانات PostgreSQL السحابية بنجاح!"))
     .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err.message));
 
+// ✨ [تعديل احترافي حرج] مشاركة الـ pool فوراً مع التطبيق قبل استدعاء أي مسارات فرعية لمنع خطأ undefined 'query'
+app.set('db', pool);
+
 // ==============================================
 // 2.5 تهيئة وبناء الجداول سحابياً وتطهير قسري شامل (قاطع لخطأ 500)
 // ==============================================
@@ -103,7 +106,7 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // حقن توجيه أولي للذكاء الاصطناعي
+        // حقن توجيه ألي للذكاء الاصطناعي
         await pool.query(`
             INSERT INTO system_settings (key, value) 
             VALUES ('ai_prompt', 'أنت المعالج الروحي المساعد المعتمد من قبل فضيلة الشيخ بسام...')
@@ -118,7 +121,7 @@ const initializeDatabase = async () => {
 initializeDatabase();
 
 // ==============================================
-// 3. ربط المسارات الفرعية المحدثة (Routes)
+// 3. ربط المسارات الفرعية (بعد ضمان تعريف قاعدة البيانات)
 // ==============================================
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboard');
@@ -172,7 +175,6 @@ app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
         res.json(allRequests.rows);
     } catch (e) {
         console.error("❌ خطأ في مسار جلب طلبات الإدارة:", e.message);
-        // إرجاع مصفوفة فارغة مأمونة بدلاً من انهيار الصفحة بخطأ 500
         res.status(200).json([]);
     }
 });
