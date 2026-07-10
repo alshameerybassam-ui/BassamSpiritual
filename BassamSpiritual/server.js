@@ -49,7 +49,7 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // ب. جدول طلبات المستفيدين (تم تحديث الحقول لتتطابق بدقة مع مسارات لوحة التحكم منعا للأخطاء)
+        // ب. جدول طلبات المستفيدين
         await pool.query(`
             CREATE TABLE IF NOT EXISTS requests (
                 id SERIAL PRIMARY KEY,
@@ -77,6 +77,34 @@ const initializeDatabase = async () => {
             );
         `);
 
+        // د. جدول آراء المستفيدين المحمي (لا ينشر الرأي إلا بموافقة الشيخ)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                full_name VARCHAR(255),
+                comment TEXT NOT NULL,
+                rating INTEGER DEFAULT 5,
+                is_approved BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // هـ. جدول إعدادات النظام وتوجيهات الذكاء الاصطناعي
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key VARCHAR(100) PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+        `);
+
+        // حقن توجيه أولي للذكاء الاصطناعي لضمان عدم بقاء الحقل فارغاً
+        await pool.query(`
+            INSERT INTO system_settings (key, value) 
+            VALUES ('ai_prompt', 'أنت المعالج الروحي المساعد المعتمد من قبل فضيلة الشيخ بسام...')
+            ON CONFLICT (key) DO NOTHING;
+        `);
+
         console.log("⚙️ [نظام النور] تم فحص وتأمين كافة الجداول السحابية بنجاح.");
     } catch (err) {
         console.error("❌ خطأ أثناء تهيئة الجداول الحيوية:", err.message);
@@ -97,25 +125,32 @@ app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 
 // ==============================================
-// 📊 مسارات لوحة المدير والمقالات المحدثة لـ PostgreSQL
+// 📊 مسارات لوحة المدير، المقالات، الآراء، والذكاء الاصطناعي المتقدمة
 // ==============================================
 
-// أ. مسار جلب كافة طلبات المستفيدين وعرضها في لوحة المدير
-app.get('/api/admin/requests', async (req, res) => {
+// وسيط حماية محلي للتأكد من هوية الشيخ بسام كمسؤول
+const verifyAdminToken = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'غير مصرح بالدخول' });
+        if (!token) return res.status(401).json({ error: 'غير مصرح بالدخول، الرمز مفقود' });
 
         const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        // التحقق من صلاحية المدير من القاعدة
         const adminCheck = await pool.query('SELECT role FROM users WHERE id = $1', [decoded.id]);
         if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
-            return res.status(403).json({ error: 'عذراً، هذه البيانات خاصة بفضيلة الشيخ بسام!' });
+            return res.status(403).json({ error: 'عذراً، هذه الصلاحية خاصة بفضيلة الشيخ بسام!' });
         }
+        req.adminId = decoded.id;
+        next();
+    } catch (e) {
+        res.status(401).json({ error: 'انتهت الجلسة الأمنية، يرجى إعادة تسجيل الدخول.' });
+    }
+};
 
-        // جلب الطلبات مع أسماء أصحابها عبر دمج الجداول (JOIN)
+// أ. مسار جلب كافة طلبات المستفيدين وعرضها في لوحة المدير
+app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
+    try {
         const allRequests = await pool.query(`
             SELECT r.id, r.user_id as "userId", u.full_name as "fullName", u.email, 
                    r.service_type as "serviceType", r.status, r.created_at as "createdAt",
@@ -124,20 +159,81 @@ app.get('/api/admin/requests', async (req, res) => {
             JOIN users u ON r.user_id = u.id
             ORDER BY r.created_at DESC
         `);
-
         res.json(allRequests.rows);
     } catch (e) {
-        res.status(401).json({ error: 'انتهت الجلسة أو الرمز غير صالح' });
+        res.status(500).json({ error: 'حدث خطأ أثناء جلب الطلبات السحابية' });
     }
 });
 
-// ب. مسار جلب المقالات السحابي للواجهة الأمامية
+// ب. مسارات التحكم بالمقالات (جلب للكل / إضافة من لوحة التحكم)
 app.get('/api/articles', async (req, res) => {
     try {
-        const articles = await pool.query('SELECT * FROM articles ORDER BY CURRENT_TIMESTAMP DESC');
+        const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
         res.json(articles.rows);
     } catch (error) {
         res.status(500).json({ error: "حدث خطأ أثناء تحميل المقالات السحابية" });
+    }
+});
+
+app.post('/api/admin/articles', verifyAdminToken, async (req, res) => {
+    const { title, summary, content, icon } = req.body;
+    try {
+        await pool.query(
+            'INSERT INTO articles (title, summary, content, icon) VALUES ($1, $2, $3, $4)',
+            [title, summary, content, icon || 'fa-solid fa-heart']
+        );
+        res.json({ success: true, message: '✅ تم نشر المقال الجديد بنجاح في الموقع.' });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل حفظ المقال الجديد' });
+    }
+});
+
+// ج. مسارات التحكم بآراء المستخدمين (الشيخ يوافق على النشر أو يحذف)
+app.get('/api/admin/reviews', verifyAdminToken, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC');
+        res.json({ success: true, reviews: result.rows });
+    } catch (e) {
+        res.status(500).json({ success: false, error: 'تعذر جلب المراجعات' });
+    }
+});
+
+app.put('/api/admin/reviews/:id/approve', verifyAdminToken, async (req, res) => {
+    const { approve } = req.body; // إرسال true للموافقة و false للتعطيل
+    try {
+        await pool.query('UPDATE reviews SET is_approved = $1 WHERE id = $2', [approve, req.params.id]);
+        res.json({ success: true, message: 'تم تحديث حالة الرأي بنجاح والمزامنة بالواجهة.' });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.delete('/api/admin/reviews/:id', verifyAdminToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM reviews WHERE id = $1', [req.params.id]);
+        res.json({ success: true, message: 'تم حذف الرأي نهائياً.' });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// د. مسارات الإشراف على الذكاء الاصطناعي وتحديث توجيهاته السحابية
+app.get('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
+    try {
+        const result = await pool.query("SELECT value FROM system_settings WHERE key = 'ai_prompt'");
+        res.json({ success: true, instructions: result.rows[0]?.value || '' });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.put('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
+    const { instructions } = req.body;
+    try {
+        await pool.query("UPDATE system_settings SET value = $1 WHERE key = 'ai_prompt'", [instructions]);
+        res.json({ success: true, message: '⚙️ تم تحديث البنية التوجيهية الحاكمة لعقل الذكاء الاصطناعي بنجاح.' });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
