@@ -33,12 +33,13 @@ pool.connect()
     .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err.message));
 
 // ==============================================
-// 2.5 تهيئة وبناء الجداول سحابياً تلقائياً وتطهير التعارضات
+// 2.5 تهيئة وبناء الجداول سحابياً وتطهير قسري شامل (قاطع لخطأ 500)
 // ==============================================
 const initializeDatabase = async () => {
     try {
-        // [خطوة التطهير] حذف جدول الطلبات القديم المتعارض لتهيئة البنية الجديدة بنجاح
-        console.log("🧹 جاري تطهير قاعدة البيانات من الجداول القديمة لمنع خطأ 500...");
+        console.log("🧹 جاري التطهير القسري لجدول الطلبات المتعارض سحابياً...");
+        
+        // استخدام أمر DROP TABLE القوي مع CASCADE لكسر أي قيود وإزالة الجدول القديم تالف الهيكل فوراً
         await pool.query(`DROP TABLE IF EXISTS requests CASCADE;`);
 
         // أ. جدول المستخدمين (المستفيدين والإدارة)
@@ -53,7 +54,7 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // ب. إعادة بناء جدول الطلبات بالهيكلية السحابية المطابقة لـ dashboard.js و admin.js بالملي
+        // ب. بناء جدول الطلبات الجديد كلياً وضمان زرع عمود الـ description بنجاح
         await pool.query(`
             CREATE TABLE requests (
                 id SERIAL PRIMARY KEY,
@@ -109,29 +110,12 @@ const initializeDatabase = async () => {
             ON CONFLICT (key) DO NOTHING;
         `);
 
-        console.log("⚙️ [نظام النور] تم تطهير وبناء كافة الجداول السحابية بنجاح واستقرار.");
+        console.log("⚙️ [نظام النور] تمت عملية التطهير بنجاح، وجدول requests الجديد يحتوي الآن على عمود description!");
     } catch (err) {
-        console.error("❌ خطأ أثناء تهيئة الجداول الحيوية:", err.message);
+        console.error("❌ خطأ حرج أثناء التطهير أو التهيئة السحابية:", err.message);
     }
 };
 initializeDatabase();
-
-        // حقن توجيه أولي للذكاء الاصطناعي
-        await pool.query(`
-            INSERT INTO system_settings (key, value) 
-            VALUES ('ai_prompt', 'أنت المعالج الروحي Mساعد المعتمد من قبل فضيلة الشيخ بسام...')
-            ON CONFLICT (key) DO NOTHING;
-        `);
-
-        console.log("⚙️ [نظام النور] تم فحص وتأمين كافة الجداول السحابية بنجاح.");
-    } catch (err) {
-        console.error("❌ خطأ أثناء تهيئة الجداول الحيوية:", err.message);
-    }
-};
-initializeDatabase();
-
-// مشاركة الـ pool مع ملفات المسارات الفرعية (Routes)
-app.set('db', pool);
 
 // ==============================================
 // 3. ربط المسارات الفرعية المحدثة (Routes)
