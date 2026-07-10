@@ -24,63 +24,66 @@
                 <span>النور الرباني</span>
             </div>
             <nav>
-                <ul>
-                    <li class="active" id="btnStats" onclick="switchSection('stats')"><i class="fas fa-tachometer-alt"></i> الإحصائيات</li>
-                    <li id="btnRequests" onclick="switchSection('requests')"><i class="fas fa-list-ul"></i> جميع الطلبات</li>
-                    <li onclick="logout()" style="color:#e74c3c; cursor:pointer; margin-top:20px;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</li>
+                <ul class="sidebar-menu">
+                    <li id="navRequests" onclick="switchTab('requests')"><i class="fas fa-list-ul"></i> جميع الطلبات المعالجة</li>
+                    <li id="navReviews" onclick="switchTab('reviews')"><i class="fas fa-comments"></i> إدارة آراء المستفيدين</li>
+                    <li id="navAi" onclick="switchTab('ai')"><i class="fas fa-brain"></i> توجيه الذكاء الاصطناعي</li>
+                    <li onclick="localStorage.removeItem('token'); window.location.href='/login.html';" style="color:#e74c3c; cursor:pointer; margin-top:40px;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</li>
                 </ul>
             </nav>
             <div class="sidebar-footer" id="sidebarAdminName">
-                <i class="fas fa-lock"></i> إشراف: بسام الشميري
+                <i class="fas fa-lock"></i> إشراف: الشيخ بسام الشميري
             </div>
         </aside>
 
         <main class="main-content">
             <header>
-                <h1 id="adminWelcome">لوحة تحكم المركز</h1>
+                <div class="header-title">
+                    <h1 id="adminWelcome">لوحة التحكم العليا</h1>
+                    <span id="currentTime" style="color: #718096; font-size: 0.9rem; font-weight: 600;"></span>
+                </div>
                 <div class="header-actions">
-                    <span id="currentTime"></span>
-                    <a href="/" target="_blank" class="btn-view-site"><i class="fas fa-external-link-alt"></i> زيارة الموقع</a>
+                    <a href="/" target="_blank" class="btn-view-site" style="background: #2c3e50; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;"><i class="fas fa-external-link-alt"></i> زيارة الواجهة الرئيسية</a>
                 </div>
             </header>
 
-            <section class="stats-grid">
+            <section class="stats-grid" style="margin-bottom: 30px;">
                 <div class="stat-card gold">
                     <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
                     <div class="stat-info">
                         <h3 id="totalCount">0</h3>
-                        <p>إجمالي الطلبات</p>
+                        <p>إجمالي الحالات المقيدة</p>
                     </div>
                 </div>
                 <div class="stat-card blue">
                     <div class="stat-icon"><i class="fas fa-clock"></i></div>
                     <div class="stat-info">
                         <h3 id="pendingCount">0</h3>
-                        <p>قيد الانتظار</p>
+                        <p>طلبات بانتظار تشخيصك</p>
                     </div>
                 </div>
                 <div class="stat-card green">
                     <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
                     <div class="stat-info">
                         <h3 id="completedCount">0</h3>
-                        <p>مكتملة</p>
+                        <p>حالات قيد العلاج والمكتملة</p>
                     </div>
                 </div>
                 <div class="stat-card red">
                     <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
                     <div class="stat-info">
                         <h3 id="rejectedCount">0</h3>
-                        <p>مرفوضة</p>
+                        <p>طلبات مستبعدة</p>
                     </div>
                 </div>
             </section>
 
-            <section class="table-section" id="requestsSection">
+            <section class="table-section" id="requestsSection" style="display:none;">
                 <div class="table-header">
-                    <h2><i class="fas fa-list"></i> قائمة طلبات المستفيدين</h2>
+                    <h2><i class="fas fa-notes-medical" style="color: #3498db;"></i> ملفات طلبات المستفيدين الحية</h2>
                     <div class="table-controls">
-                        <input type="text" id="searchInput" placeholder="ابحث باسم المستفيد أو البريد..." onkeyup="filterTable()">
-                        <button onclick="loadRequests()" class="btn-refresh" title="تحديث البيانات"><i class="fas fa-sync-alt"></i></button>
+                        <input type="text" id="searchInput" placeholder="ابحث باسم المستفيد أو البريد السحابي..." onkeyup="filterTable()">
+                        <button onclick="loadRequests()" class="btn-refresh" title="تحديث البيانات فوراً"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -88,13 +91,13 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>الاسم الرباعي</th>
+                                <th>الاسم الكامل</th>
                                 <th>البريد الإلكتروني</th>
-                                <th>نوع الخدمة</th>
-                                <th>حالة الطلب</th>
-                                <th>حالة الدفع</th>
-                                <th>التاريخ</th>
-                                <th>الإجراءات</th>
+                                <th>نوع الخدمة الروحية</th>
+                                <th>حالة التشخيص والعلاج</th>
+                                <th>حالة التحقق المالي</th>
+                                <th>تاريخ التقديم</th>
+                                <th>الإجراء والتحكم</th>
                             </tr>
                         </thead>
                         <tbody id="requestsBody">
@@ -103,13 +106,38 @@
                     </table>
                 </div>
             </section>
+
+            <section class="table-section" id="reviewsSection" style="display:none;">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <h2><i class="fas fa-comments" style="color: #2ecc71;"></i> حائط المراجعات والآراء المستلمة من لوحات المستفيدين</h2>
+                    <p style="color: #718096; font-size: 0.9rem; margin-top: 5px;">الآراء المعروضة هنا كتبها المستفيدون من داخل حساباتهم، ولن تظهر للزوار في واجهة الموقع إلا بعد ضغط زر "موافقة ونشر".</p>
+                </div>
+                <div id="reviewsContainer" style="display: flex; flex-direction: column; gap: 15px;">
+                    </div>
+            </section>
+
+            <section class="table-section" id="aiSection" style="display:none;">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <h2><i class="fas fa-brain" style="color: #9b59b6;"></i> غرفة قيادة وتوجيه المساعد الذكي (AI Instructions)</h2>
+                    <p style="color: #718096; font-size: 0.9rem; margin-top: 5px;">قم بصياغة الأوامر والقواعد الحاكمة لسلوك المساعد الآلي لتوجيه الحالات والإجابة بأسلوب فقهي وشرعي دقيق.</p>
+                </div>
+                <div style="background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: right;">
+                    <label style="font-weight: 700; color: #2c3e50; display: block; margin-bottom: 10px; font-size: 1.1rem;"><i class="fas fa-terminal"></i> النص التوجيهي والمحددات العميقة لنظام المساعد التلقائي:</label>
+                    <textarea id="aiInstructionsText" rows="12" style="width: 100%; padding: 15px; border-radius: 8px; border: 2px solid #cbd5e1; font-family: 'Cairo', sans-serif; font-size: 1rem; line-height: 1.7; color: #334155;" placeholder="اكتب هنا كافة التوجيهات والقواعد التي يسير عليها الذكاء الاصطناعي مع زوار الموقع..."></textarea>
+                    
+                    <div style="text-align: left; margin-top: 20px;">
+                        <button onclick="saveAiInstructions()" style="background: #9b59b6; color: #fff; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.2);"><i class="fas fa-save"></i> ترسيخ وتحديث نظام التوجيه سحابياً</button>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <div id="detailsModal" class="modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:none; align-items:center; justify-content:center; padding:20px;">
         <div class="modal-content" style="background:#fff; max-width:650px; width:100%; border-radius:18px; padding:25px; box-shadow:0 15px 40px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto;">
-            <div class="modal-header" style="display:flex; justify-content:between; align-items:center; border-bottom:2px solid #E2E8F0; padding-bottom:12px; margin-bottom:15px; justify-content: space-between;">
-                <h3 style="margin:0; color:#0A1628;"><i class="fas fa-file-alt" style="color:#F5B041;"></i> مراجعة طلب المستفيد وإدارته</h3>
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #E2E8F0; padding-bottom:12px; margin-bottom:15px;">
+                <h3 style="margin:0; color:#0A1628;"><i class="fas fa-file-alt" style="color:#f1c40f;"></i> مراجعة ملف المستفيد وإصدار الخطة العلاجية</h3>
                 <span class="close-modal" onclick="closeModal()" style="font-size:1.8rem; cursor:pointer; color:#94A3B8;">&times;</span>
             </div>
             <div id="modalBody" class="modal-body">
