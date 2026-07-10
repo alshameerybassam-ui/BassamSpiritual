@@ -64,6 +64,13 @@
         .btn-sm { padding: 6px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
         .btn-sm-gold { background: #F5B041; color: #0A1628; }
         .btn-sm-gold:hover { background: #E67E22; }
+        
+        /* تنسيقات حقل الآراء الإضافي المطور */
+        .review-box textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.9rem; resize: none; margin-bottom: 10px; transition: 0.3s; }
+        .review-box textarea:focus { border-color: #27ae60; outline: none; box-shadow: 0 0 8px rgba(39,174,96,0.15); }
+        .btn-review-submit { background: #27ae60; color: #fff; border: none; padding: 8px 18px; border-radius: 30px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: 0.3s; font-family: 'Cairo', sans-serif; }
+        .btn-review-submit:hover { background: #219653; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(39,174,96,0.3); }
+
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
@@ -133,6 +140,21 @@
                     </div>
                 </div>
 
+                <div class="card" style="border-right-color: #27ae60;">
+                    <h4><i class="fas fa-heart-circle-check" style="color: #27ae60;"></i> تجربتك الروحية مع المركز</h4>
+                    <div class="review-box" style="margin-top: 8px;">
+                        <p style="font-size: 0.85rem; color: #6A7A8A; margin-bottom: 10px; line-height: 1.5;">رأيك يهمنا ويساعد الآخرين في الاستشفاء. اكتب تجاربك وسيقوم فضيلة الشيخ بسام بمراجعتها ونشرها على الموقع.</p>
+                        <form id="reviewForm">
+                            <textarea id="reviewComment" rows="3" placeholder="شاركنا تجربتك الصادقة مع الرقية والبرامج العلاجية بالمركز..." required></textarea>
+                            <div style="text-align: left;">
+                                <button type="submit" class="btn-review-submit">
+                                    <i class="fas fa-paper-plane"></i> إرسال تعليقي
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="card">
                     <h4><i class="fas fa-chart-pie"></i> إحصائياتي</h4>
                     <div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div>
@@ -145,15 +167,15 @@
             <div>
                 <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
                     <button onclick="showTab('requests')" class="btn-primary" id="tabRequestsBtn">
-                        <i class="fas fa-list-ul"></i> طلباتي
+                        <i class="fas fa-list-ul"></i> قائمة طلباتي الحالية
                     </button>
                 </div>
 
                 <div id="tabRequests" class="tab-content">
                     <div class="card" style="border-right-color:#1B4D3D;">
-                        <h4><i class="fas fa-list"></i> جميع طلباتي</h4>
-                        <div id="requestsList">
-                            <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p>
+                        <h4><i class="fas fa-list"></i> تتبع الخطط البرامجية والعلاجات المخصصة لك</h4>
+                        <div id="requestsList" style="margin-top: 15px;">
+                            <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات السحابية وتحديث الحساب...</p>
                         </div>
                     </div>
                 </div>
@@ -161,13 +183,12 @@
         </div>
     </div>
 
-    <!-- مودال تقديم طلب جديد -->
     <div id="newRequestModal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal" onclick="closeNewRequestModal()">&times;</span>
-            <h3><i class="fas fa-hand-holding-heart"></i> تقديم طلب جديد</h3>
+            <h3><i class="fas fa-hand-holding-heart"></i> تقديم ملف حالة جديد للشيخ</h3>
             <form id="newRequestForm">
-                <label>نوع الخدمة <span style="color:#e74c3c;">*</span></label>
+                <label>نوع الخدمة المطلوبة <span style="color:#e74c3c;">*</span></label>
                 <select id="reqServiceType" required>
                     <option value="استشارة روحانية">استشارة روحانية (100 ر.س)</option>
                     <option value="علاج روحي">علاج روحي (100 ر.س)</option>
@@ -176,31 +197,30 @@
                     <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
                 </select>
 
-                <label>طريقة التواصل <span style="color:#e74c3c;">*</span></label>
+                <label>طريقة التواصل المعتمدة <span style="color:#e74c3c;">*</span></label>
                 <select id="reqContactMethod" required>
-                    <option value="whatsapp">واتساب</option>
-                    <option value="email">بريد إلكتروني</option>
+                    <option value="whatsapp">الواتساب المباشر</option>
+                    <option value="email">البريد الإلكتروني</option>
                 </select>
 
-                <label>وصف المشكلة بالتفصيل <span style="color:#e74c3c;">*</span></label>
-                <textarea id="reqDescription" rows="4" placeholder="اكتب مشكلتك بوضوح..." required></textarea>
+                <label>وصف وشرح الحالة بالتفصيل الشرعي <span style="color:#e74c3c;">*</span></label>
+                <textarea id="reqDescription" rows="5" placeholder="اكتب ما تعاني منه بكل وضوح وتفصيل للتشخيص الدقيق..." required></textarea>
 
-                <button type="submit" class="btn-primary" style="width:100%; margin-top:15px; justify-content:center;">
-                    <i class="fas fa-paper-plane"></i> إرسال الطلب
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:20px; justify-content:center;">
+                    <i class="fas fa-paper-plane"></i> إرسال طلب العلاج والكشف الشرعي
                 </button>
             </form>
-            <p style="font-size:0.85rem; color:#6A7A8A; margin-top:10px; text-align:center;">
-                قيمة الطلب ثابتة: <strong>100 ريال سعودي</strong> (تُدفع بعد قبول الطلب).
+            <p style="font-size:0.85rem; color:#6A7A8A; margin-top:12px; text-align:center;">
+                قيمة الطلب ثابتة: <strong>100 ريال سعودي</strong> (تُدفع وتُحقق بعد قبول الطلب).
             </p>
         </div>
     </div>
 
-    <!-- مودال عرض تفاصيل الطلب -->
     <div id="requestDetailsModal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal" onclick="closeDetailsModal()">&times;</span>
-            <h3><i class="fas fa-file-alt"></i> تفاصيل الطلب</h3>
-            <div id="requestDetailsContent"><p>جاري التحميل...</p></div>
+            <h3><i class="fas fa-file-alt"></i> مراجعة البرنامج والرد العلاجي المعتمد</h3>
+            <div id="requestDetailsContent" style="margin-top: 15px;"><p>جاري استحضار الرد الشرعي من السيرفر السحابي...</p></div>
         </div>
     </div>
 
