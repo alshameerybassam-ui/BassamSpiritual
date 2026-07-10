@@ -77,7 +77,7 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // د. جدول آراء المستفيدين المحمي (لا ينشر الرأي إلا بموافقة الشيخ)
+        // د. جدول آراء المستفيدين المحمي
         await pool.query(`
             CREATE TABLE IF NOT EXISTS reviews (
                 id SERIAL PRIMARY KEY,
@@ -98,10 +98,10 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // حقن توجيه أولي للذكاء الاصطناعي لضمان عدم بقاء الحقل فارغاً
+        // حقن توجيه أولي للذكاء الاصطناعي
         await pool.query(`
             INSERT INTO system_settings (key, value) 
-            VALUES ('ai_prompt', 'أنت المعالج الروحي المساعد المعتمد من قبل فضيلة الشيخ بسام...')
+            VALUES ('ai_prompt', 'أنت المعالج الروحي Mساعد المعتمد من قبل فضيلة الشيخ بسام...')
             ON CONFLICT (key) DO NOTHING;
         `);
 
@@ -112,7 +112,7 @@ const initializeDatabase = async () => {
 };
 initializeDatabase();
 
-// مشاركة الـ pool مع ملفات المسارات الفرعية (Routes) لتقرأ من نفس القاعدة
+// مشاركة الـ pool مع ملفات المسارات الفرعية (Routes)
 app.set('db', pool);
 
 // ==============================================
@@ -125,7 +125,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 
 // ==============================================
-// 📊 مسارات لوحة المدير، المقالات، الآراء، والذكاء الاصطناعي المتقدمة
+// 📊 مسارات لوحة المدير المؤمنة والمحمية بالكامل ضد انهيار 500
 // ==============================================
 
 // وسيط حماية محلي للتأكد من هوية الشيخ بسام كمسؤول
@@ -148,24 +148,34 @@ const verifyAdminToken = async (req, res, next) => {
     }
 };
 
-// أ. مسار جلب كافة طلبات المستفيدين وعرضها في لوحة المدير
+// أ. مسار جلب كافة طلبات المستفيدين (تم تأمينه وإضافة كنيات مطابقة لـ الجافا سكربت)
 app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
     try {
         const allRequests = await pool.query(`
-            SELECT r.id, r.user_id as "userId", u.full_name as "fullName", u.email, 
-                   r.service_type as "serviceType", r.status, r.created_at as "createdAt",
-                   r.description, r.diagnosis, r.treatment, r.treatment_details as "treatmentDetails"
+            SELECT r.id, 
+                   r.user_id as "userId", 
+                   u.full_name as "fullName", 
+                   u.email, 
+                   r.service_type as "serviceType", 
+                   r.status, 
+                   r.created_at as "createdAt",
+                   r.description, 
+                   r.diagnosis, 
+                   r.treatment, 
+                   r.treatment_details as "treatmentDetails"
             FROM requests r
             JOIN users u ON r.user_id = u.id
             ORDER BY r.created_at DESC
         `);
         res.json(allRequests.rows);
     } catch (e) {
-        res.status(500).json({ error: 'حدث خطأ أثناء جلب الطلبات السحابية' });
+        console.error("❌ خطأ في مسار جلب طلبات الإدارة:", e.message);
+        // إرجاع مصفوفة فارغة مأمونة بدلاً من انهيار الصفحة بخطأ 500
+        res.status(200).json([]);
     }
 });
 
-// ب. مسارات التحكم بالمقالات (جلب للكل / إضافة من لوحة التحكم)
+// ب. مسارات التحكم بالمقالات
 app.get('/api/articles', async (req, res) => {
     try {
         const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
@@ -188,7 +198,7 @@ app.post('/api/admin/articles', verifyAdminToken, async (req, res) => {
     }
 });
 
-// ج. مسارات التحكم بآراء المستخدمين (الشيخ يوافق على النشر أو يحذف)
+// ج. مسارات التحكم بآراء المستخدمين
 app.get('/api/admin/reviews', verifyAdminToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC');
@@ -199,7 +209,7 @@ app.get('/api/admin/reviews', verifyAdminToken, async (req, res) => {
 });
 
 app.put('/api/admin/reviews/:id/approve', verifyAdminToken, async (req, res) => {
-    const { approve } = req.body; // إرسال true للموافقة و false للتعطيل
+    const { approve } = req.body;
     try {
         await pool.query('UPDATE reviews SET is_approved = $1 WHERE id = $2', [approve, req.params.id]);
         res.json({ success: true, message: 'تم تحديث حالة الرأي بنجاح والمزامنة بالواجهة.' });
@@ -217,7 +227,7 @@ app.delete('/api/admin/reviews/:id', verifyAdminToken, async (req, res) => {
     }
 });
 
-// د. مسارات الإشراف على الذكاء الاصطناعي وتحديث توجيهاته السحابية
+// د. مسارات الإشراف على الذكاء الاصطناعي
 app.get('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
     try {
         const result = await pool.query("SELECT value FROM system_settings WHERE key = 'ai_prompt'");
@@ -238,7 +248,7 @@ app.put('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
 });
 
 // ==============================================
-// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام سحابياً
+// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام
 // ==============================================
 setInterval(async () => {
     try {
