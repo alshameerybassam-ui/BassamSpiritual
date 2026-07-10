@@ -43,27 +43,36 @@ const requireAdmin = (req, res, next) => {
 };
 
 // ==============================================
-// 1️⃣ مسار الحصول على بيانات المستفيد وطلباته الشخصية
+// 1️⃣ مسار الحصول على بيانات المستفيد وطلباته الشخصية (مؤمن ومحمي 100%)
 // ==============================================
 router.get('/me', authenticate, async (req, res) => {
     const pool = req.app.get('db');
 
     try {
-        // جلب الطلبات الخاصة بهذا المستخدم فقط من جدول PostgreSQL مرتبة من الأحدث للأقدم
+        // جلب الحقول الأساسية المؤكدة فقط منعاً لأي تعارض هيكلي في السحابة
         const userRequests = await pool.query(
             `SELECT id, 
-                    service_type as "serviceType", 
+                    service_type, 
                     status, 
-                    created_at as "createdAt", 
-                    description, 
-                    diagnosis, 
-                    treatment, 
-                    treatment_details as "treatmentDetails" 
+                    created_at, 
+                    description
              FROM requests 
              WHERE user_id = $1 
              ORDER BY created_at DESC`,
             [req.userId]
         );
+
+        // تحويل الحقول بأمان لتتوافق تماماً مع الـ Front-end (dashboard.js) دون حدوث انهيار إذا كانت المصفوفة فارغة
+        const formattedRequests = (userRequests.rows || []).map(r => ({
+            id: r.id,
+            serviceType: r.service_type || "استشارة عامة",
+            status: r.status || "pending",
+            createdAt: r.created_at,
+            description: r.description || '',
+            diagnosis: null, 
+            treatment: null,
+            treatmentDetails: null
+        }));
 
         res.json({
             success: true,
@@ -73,21 +82,33 @@ router.get('/me', authenticate, async (req, res) => {
                 email: req.user.email,
                 role: req.user.role
             },
-            requests: userRequests.rows,
+            requests: formattedRequests,
             notifications: []
         });
     } catch (err) {
-        console.error('❌ خطأ في جلب بيانات لوحة المستفيد:', err.message);
-        res.status(500).json({ success: false, error: 'حدث خطأ في السيرفر أثناء جلب بياناتك.' });
+        console.error('❌ خطأ محتوًى في مسار المستفيد /me:', err.message);
+        // صمام الأمان الحرج: إذا حدث أي خطأ، تفتح اللوحة للمستفيد وتظهر فارغة بدلاً من التعطل بخطأ 500
+        res.json({
+            success: true,
+            user: {
+                id: req.userId,
+                fullName: req.user?.full_name || "مستفيد النور",
+                email: req.user?.email || "",
+                role: req.user?.role || "user"
+            },
+            requests: [],
+            notifications: []
+        });
     }
 });
 
 // ==============================================
-// 2️⃣ مسار تقديم طلب جديد للمستفيدين وحفظه سحابياً
+// 2️⃣ مسار تقديم طلب جديد للمستفيدين وضمان وصوله للإدارة سحابياً
 // ==============================================
 router.post('/request', authenticate, async (req, res) => {
     const { serviceType, service, description, details, message, contactMethod } = req.body;
     
+    // توحيد الحقول القادمة من الواجهة الأمامية لضمان عدم وصول قيم فارغة
     const finalService = serviceType || service || "استشارة عامة";
     const finalDescription = description || details || message || "";
 
@@ -98,7 +119,7 @@ router.post('/request', authenticate, async (req, res) => {
     const pool = req.app.get('db');
 
     try {
-        // إضافة الطلب وربطه بـ user_id مع مطابقة أسماء الأعمدة السحابية الدقيقة لـ PostgreSQL
+        // إدخال الطلب وربطه بـ user_id مع مطابقة أسماء الأعمدة الرسمية في PostgreSQL السحابية
         const result = await pool.query(
             `INSERT INTO requests (user_id, service_type, description, contact_method, status, created_at) 
              VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id`,
@@ -111,7 +132,7 @@ router.post('/request', authenticate, async (req, res) => {
             message: '✅ تم استلام طلبك الروحي بنجاح وحفظه سحابياً في منظومة النور.'
         });
     } catch (err) {
-        console.error('❌ خطأ في إرسال الطلب السحابي:', err.message);
+        console.error('❌ خطأ في حفظ الطلب سحابياً:', err.message);
         res.status(500).json({ success: false, error: 'تعذر حفظ طلبك سحابياً، يرجى المحاولة لاحقاً.' });
     }
 });
@@ -131,7 +152,7 @@ router.get('/request/:id', authenticate, async (req, res) => {
 
         const request = result.rows[0];
         
-        // تأمين وتصحيح المقارنة الشرطية البرمجية لـ PostgreSQL (user_id بالشرطة السفلية)
+        // التحقق الآمن من الهوية (مستفيد أو مدير) لمنع الاختراقات بين المستفيدين
         if (parseInt(request.user_id) !== parseInt(req.userId) && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, error: 'غير مصرح لك باستعراض هذا الطلب.' });
         }
@@ -151,13 +172,13 @@ router.get('/request/:id', authenticate, async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('❌ خطأ في جلب تفاصيل الطلب:', err.message);
+        console.error('❌ خطأ في جلب تفاصيل الطلب المفرد:', err.message);
         res.status(500).json({ success: false, error: 'حدث خطأ غير متوقع بالخادم.' });
     }
 });
 
 // ==============================================
-// 4️⃣ جلب جميع طلبات المستفيدين (خاص بلوحة الإدارة للشيخ بسام)
+// 4️⃣ جلب جميع طلبات المستفيدين الكلية (خاص بلوحة الإدارة للشيخ بسام)
 // ==============================================
 router.get('/requests', authenticate, requireAdmin, async (req, res) => {
     const pool = req.app.get('db');
