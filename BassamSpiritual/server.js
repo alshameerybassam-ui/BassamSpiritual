@@ -49,18 +49,23 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // ب. جدول طلبات المستفيدين (مرتبط بجدول المستخدمين)
+        // ب. جدول طلبات المستفيدين (تم تحديث الحقول لتتطابق بدقة مع مسارات لوحة التحكم منعا للأخطاء)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS requests (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 service_type VARCHAR(255) DEFAULT 'استشارة عامة',
+                description TEXT,
+                contact_method VARCHAR(100) DEFAULT 'واتساب',
                 status VARCHAR(50) DEFAULT 'pending',
+                diagnosis TEXT,
+                treatment TEXT,
+                treatment_details TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // ج. جدول المقالات الديناميكي (الذي طلبته لقراءتها وتعديلها من لوحة التحكم)
+        // ج. جدول المقالات الديناميكي 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
@@ -113,7 +118,8 @@ app.get('/api/admin/requests', async (req, res) => {
         // جلب الطلبات مع أسماء أصحابها عبر دمج الجداول (JOIN)
         const allRequests = await pool.query(`
             SELECT r.id, r.user_id as "userId", u.full_name as "fullName", u.email, 
-                   r.service_type as "serviceType", r.status, r.created_at as "createdAt"
+                   r.service_type as "serviceType", r.status, r.created_at as "createdAt",
+                   r.description, r.diagnosis, r.treatment, r.treatment_details as "treatmentDetails"
             FROM requests r
             JOIN users u ON r.user_id = u.id
             ORDER BY r.created_at DESC
@@ -128,7 +134,7 @@ app.get('/api/admin/requests', async (req, res) => {
 // ب. مسار جلب المقالات السحابي للواجهة الأمامية
 app.get('/api/articles', async (req, res) => {
     try {
-        const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
+        const articles = await pool.query('SELECT * FROM articles ORDER BY CURRENT_TIMESTAMP DESC');
         res.json(articles.rows);
     } catch (error) {
         res.status(500).json({ error: "حدث خطأ أثناء تحميل المقالات السحابية" });
