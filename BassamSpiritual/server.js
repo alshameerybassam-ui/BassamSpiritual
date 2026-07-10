@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs'); // استدعاء وحدة نظام الملفات الأساسية
-const jwt = require('jsonwebtoken'); // استدعاء جي دبليو تي للتحقق من المدير
+const { Pool } = require('pg'); // استدعاء محرك PostgreSQL
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -15,64 +15,88 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// تشغيل الملفات الساكنة (الواجهات الأمامية HTML, CSS, JS) من مجلد public
+// تشغيل الملفات الساكنة
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==============================================
-// 2. استدعاء وربط المسارات الأساسية (Routes)
+// 2. الاتصال بقاعدة البيانات السحابية PostgreSQL
+// ==============================================
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false // مطلوب لتأمين الاتصال مع سيرفرات Render
+    }
+});
+
+pool.connect()
+    .then(() => console.log("🐘 [نظام النور] تم الاتصال بقاعدة بيانات PostgreSQL السحابية بنجاح!"))
+    .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err.message));
+
+// ==============================================
+// 2.5 تهيئة وبناء الجداول سحابياً تلقائياً (Tables Schema)
+// ==============================================
+const initializeDatabase = async () => {
+    try {
+        // أ. جدول المستخدمين (المستفيدين والإدارة)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                full_name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) DEFAULT 'user',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // ب. جدول طلبات المستفيدين (مرتبط بجدول المستخدمين)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS requests (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                service_type VARCHAR(255) DEFAULT 'استشارة عامة',
+                status VARCHAR(50) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // ج. جدول المقالات الديناميكي (الذي طلبته لقراءتها وتعديلها من لوحة التحكم)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS articles (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                summary TEXT,
+                content TEXT,
+                icon VARCHAR(100) DEFAULT 'fa-solid fa-heart',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        console.log("⚙️ [نظام النور] تم فحص وتأمين كافة الجداول السحابية بنجاح.");
+    } catch (err) {
+        console.error("❌ خطأ أثناء تهيئة الجداول الحيوية:", err.message);
+    }
+};
+initializeDatabase();
+
+// مشاركة الـ pool مع ملفات المسارات الفرعية (Routes) لتقرأ من نفس القاعدة
+app.set('db', pool);
+
+// ==============================================
+// 3. ربط المسارات الفرعية المحدثة (Routes)
 // ==============================================
 const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboard');
 
-// تفعيل المسارات وضخها خلف بادئة واجهة برمجة التطبيقات (/api)
 app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 
 // ==============================================
-// 2.5 مسارات ديناميكية للمقالات، الآراء، ورصيد الشات
+// 📊 مسارات لوحة المدير والمقالات المحدثة لـ PostgreSQL
 // ==============================================
-const ARTICLES_FILE = path.join(__dirname, 'data/articles.json');
-const TESTIMONIALS_FILE = path.join(__dirname, 'data/testimonials.json');
-const USERS_FILE = path.join(__dirname, 'data/users.json');
 
-// التأكد الذاتي من وجود مجلد data وملفات الـ JSON حتى لا يتوقف السيرفر عند التشغيل الأول
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-    fs.mkdirSync(path.join(__dirname, 'data'));
-}
-if (!fs.existsSync(ARTICLES_FILE)) fs.writeFileSync(ARTICLES_FILE, JSON.stringify([]));
-if (!fs.existsSync(TESTIMONIALS_FILE)) fs.writeFileSync(TESTIMONIALS_FILE, JSON.stringify([]));
-
-// أ. مسار تحديث رصيد رسائل المستشار الذكي
-app.get('/api/chat/credits', (req, res) => {
-    res.json({ success: true, remaining: 50 });
-});
-
-// ب. مسار جلب المقالات الثلاثة من ملف الـ JSON
-app.get('/api/articles', (req, res) => {
-    try {
-        const articles = JSON.parse(fs.readFileSync(ARTICLES_FILE, 'utf8'));
-        res.json(articles);
-    } catch (error) {
-        console.error('خطأ في قراءة ملف المقالات:', error);
-        res.status(500).json({ error: "حدث خطأ أثناء تحميل المقالات" });
-    }
-});
-
-// ج. مسار جلب شهادات وآراء المستفيدين الثلاثة من ملف الـ JSON
-app.get('/api/testimonials', (req, res) => {
-    try {
-        const testimonials = JSON.parse(fs.readFileSync(TESTIMONIALS_FILE, 'utf8'));
-        res.json(testimonials);
-    } catch (error) {
-        console.error('خطأ في قراءة ملف الشهادات:', error);
-        res.status(500).json({ error: "حدث خطأ أثناء تحميل الآراء" });
-    }
-}); // 💡 تم إصلاح القوس المغلق هنا بنجاح
-
-// ==============================================
-// 📊 مسار خاص بـ لوحة المدير لجلب كل طلبات المستفيدين بأمان لإنهاء خطأ الاتصال
-// ==============================================
-app.get('/api/admin/requests', (req, res) => {
+// أ. مسار جلب كافة طلبات المستفيدين وعرضها في لوحة المدير
+app.get('/api/admin/requests', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) return res.status(401).json({ error: 'غير مصرح بالدخول' });
@@ -80,98 +104,68 @@ app.get('/api/admin/requests', (req, res) => {
         const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        if (fs.existsSync(USERS_FILE)) {
-            const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-            const user = users.find(u => u.id === decoded.id);
-            
-            if (!user || user.role !== 'admin') {
-                return res.status(403).json({ error: 'بيانات خاصة بالإدارة فقط' });
-            }
-
-            let allRequests = [];
-            users.forEach(u => {
-                if (u.requests && Array.isArray(u.requests)) {
-                    u.requests.forEach(reqst => {
-                        allRequests.push({
-                            id: reqst.id,
-                            userId: u.id,
-                            fullName: u.fullName,
-                            email: u.email,
-                            serviceType: reqst.serviceType || 'استشارة عامة',
-                            status: reqst.status || 'pending',
-                            createdAt: reqst.createdAt || u.createdAt
-                        });
-                    });
-                }
-            });
-            return res.json(allRequests);
+        // التحقق من صلاحية المدير من القاعدة
+        const adminCheck = await pool.query('SELECT role FROM users WHERE id = $1', [decoded.id]);
+        if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
+            return res.status(403).json({ error: 'عذراً، هذه البيانات خاصة بفضيلة الشيخ بسام!' });
         }
-        res.json([]);
+
+        // جلب الطلبات مع أسماء أصحابها عبر دمج الجداول (JOIN)
+        const allRequests = await pool.query(`
+            SELECT r.id, r.user_id as "userId", u.full_name as "fullName", u.email, 
+                   r.service_type as "serviceType", r.status, r.created_at as "createdAt"
+            FROM requests r
+            JOIN users u ON r.user_id = u.id
+            ORDER BY r.created_at DESC
+        `);
+
+        res.json(allRequests.rows);
     } catch (e) {
         res.status(401).json({ error: 'انتهت الجلسة أو الرمز غير صالح' });
     }
 });
 
-// ==============================================
-// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام
-// ==============================================
-setInterval(() => {
+// ب. مسار جلب المقالات السحابي للواجهة الأمامية
+app.get('/api/articles', async (req, res) => {
     try {
-        if (fs.existsSync(USERS_FILE)) {
-            let fileContent = fs.readFileSync(USERS_FILE, 'utf8');
-            if (fileContent.trim().length > 0) {
-                let users = JSON.parse(fileContent);
-                let myAccount = users.find(u => u.email === "alshameerybassam@gmail.com");
-                
-                if (myAccount && myAccount.role !== "admin") {
-                    myAccount.role = "admin";
-                    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-                    console.log("✅ [نظام النور] تم تأكيد رتبة الإدارة لحساب الشيخ بسام.");
-                }
-            }
+        const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
+        res.json(articles.rows);
+    } catch (error) {
+        res.status(500).json({ error: "حدث خطأ أثناء تحميل المقالات السحابية" });
+    }
+});
+
+// ==============================================
+// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام سحابياً
+// ==============================================
+setInterval(async () => {
+    try {
+        const checkAdmin = await pool.query('SELECT role FROM users WHERE email = $1', ["alshameerybassam@gmail.com"]);
+        if (checkAdmin.rows.length > 0 && checkAdmin.rows[0].role !== 'admin') {
+            await pool.query('UPDATE users SET role = $1 WHERE email = $2', ['admin', "alshameerybassam@gmail.com"]);
+            console.log("✅ [نظام النور] تم تأكيد رتبة الإدارة لحساب الشيخ بسام سحابياً في PostgreSQL.");
         }
     } catch (e) {
-        console.log("❌ خطأ أثناء فحص رتبة المدير:", e.message);
+        console.log("❌ خطأ في الترقية التلقائية السحابية:", e.message);
     }
-}, 5000);
+}, 10000);
 
 // ==============================================
-// 3. التوجيه الذكي للواجهات (SPA Routing)
+// 4. التوجيه الذكي للواجهات (SPA Routing)
 // ==============================================
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/admin.html'));
-});
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
 
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/dashboard.html'));
-});
-
-// ⚠️ منع مسار النجمة من اعتراض طلبات الـ API غير الموجودة وإعادة HTML بدلاً منها
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ success: false, error: 'مسار الـ API المطلوب غير موجود في السيرفر' });
+        return res.status(404).json({ success: false, error: 'مسار الـ API غير موجود' });
     }
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// ==============================================
-// 4. معالجة الأخطاء العامة بالسيرفر
-// ==============================================
-app.use((err, req, res, next) => {
-    console.error('❌ خطأ غير متوقع في النظام:', err.stack);
-    res.status(500).json({
-        success: false,
-        error: 'حدث خطأ داخلي في الخادم، جاري العمل على صيانته.'
-    });
-});
-
-// ==============================================
-// 5. إطلاق السيرفر وتدشين العمل الميداني
-// ==============================================
+// إطلاق العمل
 app.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🚀 السيرفر يعمل بنجاح وكفاءة تامة على المنفذ: ${PORT}`);
-    console.log(`🔒 مفتاح التشفير النشط: ${process.env.JWT_SECRET ? 'مؤمن عبر الـ Environment' : 'مفتاح افتراضي مؤقت'}`);
-    console.log(`📅 توقيت النظام الحالي: ${new Date().toLocaleString('ar-SA')}`);
+    console.log(`🚀 سيرفر النور السحابي يعمل بنجاح وثبات على المنفذ: ${PORT}`);
     console.log(`====================================================`);
 });
