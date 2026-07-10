@@ -33,10 +33,14 @@ pool.connect()
     .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err.message));
 
 // ==============================================
-// 2.5 تهيئة وبناء الجداول سحابياً تلقائياً (Tables Schema)
+// 2.5 تهيئة وبناء الجداول سحابياً تلقائياً وتطهير التعارضات
 // ==============================================
 const initializeDatabase = async () => {
     try {
+        // [خطوة التطهير] حذف جدول الطلبات القديم المتعارض لتهيئة البنية الجديدة بنجاح
+        console.log("🧹 جاري تطهير قاعدة البيانات من الجداول القديمة لمنع خطأ 500...");
+        await pool.query(`DROP TABLE IF EXISTS requests CASCADE;`);
+
         // أ. جدول المستخدمين (المستفيدين والإدارة)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
@@ -49,9 +53,9 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // ب. جدول طلبات المستفيدين
+        // ب. إعادة بناء جدول الطلبات بالهيكلية السحابية المطابقة لـ dashboard.js و admin.js بالملي
         await pool.query(`
-            CREATE TABLE IF NOT EXISTS requests (
+            CREATE TABLE requests (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 service_type VARCHAR(255) DEFAULT 'استشارة عامة',
@@ -97,6 +101,20 @@ const initializeDatabase = async () => {
                 value TEXT NOT NULL
             );
         `);
+
+        // حقن توجيه أولي للذكاء الاصطناعي
+        await pool.query(`
+            INSERT INTO system_settings (key, value) 
+            VALUES ('ai_prompt', 'أنت المعالج الروحي المساعد المعتمد من قبل فضيلة الشيخ بسام...')
+            ON CONFLICT (key) DO NOTHING;
+        `);
+
+        console.log("⚙️ [نظام النور] تم تطهير وبناء كافة الجداول السحابية بنجاح واستقرار.");
+    } catch (err) {
+        console.error("❌ خطأ أثناء تهيئة الجداول الحيوية:", err.message);
+    }
+};
+initializeDatabase();
 
         // حقن توجيه أولي للذكاء الاصطناعي
         await pool.query(`
