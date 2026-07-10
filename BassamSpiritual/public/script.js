@@ -10,11 +10,7 @@ function showNotification(msg, type = 'success') {
 }
 
 // ==============================================
-// 2. تم الاستغناء عن كود التحقق من Font Awesome المسبب للمشاكل
-// ==============================================
-
-// ==============================================
-// 3. التحقق من الجلسة في الواجهة الرئيسية (بأيقونات بوتستراب الجديدة)
+// 2. التحقق من الجلسة في الواجهة الرئيسية
 // ==============================================
 (function checkSessionOnHome() {
     const token = localStorage.getItem('token');
@@ -33,24 +29,23 @@ function showNotification(msg, type = 'success') {
             dashboardLink.innerHTML = `<i class="bi bi-person-circle"></i> مرحباً، ${user.fullName.split(' ')[0]}`;
         }
         if (requestBtn) {
-            requestBtn.href = '/dashboard.html';
-            requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> قدم طلبك الآن';
+            requestBtn.href = '/dashboard';
+            requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> حسابي ولوحة التحكم';
         }
     } else {
         if (registerBtn) registerBtn.style.display = 'inline-flex';
         if (loginBtn) loginBtn.style.display = 'inline-flex';
         if (dashboardLink) dashboardLink.style.display = 'none';
         if (requestBtn) {
-            requestBtn.href = '/login.html';
+            requestBtn.href = '/login';
             requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> قدم طلبك الآن';
         }
     }
 })();
 
 // ==============================================
-// 4. المساعد الذكي - سيناريوهات متعددة
+// 3. المساعد الذكي - سيناريوهات متعددة
 // ==============================================
-
 const chatScenarios = {
     intro: {
         message: 'السلام عليكم ورحمة الله وبركاته 🌙\nأنا المستشار الروحاني الذكي في مركز النور الرباني.\nأنا هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.\n🔹 هل يمكنك إخباري بما تمر به؟',
@@ -65,7 +60,7 @@ const chatScenarios = {
         next: 'previous'
     },
     previous: {
-        message: '🔹 هل حاولت علاج هذه المشكلة سابقاً؟\n(رقية شرعية، استشارة نفسية، طبيب، لم أحاول)',
+        message: '🔹 هل حاولت علاج هذه المشكلة سابقاً？\n(رقية شرعية، استشارة نفسية، طبيب، لم أحاول)',
         next: 'summary'
     },
     summary: function(data) {
@@ -203,7 +198,7 @@ async function sendChatMessage() {
             actionDiv.innerHTML = `
                 <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041;">
                     <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%;">
-                        <i class="bi bi-arrow-left-short"></i> نقل إلى نموذج الطلب
+                        <i class="bi bi-arrow-left-short"></i> نقل إلى نموذج الطلب وتقديم الآن
                     </button>
                     <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:8px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; margin-top:8px; width:100%;">
                         <i class="bi bi-arrow-counterclockwise"></i> بدء محادثة جديدة
@@ -222,42 +217,24 @@ async function sendChatMessage() {
 
 function transferToForm() {
     const data = window._chatData || chatState.userData;
-    const description = `[تم إنشاء هذا الطلب عبر المستشار الروحاني الذكي]\n\nالمشكلة: ${data.problem}\nالتصنيف: ${data.category || 'غير محدد'}\nالمدة: ${data.duration || 'غير محدد'}\nالمحاولات السابقة: ${data.previous || 'غير محدد'}\n\nالتوصية: ${data.recommendation || ''}`;
     
-    const descField = document.getElementById('description');
-    if (descField) {
-        descField.value = description;
-        showNotification('✅ تم نقل بياناتك إلى نموذج الطلب!', 'success');
-    } else {
-        showNotification('⚠️ يرجى تسجيل الدخول لتقديم الطلب.', 'error');
-        setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+    // حفظ البيانات في الـ LocalStorage ليتم قراءتها داخل صفحة الـ Dashboard
+    localStorage.setItem('pending_chat_request', JSON.stringify(data));
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showNotification('⚠️ يرجى تسجيل الدخول ليتم توجيهك لنموذج الطلب مباشرة.', 'error');
+        setTimeout(() => { window.location.href = '/login'; }, 2000);
         return;
     }
 
-    const serviceSelect = document.getElementById('serviceType');
-    if (serviceSelect && data.serviceType) {
-        const serviceMap = {
-            'علاج العين والحسد والأسحار والرصد': 'علاج',
-            'استشارة روحانية ونفسية': 'استشارة',
-            'جلسة صوتية مباشرة مع الشيخ': 'جلسة صوتية',
-            'استشارة روحانية عامة': 'استشارة'
-        };
-        const mappedValue = serviceMap[data.serviceType] || '';
-        for (let option of serviceSelect.options) {
-            if (option.value === mappedValue || option.text.includes(data.serviceType.split(' ')[0])) {
-                option.selected = true;
-                break;
-            }
-        }
-    }
-
-    const formCard = document.querySelector('.form-card');
-    if (formCard) {
-        formCard.scrollIntoView({ behavior: 'smooth' });
-    }
-    
+    showNotification('✅ جاري الانتقال لصفحة الطلبات لتعبئة بياناتك تلقائياً...', 'success');
     toggleChat();
     resetChat();
+
+    setTimeout(() => {
+        window.location.href = '/dashboard';
+    }, 1500);
 }
 
 function resetChat() {
@@ -298,7 +275,7 @@ async function updateChatCredits() {
     const status = document.getElementById('chatStatus') || createChatStatus();
     if (!token) {
         if (status) {
-            status.innerHTML = `🔓 غير مسجل. <a href="/login.html" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على 50 رسالة مجانية.`;
+            status.innerHTML = `🔓 غير مسجل. <a href="/login" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على رسائل مجانية.`;
         }
         return;
     }
@@ -311,7 +288,7 @@ async function updateChatCredits() {
             if (data.remaining > 0) {
                 status.textContent = `✅ رسائل متبقية: ${data.remaining}`;
             } else {
-                status.innerHTML = `⚠️ انتهت رسائلك المجانية. <a href="/dashboard.html" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.`;
+                status.innerHTML = `⚠️ انتهت رسائلك المجانية. <a href="/dashboard" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.`;
             }
         }
     } catch (e) {
@@ -337,7 +314,7 @@ function autoOpenChat() {
 }
 
 // ==============================================
-// 5. تحميل المقالات والشهادات (بأيقونات بوتستراب)
+// 4. تحميل المقالات والشهادات
 // ==============================================
 async function loadArticles() {
     try {
@@ -436,14 +413,13 @@ async function loadTestimonials() {
     }
 }
 
-// === كود عداد الأرقام التصاعدي المتطور والمحسن (تم تصحيحه) ===
+// === كود عداد الأرقام التصاعدي التفاعلي المحسن والمستقر ===
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
-    const speed = 150; // سرعة الأنيميشن الإجمالية
+    const speed = 150;
 
     counters.forEach(counter => {
         const target = +counter.getAttribute('data-target');
-        // قمنا بإنشاء دالة تحديث داخلية لكل عداد منفصل بدلاً من الريكيرجن الشامل المسبب للتعليق
         const updateCount = () => {
             const count = +counter.innerText.replace('+', '');
             const inc = Math.ceil(target / speed);
@@ -473,13 +449,12 @@ window.addEventListener('scroll', () => {
 });
 
 // ==============================================
-// 6. تهيئة الصفحة والبدء العملي للخدمات
+// 5. تهيئة الصفحة والبدء العملي للخدمات
 // ==============================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تم تحميل اللوحة الرئيسية بالكامل والمكتبة مستقرة بنسبة 100%');
     loadArticles();
     loadTestimonials();
-    setTimeout(animateCounters, 600);
     setTimeout(autoOpenChat, 2500);
     
     setInterval(updateChatCredits, 30000);
@@ -493,5 +468,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-console.log('✅ تم تحميل التحديث البرمجي الخالي من فونت أوسم بنجاح');
