@@ -51,7 +51,17 @@ router.get('/me', authenticate, async (req, res) => {
     try {
         // جلب الطلبات الخاصة بهذا المستخدم فقط من جدول PostgreSQL مرتبة من الأحدث للأقدم
         const userRequests = await pool.query(
-            'SELECT * FROM requests WHERE user_id = $1 ORDER BY created_at DESC',
+            `SELECT id, 
+                    service_type as "serviceType", 
+                    status, 
+                    created_at as "createdAt", 
+                    description, 
+                    diagnosis, 
+                    treatment, 
+                    treatment_details as "treatmentDetails" 
+             FROM requests 
+             WHERE user_id = $1 
+             ORDER BY created_at DESC`,
             [req.userId]
         );
 
@@ -63,17 +73,8 @@ router.get('/me', authenticate, async (req, res) => {
                 email: req.user.email,
                 role: req.user.role
             },
-            requests: userRequests.rows.map(r => ({
-                id: r.id,
-                serviceType: r.service_type || "استشارة عامة",
-                status: r.status,
-                createdAt: r.created_at,
-                description: r.description || '',
-                diagnosis: r.diagnosis || null,
-                treatment: r.treatment || null,
-                treatmentDetails: r.treatment_details || null
-            })),
-            notifications: [] // يمكنك ربطها بجدول إشعارات لاحقاً إن أردت
+            requests: userRequests.rows,
+            notifications: []
         });
     } catch (err) {
         console.error('❌ خطأ في جلب بيانات لوحة المستفيد:', err.message);
@@ -97,10 +98,10 @@ router.post('/request', authenticate, async (req, res) => {
     const pool = req.app.get('db');
 
     try {
-        // إضافة الطلب وربطه بـ user_id للمستخدم الحالي
+        // إضافة الطلب وربطه بـ user_id مع مطابقة أسماء الأعمدة السحابية الدقيقة لـ PostgreSQL
         const result = await pool.query(
-            `INSERT INTO requests (user_id, service_type, description, contact_method, status) 
-             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            `INSERT INTO requests (user_id, service_type, description, contact_method, status, created_at) 
+             VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id`,
             [req.userId, finalService, finalDescription, contactMethod || "واتساب", 'pending']
         );
 
@@ -130,8 +131,8 @@ router.get('/request/:id', authenticate, async (req, res) => {
 
         const request = result.rows[0];
         
-        // التحقق من أن الطلب يخص المستخدم الحالي، أو أن المستعلم هو المدير
-        if (request.user_id !== req.userId && req.user.role !== 'admin') {
+        // تأمين وتصحيح المقارنة الشرطية البرمجية لـ PostgreSQL (user_id بالشرطة السفلية)
+        if (parseInt(request.user_id) !== parseInt(req.userId) && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, error: 'غير مصرح لك باستعراض هذا الطلب.' });
         }
 
@@ -162,7 +163,6 @@ router.get('/requests', authenticate, requireAdmin, async (req, res) => {
     const pool = req.app.get('db');
 
     try {
-        // جلب جميع طلبات المنصة ودمجها مع معلومات أصحابها من جدول المستخدمين تلقائياً
         const result = await pool.query(`
             SELECT r.id, r.service_type, r.status, r.description, r.created_at, r.diagnosis, r.treatment,
                    u.full_name, u.email
@@ -176,7 +176,7 @@ router.get('/requests', authenticate, requireAdmin, async (req, res) => {
             _id: r.id, 
             fullName: r.full_name || "مستفيد غير معروف",
             email: r.email || "—",
-            phone: "—", // يمكن دمجه لاحقاً عند إضافة حقل الهاتف لجدول المستخدمين سحابياً
+            phone: "—",
             serviceType: r.service_type || "—",
             status: r.status || "pending",
             createdAt: r.created_at,
@@ -186,7 +186,6 @@ router.get('/requests', authenticate, requireAdmin, async (req, res) => {
             adminReply: r.treatment || ""
         }));
 
-        // تلبية الرد المتوافق تماماً مع تركيبة ملفات الفرونت إند ولغات العرض ليدك
         res.json({ success: true, requests: formattedRequests, data: formattedRequests });
     } catch (error) {
         console.error('❌ خطأ شامل بلوحة الإدارة السحابية:', error.message);
