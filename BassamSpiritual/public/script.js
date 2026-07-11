@@ -218,7 +218,7 @@ async function sendChatMessage() {
 function transferToForm() {
     const data = window._chatData || chatState.userData;
     
-    // حفظ البيانات في الـ LocalStorage ليتم قراءتها داخل صفحة الـ Dashboard
+    // حفظ البيانات في LocalStorage ليتم قراءتها في صفحة الـ Dashboard
     localStorage.setItem('pending_chat_request', JSON.stringify(data));
     
     const token = localStorage.getItem('token');
@@ -232,6 +232,7 @@ function transferToForm() {
     toggleChat();
     resetChat();
 
+    // التوجيه للوحة التحكم
     setTimeout(() => {
         window.location.href = '/dashboard';
     }, 1500);
