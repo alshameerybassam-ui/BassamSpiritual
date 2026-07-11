@@ -6,7 +6,6 @@ let currentUser = null;
 let userRequests = [];
 let currentRequestId = null;
 
-// ===== 1. الإشعار الفوري للمستفيد =====
 function showNotification(msg, type = 'success') {
     const n = document.getElementById('notification');
     if (!n) { alert(msg); return; }
@@ -15,7 +14,6 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 6000);
 }
 
-// ===== دالة الإملاء الصوتي الاختيارية (جديد) =====
 function startDictation(btnElement) {
     if (!('webkitSpeechRecognition' in window)) {
         showNotification('⚠️ متصفحك لا يدعم ميزة الإملاء الصوتي.', 'error');
@@ -49,7 +47,6 @@ function startDictation(btnElement) {
     recognition.start();
 }
 
-// ===== 2. التحقق الآمن =====
 async function checkAuth() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = '/login.html'; return false; }
@@ -63,7 +60,6 @@ async function checkAuth() {
     } catch (e) { return true; }
 }
 
-// ===== 3. تحميل بيانات اللوحة =====
 async function loadDashboard() {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -78,36 +74,22 @@ async function loadDashboard() {
     } catch (e) { showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error'); }
 }
 
-// ===== 4. رندرة الطلبات =====
 function renderRequests(requests) {
     const container = document.getElementById('requestsList');
     if (!container) return;
-    if (!requests || requests.length === 0) { container.innerHTML = `<div style="text-align:center; padding:30px;">لا توجد طلبات.</div>`; return; }
+    if (!requests || requests.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:30px;">لا توجد طلبات.</div>`;
+        return;
+    }
 }
 
-// ===== 5. عرض تفاصيل الطلب =====
-async function viewRequest(id) { /* منطق العرض */ }
+document.getElementById('newRequestForm')?.addEventListener('submit', async function(e) { e.preventDefault(); });
 
-// ===== 6. إرسال المراجعات =====
-async function submitReview(e) { if(e) e.preventDefault(); /* منطق المراجعة */ }
-
-// ===== 7. تقديم طلب جديد =====
-document.getElementById('newRequestForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    /* منطق الطلب */
-});
-
-// ===== 8. النوافذ المنبثقة =====
-function openNewRequestModal() { const modal = document.getElementById('newRequestModal'); if (modal) modal.classList.add('show'); }
-function closeNewRequestModal() { const modal = document.getElementById('newRequestModal'); if (modal) modal.classList.remove('show'); }
-
-// ===== 9. تهيئة المنصة =====
 (async function init() {
     const isAuth = await checkAuth();
     if (!isAuth) return;
     await loadDashboard();
 
-    // الربط التلقائي للمستشار الذكي
     const pendingData = localStorage.getItem('pending_chat_request');
     if (pendingData) {
         setTimeout(() => {
@@ -115,13 +97,8 @@ function closeNewRequestModal() { const modal = document.getElementById('newRequ
             openNewRequestModal(); 
             const descField = document.getElementById('reqDescription');
             if (descField) descField.value = `[تم إنشاء هذا الطلب عبر المستشار الذكي]\n\nالمشكلة: ${data.problem}`;
-            showNotification('✨ تم استلام بياناتك وتعبئتها.', 'success');
+            showNotification('✨ تم استلام بياناتك وتعبئتها تلقائياً.', 'success');
             localStorage.removeItem('pending_chat_request'); 
         }, 800);
     }
-
-    document.getElementById('reviewForm')?.addEventListener('submit', submitReview);
-    document.querySelectorAll('.modal-overlay, .modal').forEach(modal => {
-        modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); });
-    });
 })();
