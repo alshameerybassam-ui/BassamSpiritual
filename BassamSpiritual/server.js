@@ -76,6 +76,7 @@ const initializeDatabase = async () => {
                 payment_transfer_number VARCHAR(100),
                 payment_submitted_at TIMESTAMP,
                 payment_rejection_reason TEXT,
+                initial_rejection_reason TEXT, -- توثيق سبب اعتذار الشيخ عن الحالة مبدئياً
                 total_paid_amount NUMERIC DEFAULT 0.00,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -280,6 +281,7 @@ app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
                    r.payment_transfer_number as "paymentTransferNumber",
                    r.payment_submitted_at as "paymentSubmittedAt",
                    r.payment_rejection_reason as "paymentRejectionReason",
+                   r.initial_rejection_reason as "initialRejectionReason",
                    r.total_paid_amount as "totalPaidAmount"
             FROM requests r
             JOIN users u ON r.user_id = u.id
@@ -292,7 +294,48 @@ app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
     }
 });
 
-// ب. تشخيص مبدئي من الشيخ بسام وتحويل الحالة إلى قيد العلاج وطلب الكشفية 100 ريال
+// 🌟 [مسار جديد مضاف]: 1. قبول الحالة المبدئي لتبدأ إجراءات الدفع والتأكيد الكشفية
+app.put('/api/admin/requests/:id/accept-initial', verifyAdminToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `UPDATE requests 
+             SET status = 'accepted_waiting_payment' 
+             WHERE id = $1 RETURNING id`,
+            [req.params.id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'الملف غير موجود' });
+        }
+
+        res.json({ success: true, message: 'تم قبول استقبال الحالة مبدئياً والمستفيد ملزم برفع الحوالة الآن.' });
+    } catch (e) {
+        res.status(500).json({ error: 'حدث خطأ سيرفر أثناء تحديث حالة قبول الملف.' });
+    }
+});
+
+// 🌟 [مسار جديد مضاف]: 2. رفض استقبال الحالة مباشرة واعتذار كلي دون إلزام مالي
+app.put('/api/admin/requests/:id/reject-initial', verifyAdminToken, async (req, res) => {
+    const { reason } = req.body;
+    try {
+        const result = await pool.query(
+            `UPDATE requests 
+             SET status = 'rejected_by_admin', initial_rejection_reason = $1, is_message_locked = true
+             WHERE id = $2 RETURNING id`,
+            [reason || 'تم الاعتذار عن استقبال الحالة لعدم الاختصاص الروحي.', req.params.id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'الملف غير موجود' });
+        }
+
+        res.json({ success: true, message: 'تم رفض الملف بنجاح وإغلاقه كلياً والمستفيد غير ملزم بأي مبالغ مادية.' });
+    } catch (e) {
+        res.status(500).json({ error: 'حدث خطأ سيرفر أثناء معالجة الاعتذار وإغلاق الملف.' });
+    }
+});
+
+// ب. تشخيص مبدئي اختياري إضافي 
 app.put('/api/admin/requests/:id/diagnose', verifyAdminToken, async (req, res) => {
     const { initialDiagnosis } = req.body;
     try {
@@ -346,7 +389,7 @@ app.put('/api/admin/requests/:id/reject-payment', verifyAdminToken, async (req, 
     }
 });
 
-// هـ. إصدار الخطة العلاجية الكاملة وتحديد المبالغ الإضافية والمدة الزمنية
+// هـ. إصدار الخطة العلاجية الكاملة وتحديد المبالغ الإضافية والمدة الزمنية (قيد العلاج والمتابعة)
 app.put('/api/admin/requests/:id/complete-treatment', verifyAdminToken, async (req, res) => {
     const { treatmentPlan, additionalCost, durationDays } = req.body;
     try {
@@ -360,7 +403,7 @@ app.put('/api/admin/requests/:id/complete-treatment', verifyAdminToken, async (r
             `UPDATE requests 
              SET treatment_plan = $1, additional_treatment_cost = $2, treatment_duration_days = $3, treatment_expires_at = $4, status = $5, total_paid_amount = total_paid_amount + $6
              WHERE id = $7`,
-            [treatmentPlan, addCost, days, expiryDate, 'completed', addCost > 0 ? 0 : 0, req.params.id] // لا تضاف لتكلفة الدفع الفوري إلا بعد إرسال المستفيد حوالة العلاج
+            [treatmentPlan, addCost, days, expiryDate, 'completed', 0, req.params.id] // حالة completed هنا تعني (قيد العلاج والمتابعة الفعالة) للواجهات
         );
 
         res.json({ success: true, message: '✅ تم إرسال البرامج العلاجية والأذكار بنجاح تام للمستفيد وتحويل الحالة لمكتمل.' });
