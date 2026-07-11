@@ -498,3 +498,16 @@ tr:hover { background: #FAFAFA; }
         grid-template-columns: 1fr; 
     }
 }
+/* طبقة التعتيم الخلفية عند فتح القائمة على الجوال */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998; /* تحت السايدبار مباشرة وفوق المحتوى */
+    backdrop-filter: blur(2px);
+}
+.sidebar-overlay.show {
+    display: block;
+}
