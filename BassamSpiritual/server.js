@@ -32,18 +32,15 @@ pool.connect()
     .then(() => console.log("🐘 [نظام النور] تم الاتصال بقاعدة بيانات PostgreSQL السحابية بنجاح!"))
     .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err.message));
 
-// ✨ [تعديل احترافي حرج] مشاركة الـ pool فوراً مع التطبيق قبل استدعاء أي مسارات فرعية لمنع خطأ undefined 'query'
+// مشاركة الـ pool فوراً مع التطبيق قبل استدعاء أي مسارات فرعية لمنع خطأ undefined 'query'
 app.set('db', pool);
 
 // ==============================================
-// 2.5 تهيئة وبناء الجداول سحابياً وتطهير قسري شامل (قاطع لخطأ 500)
+// 2.5 تهيئة وبناء الجداول سحابياً وتحديث الهيكل البرمجي المتقدم
 // ==============================================
 const initializeDatabase = async () => {
     try {
-        console.log("🧹 جاري التطهير القسري لجدول الطلبات المتعارض سحابياً...");
-        
-        // استخدام أمر DROP TABLE القوي مع CASCADE لكسر أي قيود وإزالة الجدول القديم تالف الهيكل فوراً
-        await pool.query(`DROP TABLE IF EXISTS requests CASCADE;`);
+        console.log("🧹 جاري فحص وتحديث الجداول السحابية للتوافق مع نظام المراحل المطور...");
 
         // أ. جدول المستخدمين (المستفيدين والإدارة)
         await pool.query(`
@@ -57,23 +54,46 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // ب. بناء جدول الطلبات الجديد كلياً وضمان زرع عمود الـ description بنجاح
+        // ب. بناء أو تحديث جدول الطلبات لدعم الحوالات والمراحل التشخيصية الكاملة
+        // نقوم بإسقاط الجدول القديم لضمان زرع البنية الهندسية الجديدة بالكامل بدون تعارض
+        await pool.query(`DROP TABLE IF EXISTS requests CASCADE;`);
         await pool.query(`
             CREATE TABLE requests (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 service_type VARCHAR(255) DEFAULT 'استشارة عامة',
-                description TEXT,
+                description TEXT NOT NULL,
                 contact_method VARCHAR(100) DEFAULT 'واتساب',
-                status VARCHAR(50) DEFAULT 'pending',
-                diagnosis TEXT,
-                treatment TEXT,
-                treatment_details TEXT,
+                status VARCHAR(50) DEFAULT 'pending', 
+                initial_diagnosis TEXT,
+                treatment_plan TEXT,
+                additional_treatment_cost NUMERIC DEFAULT 0.00,
+                treatment_duration_days INTEGER DEFAULT 0,
+                treatment_expires_at TIMESTAMP,
+                is_message_locked BOOLEAN DEFAULT FALSE,
+                payment_method VARCHAR(100),
+                payment_sender_name VARCHAR(255),
+                payment_transfer_number VARCHAR(100),
+                payment_submitted_at TIMESTAMP,
+                payment_rejection_reason TEXT,
+                total_paid_amount NUMERIC DEFAULT 0.00,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // ج. جدول المقالات الديناميكي 
+        // ج. جدول الرسائل والمراجعات والاستفسارات الداخلية المدمجة بالطلب
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS request_messages (
+                id SERIAL PRIMARY KEY,
+                request_id INTEGER REFERENCES requests(id) ON DELETE CASCADE,
+                sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                sender_role VARCHAR(50) NOT NULL,
+                message_text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // د. جدول المقالات الديناميكي 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
@@ -85,7 +105,7 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // د. جدول آراء المستفيدين المحمي
+        // هـ. جدول آراء المستفيدين المحمي
         await pool.query(`
             CREATE TABLE IF NOT EXISTS reviews (
                 id SERIAL PRIMARY KEY,
@@ -98,7 +118,7 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // هـ. جدول إعدادات النظام وتوجيهات الذكاء الاصطناعي
+        // و. جدول إعدادات النظام وتوجيهات الذكاء الاصطناعي
         await pool.query(`
             CREATE TABLE IF NOT EXISTS system_settings (
                 key VARCHAR(100) PRIMARY KEY,
@@ -106,21 +126,25 @@ const initializeDatabase = async () => {
             );
         `);
 
-        // حقن توجيه ألي للذكاء الاصطناعي
+        // حقن توجيه آلي للذكاء الاصطناعي
         await pool.query(`
             INSERT INTO system_settings (key, value) 
             VALUES ('ai_prompt', 'أنت المعالج الروحي المساعد المعتمد من قبل فضيلة الشيخ بسام...')
             ON CONFLICT (key) DO NOTHING;
         `);
 
-        console.log("⚙️ [نظام النور] تمت عملية التطهير بنجاح، وجدول requests الجديد يحتوي الآن على عمود description!");
+        console.log("⚙️ [نظام النور] تمت ترقية بنية الجداول السحابية بنجاح واستقرار تام!");
     } catch (err) {
         console.error("❌ خطأ حرج أثناء التطهير أو التهيئة السحابية:", err.message);
     }
 };
 initializeDatabase();
 
-// وسيط حماية محلي للتأكد من فك رمز الهوية للمستفيد لقراءة الـ Token وحمايته
+// ==============================================
+// 3. البرمجيات الوسيطة للتحقق من الصلاحيات والرموز الأمنية (JWT)
+// ==============================================
+
+// وسيط حماية المستفيد لقراءة الـ Token
 const verifyUserToken = (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -135,42 +159,7 @@ const verifyUserToken = (req, res, next) => {
     }
 };
 
-// ==============================================
-// ✨ [المسار المصلح] استقبال وإنشاء طلب مستفيد جديد وحفظه في PostgreSQL
-// ==============================================
-app.post('/api/requests', verifyUserToken, async (req, res) => {
-    const { serviceType, description } = req.body;
-    try {
-        if (!description) {
-            return res.status(400).json({ success: false, error: 'وصف الحالة مطلوب شرحه بالتفصيل' });
-        }
-        
-        await pool.query(
-            'INSERT INTO requests (user_id, service_type, description, status) VALUES ($1, $2, $3, $4)',
-            [req.userId, serviceType || 'استشارة عامة', description, 'pending']
-        );
-
-        res.json({ success: true, message: 'تم رفع طلبك السحابي بنجاح للشيخ بسام' });
-    } catch (error) {
-        console.error("❌ خطأ سحابي عند حفظ الطلب:", error.message);
-        res.status(500).json({ success: false, error: 'فشل خادم السيرفر في معالجة طلبك وحفظه' });
-    }
-});
-
-// ==============================================
-// 3. ربط المسارات الفرعية (بعد ضمان تعريف قاعدة البيانات)
-// ==============================================
-const authRouter = require('./routes/auth');
-const dashboardRouter = require('./routes/dashboard');
-
-app.use('/api/auth', authRouter);
-app.use('/api/dashboard', dashboardRouter);
-
-// ==============================================
-// 📊 مسارات لوحة المدير المؤمنة والمحمية بالكامل ضد انهيار 500
-// ==============================================
-
-// وسيط حماية محلي للتأكد من هوية الشيخ بسام كمسؤول
+// وسيط حماية خاص بفضيلة الشيخ بسام كمسؤول أعلى
 const verifyAdminToken = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -190,7 +179,85 @@ const verifyAdminToken = async (req, res, next) => {
     }
 };
 
-// أ. مسار جلب كافة طلبات المستفيدين (تم تأمينه وإضافة كنيات مطابقة لـ الجافا سكربت)
+// ==============================================
+// 4. مسارات مستخدمي النظام الأساسيين (المستفيدين)
+// ==============================================
+
+// أ. استقبال وإنشاء طلب مستفيد جديد وحفظه في PostgreSQL
+app.post('/api/requests', verifyUserToken, async (req, res) => {
+    const { serviceType, description, contactMethod } = req.body;
+    try {
+        if (!description) {
+            return res.status(400).json({ success: false, error: 'وصف الحالة مطلوب شرحه بالتفصيل' });
+        }
+        
+        await pool.query(
+            'INSERT INTO requests (user_id, service_type, description, contact_method, status) VALUES ($1, $2, $3, $4, $5)',
+            [req.userId, serviceType || 'استشارة عامة', description, contactMethod || 'واتساب', 'pending']
+        );
+
+        res.json({ success: true, message: 'تم رفع طلبك السحابي بنجاح للشيخ بسام، وهو قيد المراجعة الفقهية الآن.' });
+    } catch (error) {
+        console.error("❌ خطأ سحابي عند حفظ الطلب:", error.message);
+        res.status(500).json({ success: false, error: 'فشل خادم السيرفر في معالجة طلبك وحفظه' });
+    }
+});
+
+// ب. قيام المستفيد برفع بيانات الحوالة المالية (100 ريال كشفية)
+app.put('/api/requests/:id/submit-payment', verifyUserToken, async (req, res) => {
+    const { paymentMethod, paymentSenderName, paymentTransferNumber } = req.body;
+    try {
+        if (!paymentMethod || !paymentSenderName || !paymentTransferNumber) {
+            return res.status(400).json({ success: false, error: 'يرجى ملء جميع بيانات إيصال التحويل المالي بالتفصيل' });
+        }
+
+        const result = await pool.query(
+            `UPDATE requests 
+             SET payment_method = $1, payment_sender_name = $2, payment_transfer_number = $3, status = $4, payment_submitted_at = CURRENT_TIMESTAMP
+             WHERE id = $5 AND user_id = $6 RETURNING id`,
+            [paymentMethod, paymentSenderName, paymentTransferNumber, 'payment_submitted', req.params.id, req.userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'الطلب غير موجود أو غير تابع لحسابك' });
+        }
+
+        res.json({ success: true, message: 'تم إرسال بيانات إيصال الحوالة لفضيلة الشيخ بسام للتحقق المالي المباشر.' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'خطأ خادم داخلي أثناء معالجة بيانات الحوالة' });
+    }
+});
+
+// ج. إرسال استفسار أو مراجعة من قبل المستفيد داخل الطلب
+app.post('/api/requests/:id/messages', verifyUserToken, async (req, res) => {
+    const { messageText } = req.body;
+    try {
+        const reqCheck = await pool.query('SELECT status, is_message_locked FROM requests WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
+        
+        if (reqCheck.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'لم يتم العثور على هذا الملف.' });
+        }
+        
+        if (reqCheck.rows[0].is_message_locked) {
+            return res.status(403).json({ success: false, error: 'لقد أغلق فضيلة الشيخ باب المراسلات والمراجعات لهذا الطلب نظراً لشفاء الحالة تماماً.' });
+        }
+
+        await pool.query(
+            'INSERT INTO request_messages (request_id, sender_id, sender_role, message_text) VALUES ($1, $2, $3, $4)',
+            [req.params.id, req.userId, 'user', messageText]
+        );
+
+        res.json({ success: true, message: 'تم إرسال مراجعتك بنجاح للوحة الشيخ.' });
+    } catch (e) {
+        res.status(500).json({ success: false, error: 'فشل إرسال الرسالة السحابية.' });
+    }
+});
+
+// ==============================================
+// 5. مسارات التحكم الكاملة الخاصة بالإدارة (الشيخ بسام الشميري)
+// ==============================================
+
+// أ. مسار جلب كافة طلبات المستفيدين بدقة هندسية عالية وبدون أي إخفاء
 app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
     try {
         const allRequests = await pool.query(`
@@ -202,9 +269,18 @@ app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
                    r.status, 
                    r.created_at as "createdAt",
                    r.description, 
-                   r.diagnosis, 
-                   r.treatment, 
-                   r.treatment_details as "treatmentDetails"
+                   r.initial_diagnosis as "initialDiagnosis", 
+                   r.treatment_plan as "treatmentPlan",
+                   r.additional_treatment_cost as "additionalTreatmentCost",
+                   r.treatment_duration_days as "treatmentDurationDays",
+                   r.treatment_expires_at as "treatmentExpiresAt",
+                   r.is_message_locked as "isMessageLocked",
+                   r.payment_method as "paymentMethod",
+                   r.payment_sender_name as "paymentSenderName",
+                   r.payment_transfer_number as "paymentTransferNumber",
+                   r.payment_submitted_at as "paymentSubmittedAt",
+                   r.payment_rejection_reason as "paymentRejectionReason",
+                   r.total_paid_amount as "totalPaidAmount"
             FROM requests r
             JOIN users u ON r.user_id = u.id
             ORDER BY r.created_at DESC
@@ -216,7 +292,145 @@ app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
     }
 });
 
-// ب. مسارات التحكم بالمقالات
+// ب. تشخيص مبدئي من الشيخ بسام وتحويل الحالة إلى قيد العلاج وطلب الكشفية 100 ريال
+app.put('/api/admin/requests/:id/diagnose', verifyAdminToken, async (req, res) => {
+    const { initialDiagnosis } = req.body;
+    try {
+        if (!initialDiagnosis) {
+            return res.status(400).json({ error: 'يرجى كتابة الملاحظات التشخيصية المبدئية للمستفيد' });
+        }
+
+        await pool.query(
+            `UPDATE requests 
+             SET initial_diagnosis = $1, status = $2 
+             WHERE id = $3`,
+            [initialDiagnosis, 'processing', req.params.id]
+        );
+
+        res.json({ success: true, message: 'تم حفظ التشخيص، وإشعار المستفيد بطلب دفع قيمة الكشفية بنجاح.' });
+    } catch (e) {
+        res.status(500).json({ error: 'حدث خطأ سيرفر أثناء تحديث التشخيص المبدئي.' });
+    }
+});
+
+// ج. اعتماد وقبول الحوالة المالية (100 ريال) بضغطة زر واحدة
+app.put('/api/admin/requests/:id/approve-payment', verifyAdminToken, async (req, res) => {
+    try {
+        await pool.query(
+            `UPDATE requests 
+             SET total_paid_amount = total_paid_amount + 100.00, status = $1 
+             WHERE id = $2`,
+            ['processing', req.params.id] 
+        );
+        res.json({ success: true, message: '🟢 تم اعتماد الحوالة وتأكيد استلام مبلغ الكشفية بنجاح، وجاهز لصياغة الخطة العلاجية.' });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل خادم الاعتماد المالي.' });
+    }
+});
+
+// د. رفض الحوالة المالية وتوثيق سبب الرفض وإشعار المستفيد لإعادتها
+app.put('/api/admin/requests/:id/reject-payment', verifyAdminToken, async (req, res) => {
+    const { reason } = req.body;
+    try {
+        if (!reason) return res.status(400).json({ error: 'يرجى كتابة سبب رفض إيصال الحوالة' });
+
+        await pool.query(
+            `UPDATE requests 
+             SET payment_rejection_reason = $1, status = $2 
+             WHERE id = $3`,
+            [reason, 'payment_rejected', req.params.id]
+        );
+        res.json({ success: true, message: '🔴 تم رفض الحوالة بنجاح وإشعار المستفيد بالسبب لتعديل البيانات.' });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل خادم معالجة الرفض المالي.' });
+    }
+});
+
+// هـ. إصدار الخطة العلاجية الكاملة وتحديد المبالغ الإضافية والمدة الزمنية
+app.put('/api/admin/requests/:id/complete-treatment', verifyAdminToken, async (req, res) => {
+    const { treatmentPlan, additionalCost, durationDays } = req.body;
+    try {
+        if (!treatmentPlan) return res.status(400).json({ error: 'يرجى كتابة تفاصيل الخطة العلاجية بالكامل' });
+
+        const days = parseInt(durationDays) || 0;
+        const expiryDate = days > 0 ? new Date(Date.now() + days * 24 * 60 * 60 * 1000) : null;
+        const addCost = parseFloat(additionalCost) || 0.00;
+
+        await pool.query(
+            `UPDATE requests 
+             SET treatment_plan = $1, additional_treatment_cost = $2, treatment_duration_days = $3, treatment_expires_at = $4, status = $5, total_paid_amount = total_paid_amount + $6
+             WHERE id = $7`,
+            [treatmentPlan, addCost, days, expiryDate, 'completed', addCost > 0 ? 0 : 0, req.params.id] // لا تضاف لتكلفة الدفع الفوري إلا بعد إرسال المستفيد حوالة العلاج
+        );
+
+        res.json({ success: true, message: '✅ تم إرسال البرامج العلاجية والأذكار بنجاح تام للمستفيد وتحويل الحالة لمكتمل.' });
+    } catch (e) {
+        res.status(500).json({ error: 'خطأ أثناء كتابة وحفظ الخطة العلاجية النهائية.' });
+    }
+});
+
+// و. قيد قدرة المستفيد على المراسلة أو تجميد المراسلة نهائياً للطلب الحالي
+app.put('/api/admin/requests/:id/lock-messages', verifyAdminToken, async (req, res) => {
+    const { lock } = req.body; // مرري true للقفل النهائي أو false لفك القفل
+    try {
+        await pool.query(
+            `UPDATE requests SET is_message_locked = $1, status = $2 WHERE id = $3`,
+            [lock, lock ? 'closed' : 'completed', req.params.id]
+        );
+        res.json({ success: true, message: lock ? '🔒 تم إغلاق باب المراسلات والمراجعات لهذا الطلب بنجاح وفخر.' : '🔓 تم إعادة فتح باب المراجعات للمستفيد.' });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل نظام التحكم في أمن المراسلات والمراجعات.' });
+    }
+});
+
+// ز. إرسال رد مباشر من الشيخ بسام داخل صندوق المحادثة الخاص بالطلب
+app.post('/api/admin/requests/:id/messages', verifyAdminToken, async (req, res) => {
+    const { messageText } = req.body;
+    try {
+        if (!messageText) return res.status(400).json({ error: 'نص التوجيه لا يمكن أن يكون فارغاً' });
+
+        await pool.query(
+            'INSERT INTO request_messages (request_id, sender_id, sender_role, message_text) VALUES ($1, $2, $3, $4)',
+            [req.params.id, req.adminId, 'admin', messageText]
+        );
+
+        res.json({ success: true, message: 'تم إرسال ردك وتوجيهك الروحي الحكيم للمستفيد فوراَ.' });
+    } catch (e) {
+        res.status(500).json({ error: 'حدث خطأ أثناء إرسال الرسالة من لوحة الشيخ.' });
+    }
+});
+
+// ح. جلب سجل المحادثة التاريخي المكامل بين الشيخ والمستفيد للطلب الحالي
+app.get('/api/requests/:id/messages', async (req, res) => {
+    try {
+        const messages = await pool.query(
+            `SELECT m.id, m.sender_role as "senderRole", m.message_text as "messageText", m.created_at as "createdAt", u.full_name as "senderName"
+             FROM request_messages m
+             JOIN users u ON m.sender_id = u.id
+             WHERE m.request_id = $1
+             ORDER BY m.created_at ASC`,
+            [req.params.id]
+        );
+        res.json({ success: true, messages: messages.rows });
+    } catch (e) {
+        res.status(500).json({ success: false, error: 'تعذر جلب سجل المحادثات.' });
+    }
+});
+
+// ط. حذف طلب مستفيد نهائياً من النظام السحابي
+app.delete('/api/admin/requests/:id', verifyAdminToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM requests WHERE id = $1', [req.params.id]);
+        res.json({ success: true, message: '🗑️ تم حذف ملف المستفيد بالكامل من السجلات السحابية بنجاح.' });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل السيرفر في مسح الطلب.' });
+    }
+});
+
+// ==============================================
+// 6. مسارات التحكم بالمقالات وآراء المستفيدين والذكاء الاصطناعي
+// ==============================================
+
 app.get('/api/articles', async (req, res) => {
     try {
         const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
@@ -239,7 +453,6 @@ app.post('/api/admin/articles', verifyAdminToken, async (req, res) => {
     }
 });
 
-// ج. مسارات التحكم بآراء المستخدمين
 app.get('/api/admin/reviews', verifyAdminToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC');
@@ -268,7 +481,6 @@ app.delete('/api/admin/reviews/:id', verifyAdminToken, async (req, res) => {
     }
 });
 
-// د. مسارات الإشراف على الذكاء الاصطناعي
 app.get('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
     try {
         const result = await pool.query("SELECT value FROM system_settings WHERE key = 'ai_prompt'");
@@ -289,7 +501,16 @@ app.put('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
 });
 
 // ==============================================
-// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام
+// 7. روابط التوجيه الفرعية للمصادقة ولوحة تحكم المستفيد
+// ==============================================
+const authRouter = require('./routes/auth');
+const dashboardRouter = require('./routes/dashboard');
+
+app.use('/api/auth', authRouter);
+app.use('/api/dashboard', dashboardRouter);
+
+// ==============================================
+// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام كأدمن أعلى
 // ==============================================
 setInterval(async () => {
     try {
@@ -304,7 +525,7 @@ setInterval(async () => {
 }, 10000);
 
 // ==============================================
-// 4. التوجيه الذكي للواجهات (SPA Routing)
+// 8. التوجيه الذكي للواجهات الساكنة (SPA Routing)
 // ==============================================
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
@@ -316,7 +537,7 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// إطلاق العمل
+// إطلاق سيرفر التطبيق
 app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(`🚀 سيرفر النور السحابي يعمل بنجاح وثبات على المنفذ: ${PORT}`);
