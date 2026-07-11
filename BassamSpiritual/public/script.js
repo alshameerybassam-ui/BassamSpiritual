@@ -9,7 +9,7 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 6000);
 }
 
-// ===== [ميزة مضافة]: دالة الإملاء الصوتي الاختيارية في شات المساعد الذكي =====
+// ===== 2. دالة الإملاء الصوتي الاختيارية في شات المساعد الذكي =====
 function startChatDictation(btnElement) {
     if (!('webkitSpeechRecognition' in window)) {
         showNotification('⚠️ متصفحك لا يدعم ميزة الإملاء الصوتي هنا.', 'error');
@@ -41,7 +41,7 @@ function startChatDictation(btnElement) {
 }
 
 // ==============================================
-// 2. التحقق من الجلسة في الواجهة الرئيسية
+// 3. التحقق من الجلسة في الواجهة الرئيسية
 // ==============================================
 (function checkSessionOnHome() {
     const token = localStorage.getItem('token');
@@ -75,7 +75,7 @@ function startChatDictation(btnElement) {
 })();
 
 // ==============================================
-// 3. المساعد الذكي - سيناريوهات متعددة
+// 4. المساعد الذكي - تفعيل إرسال الشات التفاعلي والتشخيص
 // ==============================================
 const chatScenarios = {
     intro: {
@@ -216,34 +216,37 @@ async function sendChatMessage() {
         reply = scenario?.message || 'أنا هنا لمساعدتك. أخبرني أكثر.';
     }
 
-    const botDiv = document.createElement('div');
-    botDiv.className = 'chat-message bot';
-    botDiv.innerHTML = `<div class="message-content">${reply.replace(/\n/g, '<br>')}</div>`;
-    container.appendChild(botDiv);
-    container.scrollTop = container.scrollHeight;
+    // محاكاة تأخير بسيط للرد لمنح إحساس الذكاء الاصطناعي الحي
+    setTimeout(() => {
+        const botDiv = document.createElement('div');
+        botDiv.className = 'chat-message bot';
+        botDiv.innerHTML = `<div class="message-content">${reply.replace(/\n/g, '<br>')}</div>`;
+        container.appendChild(botDiv);
+        container.scrollTop = container.scrollHeight;
 
-    if (isSummary) {
-        setTimeout(() => {
-            const actionDiv = document.createElement('div');
-            actionDiv.className = 'chat-message bot';
-            actionDiv.innerHTML = `
-                <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041;">
-                    <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%;">
-                        <i class="bi bi-arrow-left-short"></i> نقل إلى نموذج الطلب وتقديم الآن
-                    </button>
-                    <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:8px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; margin-top:8px; width:100%;">
-                        <i class="bi bi-arrow-counterclockwise"></i> بدء محادثة جديدة
-                    </button>
-                </div>
-            `;
-            container.appendChild(actionDiv);
-            container.scrollTop = container.scrollHeight;
-        }, 500);
-    }
+        if (isSummary) {
+            setTimeout(() => {
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'chat-message bot';
+                actionDiv.innerHTML = `
+                    <div class="message-content" style="background:#FFFBF0; border-right:4px solid #F5B041; padding: 10px;">
+                        <button onclick="transferToForm()" style="background:linear-gradient(135deg,#F5B041,#E67E22); color:#0A1628; border:none; padding:10px 20px; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Cairo'; width:100%; margin-bottom: 5px;">
+                            <i class="bi bi-arrow-left-short"></i> نقل إلى نموذج الطلب وتقديم الآن
+                        </button>
+                        <button onclick="resetChat()" style="background:#E2E8F0; color:#333; border:none; padding:8px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-family:'Cairo'; width:100%;">
+                            <i class="bi bi-arrow-counterclockwise"></i> بدء محادثة جديدة
+                        </button>
+                    </div>
+                `;
+                container.appendChild(actionDiv);
+                container.scrollTop = container.scrollHeight;
+            }, 500);
+        }
 
-    chatState.isProcessing = false;
-    input.disabled = false;
-    input.focus();
+        chatState.isProcessing = false;
+        input.disabled = false;
+        input.focus();
+    }, 400);
 }
 
 function transferToForm() {
@@ -253,7 +256,7 @@ function transferToForm() {
     const token = localStorage.getItem('token');
     if (!token) {
         showNotification('⚠️ يرجى تسجيل الدخول ليتم توجيهك لنموذج الطلب مباشرة.', 'error');
-        setTimeout(() => { window.location.href = '/login'; }, 2000);
+        setTimeout(() => { window.location.href = '/login.html'; }, 2000);
         return;
     }
 
@@ -262,7 +265,7 @@ function transferToForm() {
     resetChat();
 
     setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/dashboard.html';
     }, 1500);
 }
 
@@ -304,7 +307,7 @@ async function updateChatCredits() {
     const status = document.getElementById('chatStatus') || createChatStatus();
     if (!token) {
         if (status) {
-            status.innerHTML = `🔓 غير مسجل. <a href="/login" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على رسائل مجانية.`;
+            status.innerHTML = `🔓 غير مسجل. <a href="/login.html" style="color:#F5B041; font-weight:700;">سجل الدخول</a> للحصول على رسائل مجانية.`;
         }
         return;
     }
@@ -317,7 +320,7 @@ async function updateChatCredits() {
             if (data.remaining > 0) {
                 status.textContent = `✅ رسائل متبقية: ${data.remaining}`;
             } else {
-                status.innerHTML = `⚠️ انتهت رسائلك المجانية. <a href="/dashboard" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.`;
+                status.innerHTML = `⚠️ انتهت رسائلك المجانية. <a href="/dashboard.html" style="color:#F5B041; font-weight:700;">تواصل مع الشيخ مباشرة</a>.`;
             }
         }
     } catch (e) {
@@ -343,7 +346,7 @@ function autoOpenChat() {
 }
 
 // ==============================================
-// 4. تحميل المقالات والشهادات
+// 5. تحميل المقالات والشهادات
 // ==============================================
 async function loadArticles() {
     try {
@@ -477,7 +480,7 @@ window.addEventListener('scroll', () => {
 });
 
 // ==============================================
-// 5. تهيئة الصفحة والبدء العملي للخدمات
+// 6. تهيئة الصفحة والبدء العملي للخدمات
 // ==============================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تم تحميل اللوحة الرئيسية بالكامل والمكتبة مستقرة بنسبة 100%');
