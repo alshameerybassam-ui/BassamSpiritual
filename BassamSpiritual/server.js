@@ -120,6 +120,43 @@ const initializeDatabase = async () => {
 };
 initializeDatabase();
 
+// وسيط حماية محلي للتأكد من فك رمز الهوية للمستفيد لقراءة الـ Token وحمايته
+const verifyUserToken = (req, res, next) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ success: false, error: 'غير مصرح بالدخول، الرمز مفقود' });
+
+        const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.userId = decoded.id;
+        next();
+    } catch (e) {
+        res.status(401).json({ success: false, error: 'انتهت الجلسة الأمنية، يرجى تسجيل الدخول.' });
+    }
+};
+
+// ==============================================
+// ✨ [المسار المصلح] استقبال وإنشاء طلب مستفيد جديد وحفظه في PostgreSQL
+// ==============================================
+app.post('/api/requests', verifyUserToken, async (req, res) => {
+    const { serviceType, description } = req.body;
+    try {
+        if (!description) {
+            return res.status(400).json({ success: false, error: 'وصف الحالة مطلوب شرحه بالتفصيل' });
+        }
+        
+        await pool.query(
+            'INSERT INTO requests (user_id, service_type, description, status) VALUES ($1, $2, $3, $4)',
+            [req.userId, serviceType || 'استشارة عامة', description, 'pending']
+        );
+
+        res.json({ success: true, message: 'تم رفع طلبك السحابي بنجاح للشيخ بسام' });
+    } catch (error) {
+        console.error("❌ خطأ سحابي عند حفظ الطلب:", error.message);
+        res.status(500).json({ success: false, error: 'فشل خادم السيرفر في معالجة طلبك وحفظه' });
+    }
+});
+
 // ==============================================
 // 3. ربط المسارات الفرعية (بعد ضمان تعريف قاعدة البيانات)
 // ==============================================
