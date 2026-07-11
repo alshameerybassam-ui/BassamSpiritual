@@ -1,5 +1,5 @@
 // =================================================================
-// ملف لوحة تحكم المستفيدين المطور - مركز النور الرباني
+// ملف لوحة تحكم المستفيدين المطور والمُفعّل - مركز النور الرباني
 // =================================================================
 
 let currentUser = null;
@@ -18,7 +18,7 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 6000);
 }
 
-// ===== [ميزة مضافة]: دالة الإملاء الصوتي الاختيارية للمستفيد =====
+// ===== 2. دالة الإملاء الصوتي الاختيارية للمستفيد =====
 function startDictation(btnElement) {
     if (!('webkitSpeechRecognition' in window)) {
         showNotification('⚠️ متصفحك لا يدعم ميزة الإملاء الصوتي.', 'error');
@@ -57,7 +57,7 @@ function startDictation(btnElement) {
     recognition.start();
 }
 
-// ===== 2. التحقق الآمن من الجلسة والصلاحيات =====
+// ===== 3. التحقق الآمن من الجلسة والصلاحيات =====
 async function checkAuth() {
     const token = localStorage.getItem('token');
     if (!token) { 
@@ -83,7 +83,7 @@ async function checkAuth() {
     }
 }
 
-// ===== 3. تحميل بيانات لوحة المستفيد =====
+// ===== 4. تحميل بيانات لوحة المستفيد =====
 async function loadDashboard() {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -103,35 +103,132 @@ async function loadDashboard() {
     } catch (e) { showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error'); }
 }
 
-// ===== 4. رندرة الطلبات =====
+// ===== 5. رندرة وعرض الطلبات تفعيل الزر والجدول =====
 function renderRequests(requests) {
     const container = document.getElementById('requestsList');
     if (!container) return;
     if (!requests || requests.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:30px;">لا توجد طلبات.</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#6A7A8A;">📭 لا توجد طلبات علاجية مقدمة حالياً.</div>`;
         return;
     }
-    // ملاحظة: منطق الرندرة الداخلي يتم عبر HTML الديناميكي في السيرفر
+
+    const statusMap = {
+        'pending': '<span class="badge bg-warning text-dark">قيد الانتظار</span>',
+        'processing': '<span class="badge bg-info text-dark">قيد العلاج</span>',
+        'completed': '<span class="badge bg-success">مكتمل</span>',
+        'rejected': '<span class="badge bg-danger">مستبعد</span>'
+    };
+
+    let html = `<table class="table style-table text-right" style="direction:rtl;">
+        <thead>
+            <tr>
+                <th>رقم الطلب</th>
+                <th>نوع الخدمة</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+                <th>الإجراء</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    requests.forEach((req, index) => {
+        const date = req.createdAt ? new Date(req.createdAt).toLocaleDateString('ar-YE') : '—';
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td><strong>${req.serviceType || 'استشارة عامة'}</strong></td>
+                <td>${statusMap[req.status] || statusMap.pending}</td>
+                <td>${date}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="viewRequest('${req.id}')">
+                        <i class="bi bi-eye"></i> عرض التفاصيل
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
 }
 
-// ===== 5. عرض تفاصيل الطلب =====
+// ===== 6. تفعيل عرض تفاصيل الطلب والخطة العلاجية المرسلة =====
 async function viewRequest(id) {
-    // منطق عرض التفاصيل الخاص بك
+    currentRequestId = id;
+    const token = localStorage.getItem('token');
+    const modal = document.getElementById('viewRequestModal') || document.getElementById('newRequestModal'); 
+    
+    try {
+        const res = await fetch(`/api/dashboard/requests/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if(data.success) {
+            alert(`📝 تفاصيل الطلب:\n\nالخدمة: ${data.request.serviceType}\nالوصف: ${data.request.description}\n\n🌿 الرد العلاجي من الشيخ:\n${data.request.treatmentDetails || 'لم يتم الرد بعد من فضيلة الشيخ.'}`);
+        }
+    } catch(e) {
+        showNotification('⚠️ خطأ في جلب تفاصيل الحالة.', 'error');
+    }
 }
 
-// ===== 6. إرسال المراجعات =====
+// ===== 7. تفعيل إرسال المراجعات والتقييمات للشيخ =====
 async function submitReview(e) {
     if(e) e.preventDefault();
-    // منطق إرسال التقييم الخاص بك
+    const token = localStorage.getItem('token');
+    const comment = document.getElementById('reviewComment')?.value.trim();
+    const rating = document.getElementById('reviewRating')?.value || 5;
+
+    if(!comment) { showNotification('⚠️ من فضلك اكتب نص التقييم أولاً.', 'error'); return; }
+
+    try {
+        const res = await fetch('/api/testimonials', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ comment, rating })
+        });
+        const data = await res.json();
+        if(data.success) {
+            showNotification('✅ شكرًا لك! تم إرسال تقييمك للإدارة بنجاح لمراجعته ونشره.');
+            if(document.getElementById('reviewForm')) document.getElementById('reviewForm').reset();
+        }
+    } catch(e) {
+        showNotification('❌ فشل إرسال التقييم للسيرفر.', 'error');
+    }
 }
 
-// ===== 7. تقديم طلب جديد =====
+// ===== 8. تفعيل زر تقديم طلب جديد لحالة روحية =====
 document.getElementById('newRequestForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
-    // منطق إرسال الطلب الخاص بك
+    const token = localStorage.getItem('token');
+    const serviceType = document.getElementById('reqServiceType')?.value;
+    const description = document.getElementById('reqDescription')?.value.trim();
+
+    if(!description) { showNotification('⚠️ الرجاء شرح الأعراض أو الحالة بدقة.', 'error'); return; }
+
+    try {
+        const res = await fetch('/api/requests', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ serviceType, description })
+        });
+        const data = await res.json();
+        if(data.success) {
+            showNotification('🚀 تم رفع طلبك بنجاح وجاري عرضه على فضيلة الشيخ للتشخيص.');
+            closeNewRequestModal();
+            loadDashboard();
+        }
+    } catch(e) {
+        showNotification('❌ فشل إرسال الطلب، تأكد من الاتصال.', 'error');
+    }
 });
 
-// ===== 8. النوافذ المنبثقة =====
+// ===== 9. النوافذ المنبثقة =====
 function openNewRequestModal() {
     const modal = document.getElementById('newRequestModal');
     if (modal) modal.classList.add('show');
@@ -141,13 +238,12 @@ function closeNewRequestModal() {
     if (modal) modal.classList.remove('show');
 }
 
-// ===== 9. تهيئة المنصة (مع الربط التلقائي للمستشار الذكي) =====
+// ===== 10. تهيئة المنصة واستقبال بيانات الشات الذكي =====
 (async function init() {
     const isAuth = await checkAuth();
     if (!isAuth) return;
     await loadDashboard();
 
-    // [الربط التلقائي]: استقبال بيانات المستشار الذكي من localStorage
     const pendingData = localStorage.getItem('pending_chat_request');
     if (pendingData) {
         setTimeout(() => {
