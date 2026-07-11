@@ -26,6 +26,7 @@
             <nav>
                 <ul class="sidebar-menu">
                     <li id="navRequests" onclick="switchTab('requests')"><i class="fas fa-list-ul"></i> جميع الطلبات المعالجة</li>
+                    <li id="navArticles" onclick="switchTab('articles')"><i class="fas fa-book-open"></i> إدارة المقالات الروحية</li>
                     <li id="navReviews" onclick="switchTab('reviews')"><i class="fas fa-comments"></i> إدارة آراء المستفيدين</li>
                     <li id="navAi" onclick="switchTab('ai')"><i class="fas fa-brain"></i> توجيه الذكاء الاصطناعي</li>
                     <li onclick="localStorage.removeItem('token'); window.location.href='/login.html';" style="color:#e74c3c; cursor:pointer; margin-top:40px;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</li>
@@ -107,13 +108,62 @@
                 </div>
             </section>
 
+            <section class="table-section" id="articlesSection" style="display:none;">
+                <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2><i class="fas fa-book-open" style="color: #f39c12;"></i> إدارة ومراقبة المقالات الروحية</h2>
+                        <p style="color: #718096; font-size: 0.9rem; margin-top: 5px;">يمكنك من هنا نشر مقالات جديدة، تعديل المحتوى، أو حذف المقالات القديمة من الواجهة الرئيسية.</p>
+                    </div>
+                    <button onclick="openNewArticleForm()" class="btn-refresh" style="background: linear-gradient(135deg, #f39c12, #d35400); color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: bold; width: auto; height: auto; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-plus-circle"></i> إضافة مقال جديد
+                    </button>
+                </div>
+
+                <div id="articleFormContainer" style="display: none; background: #f8fafc; border: 2px solid #e2e8f0; padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: right;">
+                    <h3 id="articleFormTitle" style="color: #2c3e50; margin-bottom: 15px;"><i class="fas fa-feather-alt"></i> نشر مقال جديد في المدونة</h3>
+                    <form id="adminArticleForm" onsubmit="saveArticle(event)">
+                        <input type="hidden" id="adminArticleId">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; color: #475569; font-weight: 600; margin-bottom: 5px;">عنوان المقال:</label>
+                            <input type="text" id="adminArticleTitle" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Cairo'; font-size: 1rem;">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; color: #475569; font-weight: 600; margin-bottom: 5px;">ملخص قصير (يظهر في كرت الواجهة الرئيسية):</label>
+                            <input type="text" id="adminArticleSummary" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Cairo'; font-size: 1rem;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; color: #475569; font-weight: 600; margin-bottom: 5px;">المحتوى الفقهي والعلاجي الكامل للمقال:</label>
+                            <textarea id="adminArticleContent" rows="10" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Cairo'; font-size: 1rem; line-height: 1.7;"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-start;">
+                            <button type="submit" style="background: #2ecc71; color: #fff; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo';">حفظ ونشر الآن</button>
+                            <button type="button" onclick="closeArticleForm()" style="background: #94a3b8; color: #fff; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo';">إلغاء التراجع</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50%;">عنوان المقال الروحي</th>
+                                <th style="width: 25%;">تاريخ النشر والتوثيق</th>
+                                <th style="width: 25%; text-align: center;">إجراءات الإدارة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminArticlesTableBody">
+                            <tr><td colspan="3" style="text-align:center; padding:30px; color:#888;">جاري فحص المقالات وجلبها من قاعدة البيانات...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section class="table-section" id="reviewsSection" style="display:none;">
                 <div class="table-header" style="margin-bottom: 20px;">
                     <h2><i class="fas fa-comments" style="color: #2ecc71;"></i> حائط المراجعات والآراء المستلمة من لوحات المستفيدين</h2>
                     <p style="color: #718096; font-size: 0.9rem; margin-top: 5px;">الآراء المعروضة هنا كتبها المستفيدون من داخل حساباتهم، ولن تظهر للزوار في واجهة الموقع إلا بعد ضغط زر "موافقة ونشر".</p>
                 </div>
-                <div id="reviewsContainer" style="display: flex; flex-direction: column; gap: 15px;">
-                    </div>
+                <div id="reviewsContainer" style="display: flex; flex-direction: column; gap: 15px;"></div>
             </section>
 
             <section class="table-section" id="aiSection" style="display:none;">
@@ -140,8 +190,7 @@
                 <h3 style="margin:0; color:#0A1628;"><i class="fas fa-file-alt" style="color:#f1c40f;"></i> مراجعة ملف المستفيد وإصدار الخطة العلاجية</h3>
                 <span class="close-modal" onclick="closeModal()" style="font-size:1.8rem; cursor:pointer; color:#94A3B8;">&times;</span>
             </div>
-            <div id="modalBody" class="modal-body">
-                </div>
+            <div id="modalBody" class="modal-body"></div>
         </div>
     </div>
 
