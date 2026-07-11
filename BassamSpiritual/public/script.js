@@ -9,6 +9,37 @@ function showNotification(msg, type = 'success') {
     setTimeout(() => n.classList.remove('show'), 6000);
 }
 
+// ===== [ميزة مضافة]: دالة الإملاء الصوتي الاختيارية في شات المساعد الذكي =====
+function startChatDictation(btnElement) {
+    if (!('webkitSpeechRecognition' in window)) {
+        showNotification('⚠️ متصفحك لا يدعم ميزة الإملاء الصوتي هنا.', 'error');
+        return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    const inputField = document.getElementById('chatInput');
+    if (!inputField) return;
+
+    btnElement.innerHTML = '<i class="bi bi-mic-fill" style="color:red;"></i>';
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        inputField.value += (inputField.value ? ' ' : '') + transcript;
+        btnElement.innerHTML = '<i class="bi bi-mic"></i>';
+    };
+
+    recognition.onerror = function() {
+        btnElement.innerHTML = '<i class="bi bi-mic"></i>';
+        showNotification('❌ فشل التعرف على الصوت.', 'error');
+    };
+
+    recognition.start();
+}
+
 // ==============================================
 // 2. التحقق من الجلسة في الواجهة الرئيسية
 // ==============================================
@@ -217,8 +248,6 @@ async function sendChatMessage() {
 
 function transferToForm() {
     const data = window._chatData || chatState.userData;
-    
-    // حفظ البيانات في LocalStorage ليتم قراءتها في صفحة الـ Dashboard
     localStorage.setItem('pending_chat_request', JSON.stringify(data));
     
     const token = localStorage.getItem('token');
@@ -232,7 +261,6 @@ function transferToForm() {
     toggleChat();
     resetChat();
 
-    // التوجيه للوحة التحكم
     setTimeout(() => {
         window.location.href = '/dashboard';
     }, 1500);
@@ -414,7 +442,6 @@ async function loadTestimonials() {
     }
 }
 
-// === كود عداد الأرقام التصاعدي التفاعلي المحسن والمستقر ===
 function animateCounters() {
     const counters = document.querySelectorAll('.counter-number');
     const speed = 150;
