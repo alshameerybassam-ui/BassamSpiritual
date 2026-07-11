@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs-extra');
 const path = require('path');
 
-const USERS_FILE = path.join(__dirname, '../data/users.json');
 const CHAT_HISTORY_FILE = path.join(__dirname, '../data/chat_history.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
 
@@ -15,22 +14,28 @@ if (!fs.existsSync(CHAT_HISTORY_FILE) || fs.readFileSync(CHAT_HISTORY_FILE).leng
     fs.writeFileSync(CHAT_HISTORY_FILE, JSON.stringify([]));
 }
 
-const readUsers = () => JSON.parse(fs.readFileSync(USERS_FILE));
 const readChatHistory = () => JSON.parse(fs.readFileSync(CHAT_HISTORY_FILE));
 const writeChatHistory = (data) => fs.writeFileSync(CHAT_HISTORY_FILE, JSON.stringify(data, null, 2));
 
 // ==============================================
-// الوسيط: التحقق من صحة المستخدم
+// 🛡️ الوسيط السحابي الموحد: التحقق من صحة المستخدم
 // ==============================================
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'غير مصرح، رمز الجلسة مفقود' });
+    
+    const pool = req.app.get('db');
+
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const users = readUsers();
-        const user = users.find(u => u.id === decoded.id);
-        if (!user || !user.isActive) return res.status(401).json({ error: 'الحساب غير نشط أو محظور' });
-        req.user = user;
+        
+        // جلب بيانات الحساب سحابياً لضمان التوافق مع auth.js و requests.js
+        const result = await pool.query('SELECT id, full_name, email, role FROM users WHERE id = $1', [decoded.id]);
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'الحساب غير موجود أو تم حظره مسبقاً.' });
+        }
+
+        req.user = result.rows[0];
         req.userId = decoded.id;
         next();
     } catch (e) {
@@ -131,7 +136,7 @@ router.post('/send', authenticate, async (req, res) => {
     }
 
     try {
-        const reply = await callGeminiAPI(message, user.fullName, user.email, userHistory);
+        const reply = await callGeminiAPI(message, user.full_name || user.fullName, user.email, userHistory);
         
         // حفظ الرسالة الجديدة في السجل التاريخي
         history.push({ userId, message, reply, date: new Date().toISOString() });
@@ -145,7 +150,7 @@ router.post('/send', authenticate, async (req, res) => {
         });
     } catch (error) {
         console.error('❌ فشل الاتصال بـ Gemini - تفعيل نظام الرد البديل الآمن:', error.message);
-        const fallbackReply = `🌙 السلام عليكم ورحمة الله وبركاته يا ${user.fullName}،
+        const fallbackReply = `🌙 السلام عليكم ورحمة الله وبركاته يا ${user.full_name || user.fullName || "مستفيد النور"}،
 
 أشكرك على ثقتك وتواصلك مع مركزنا. نواجه حالياً ضغطاً تقنياً مؤقتاً في معالجة البيانات الفورية.
 
