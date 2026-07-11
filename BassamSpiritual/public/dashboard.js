@@ -103,7 +103,7 @@ async function loadDashboard() {
     } catch (e) { showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error'); }
 }
 
-// ===== 5. رندرة وعرض الطلبات تفعيل الزر والجدول =====
+// ===== 5. رندرة وعرض الطلبات تفعيل الزر والجدول الهيكلي المتطور =====
 function renderRequests(requests) {
     const container = document.getElementById('requestsList');
     if (!container) return;
@@ -112,21 +112,26 @@ function renderRequests(requests) {
         return;
     }
 
+    // خريطة الحالات المحدثة لتتوافق بالكامل مع الحوكمة السحابية
     const statusMap = {
-        'pending': '<span class="badge bg-warning text-dark">قيد الانتظار</span>',
-        'processing': '<span class="badge bg-info text-dark">قيد العلاج</span>',
-        'completed': '<span class="badge bg-success">مكتمل</span>',
-        'rejected': '<span class="badge bg-danger">مستبعد</span>'
+        'pending': '<span class="badge bg-warning text-dark">قيد المراجعة المبدئية</span>',
+        'accepted_waiting_payment': '<span class="badge bg-secondary text-white">بانتظار دفع الكشفية (100 ريال)</span>',
+        'payment_submitted': '<span class="badge bg-info text-dark">جاري التحقق من التحويل</span>',
+        'payment_rejected': '<span class="badge bg-danger">إيصال مرفوض - يرجى التعديل</span>',
+        'processing': '<span class="badge bg-primary text-white">قيد العلاج والمتابعة</span>',
+        'completed': '<span class="badge bg-success">اكتمل البرنامج العلاجي</span>',
+        'rejected_by_admin': '<span class="badge bg-dark">تم الاعتذار عن استقبال الملف</span>',
+        'closed': '<span class="badge bg-dark">ملف مغلق نهائياً</span>'
     };
 
     let html = `<table class="table style-table text-right" style="direction:rtl;">
         <thead>
             <tr>
-                <th>رقم الطلب</th>
-                <th>نوع الخدمة</th>
-                <th>الحالة</th>
-                <th>التاريخ</th>
-                <th>الإجراء</th>
+                <th>رقم الملف</th>
+                <th>نوع الخدمة المعالجة</th>
+                <th>حالة الملف السحابي</th>
+                <th>تاريخ التقديم</th>
+                <th>إجراءات الإدارة</th>
             </tr>
         </thead>
         <tbody>`;
@@ -135,13 +140,13 @@ function renderRequests(requests) {
         const date = req.createdAt ? new Date(req.createdAt).toLocaleDateString('ar-YE') : '—';
         html += `
             <tr>
-                <td>${index + 1}</td>
+                <td>#${req.id}</td>
                 <td><strong>${req.serviceType || 'استشارة عامة'}</strong></td>
-                <td>${statusMap[req.status] || statusMap.pending}</td>
+                <td>${statusMap[req.status] || '<span class="badge bg-warning text-dark">قيد الانتظار</span>'}</td>
                 <td>${date}</td>
                 <td>
                     <button class="btn btn-sm btn-primary" onclick="viewRequest('${req.id}')">
-                        <i class="bi bi-eye"></i> عرض التفاصيل
+                        <i class="bi bi-eye"></i> فتح الملف والتفاصيل
                     </button>
                 </td>
             </tr>
@@ -152,22 +157,128 @@ function renderRequests(requests) {
     container.innerHTML = html;
 }
 
-// ===== 6. تفعيل عرض تفاصيل الطلب والخطة العلاجية المرسلة =====
+// ===== 6. تفعيل عرض تفاصيل الطلب مع حوكمة نماذج الدفع المالي المدمجة =====
 async function viewRequest(id) {
     currentRequestId = id;
     const token = localStorage.getItem('token');
-    const modal = document.getElementById('viewRequestModal') || document.getElementById('newRequestModal'); 
     
     try {
         const res = await fetch(`/api/dashboard/requests/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if(data.success) {
-            alert(`📝 تفاصيل الطلب:\n\nالخدمة: ${data.request.serviceType}\nالوصف: ${data.request.description}\n\n🌿 الرد العلاجي من الشيخ:\n${data.request.treatmentDetails || 'لم يتم الرد بعد من فضيلة الشيخ.'}`);
+        if(!data.success) { showNotification('⚠️ تعذر جلب تفاصيل الحالة.', 'error'); return; }
+        
+        const req = data.request;
+        let detailsHtml = `
+            <div class="request-details-box text-right" style="direction: rtl; text-align: right;">
+                <p><strong>نوع الخدمة الكلية:</strong> ${req.service_type || req.serviceType}</p>
+                <p><strong>شرح الأعراض المرفوع:</strong> ${req.description}</p>
+                <hr>
+        `;
+
+        // 1. معالجة حالة انتظار رفع الحوالة أو الرفض المالي لإظهار حقول التحويل المالي المباشر
+        if (req.status === 'accepted_waiting_payment' || req.status === 'payment_rejected') {
+            if (req.status === 'payment_rejected') {
+                detailsHtml += `<div class="alert alert-danger">⚠️ سبب رفض التحويل السابق: ${req.payment_rejection_reason || 'غير محدد'}</div>`;
+            }
+            detailsHtml += `
+                <div class="card p-3 bg-light mt-3">
+                    <h5 class="text-primary"><i class="bi bi-wallet2"></i> استمارة تأكيد حوالة الكشفية (100 ريال)</h5>
+                    <p class="small text-muted">الرجاء تحويل مبلغ 100 ريال كشفية وإدخال بيانات الإيصال أدناه للاعتماد المباشر من الشيخ.</p>
+                    <form id="paymentSubmitForm" onsubmit="submitPaymentData(event, '${req.id}')">
+                        <div class="mb-2">
+                            <label class="form-label small">طريقة التحويل المالي</label>
+                            <input type="text" id="payMethod" class="form-control form-control-sm" placeholder="مثال: الكريمي، النجم، بنك التضامن" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">اسم المرسل بالكامل كاملاً كما هو بالحوالة</label>
+                            <input type="text" id="paySender" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">رقم الحوالة / السند المالي</label>
+                            <input type="text" id="payNumber" class="form-control form-control-sm" required>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-success w-100 mt-2">🚀 إرسال إيصال التحويل المالي</button>
+                    </form>
+                </div>
+            `;
+        } 
+        // 2. حالة التحقق من الحوالة
+        else if (req.status === 'payment_submitted') {
+            detailsHtml += `<div class="alert alert-info">🔄 تم استلام إيصال الحوالة المادية لـ الكشفية، وهي قيد المراجعة والتدقيق المالي الآن من قبل الشيخ بسام الشميري.</div>`;
+        }
+        // 3. حالة رفض الملف مبدئياً من الشيخ
+        else if (req.status === 'rejected_by_admin') {
+            detailsHtml += `<div class="alert alert-dark">🚫 اعتذر فضيلة الشيخ عن استقبال الحالة. <strong>السبب:</strong> ${req.initial_rejection_reason || 'عدم الاختصاص الروحي أو الفقهي.'}</div>`;
+        }
+        // 4. الحالات المتقدمة (العلاج والمتابعة)
+        else {
+            detailsHtml += `
+                <p class="text-success"><strong>🔮 الملاحظات والتشخيص المبدئي:</strong></p>
+                <div class="p-2 bg-light border rounded mb-2">${req.initial_diagnosis || 'جاري صياغة التقييم الروحي المبدئي...'}</div>
+                
+                <p class="text-primary"><strong>🌿 البرنامج والخطط العلاجية المعتمدة:</strong></p>
+                <div class="p-2 bg-light border rounded" style="white-space: pre-line;">${req.treatment_plan || 'تظهر الأوراد والبرامج والأذكار هنا فور اعتمادها المالي التام.'}</div>
+            `;
+            
+            if (req.additional_treatment_cost > 0) {
+                detailsHtml += `<p class="mt-2 text-danger small"><strong>⚠️ تكلفة العلاج الخاص التراكمي:</strong> ${req.additional_treatment_cost} ريال.</p>`;
+            }
+        }
+
+        detailsHtml += `</div>`;
+        
+        // استخدام آلية تنبيه أنيقة مبدئية أو يمكن رندرتها داخل ديف مخصص للـ Modal في واجهتك
+        const targetDetailsModal = document.getElementById('requestDetailsContainer');
+        if (targetDetailsModal) {
+            targetDetailsModal.innerHTML = detailsHtml;
+            // افتحي المودال الخاص بالتفاصيل إذا كان متاحاً في الواجهة
+            document.getElementById('viewRequestModal')?.classList.add('show');
+        } else {
+            // بديل تفاعلي مبسط في حال عدم توفر عقدة الـ DOM
+            alert(`معلومات الملف المطور #${req.id}`);
+        }
+
+    } catch(e) {
+        showNotification('⚠️ خطأ هندسي في جلب تفاصيل الحالة من السيرفر.', 'error');
+    }
+}
+
+// ===== 6.5 [دالة جديدة مضافة]: رفع بيانات التحويل المالي سحابياً للمستفيد =====
+async function submitPaymentData(event, requestId) {
+    event.preventDefault();
+    const token = localStorage.getItem('token');
+    
+    const paymentMethod = document.getElementById('payMethod')?.value.trim();
+    const paymentSenderName = document.getElementById('paySender')?.value.trim();
+    const paymentTransferNumber = document.getElementById('payNumber')?.value.trim();
+
+    if (!paymentMethod || !paymentSenderName || !paymentTransferNumber) {
+        showNotification('⚠️ يرجى ملء كافة بيانات الحوالة بدقة.', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/requests/${requestId}/submit-payment`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ paymentMethod, paymentSenderName, paymentTransferNumber })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            showNotification('✅ تم إرسال بيانات إيصال الحوالة المادية بنجاح للشيخ للتدقيق.', 'success');
+            document.getElementById('viewRequestModal')?.classList.remove('show');
+            loadDashboard();
+        } else {
+            showNotification(`❌ ${data.error}`, 'error');
         }
     } catch(e) {
-        showNotification('⚠️ خطأ في جلب تفاصيل الحالة.', 'error');
+        showNotification('❌ فشل معالجة طلب الدفع السحابي.', 'error');
     }
 }
 
@@ -219,7 +330,7 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
         });
         const data = await res.json();
         if(data.success) {
-            showNotification('🚀 تم رفع طلبك بنجاح وجاري عرضه على فضيلة الشيخ للتشخيص.');
+            showNotification('🚀 تم رفع طلبك بنجاح وجاري عرضه على فضيلة الشيخ للتشخيص المبدئي.');
             closeNewRequestModal();
             loadDashboard();
         }
