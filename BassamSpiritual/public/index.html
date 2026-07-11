@@ -9,6 +9,119 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* تنسيقات النافذة المنبثقة الاحترافية للمقال */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+        }
+        .modal-box {
+            background: #ffffff;
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-overlay.show .modal-box {
+            transform: translateY(0);
+        }
+        
+        /* البديل الجديد لمربع العنوان: شريط جمالي علوي مع زر إغلاق عائم */
+        .modal-top-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #d4af37, #f5b041, #d4af37);
+            width: 100%;
+        }
+        .modal-close-floating {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 36px;
+            height: 36px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+            transition: 0.2s ease;
+            z-index: 10;
+        }
+        .modal-close-floating:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .modal-body {
+            overflow-y: auto;
+            padding: 35px 30px;
+        }
+        
+        /* تصميم الهيدر الجديد المدمج داخل جسم المحتوى مباشرة بدون مربعات تقليدية */
+        .modal-article-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .modal-article-header .badge-icon {
+            font-size: 1.5rem;
+            color: #d4af37;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .modal-article-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.4;
+            margin: 0;
+        }
+        .modal-footer {
+            padding: 15px 30px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #f1f5f9;
+        }
+        .btn-modal-close {
+            background: #0f172a;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-family: 'Cairo';
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+        .btn-modal-close:hover {
+            background: #1e293b;
+        }
+    </style>
 </head>
 <body>
 
@@ -32,9 +145,10 @@
     </div>
 
     <div class="container">
+        <!-- قسم الهيرو والتعريف -->
         <div class="hero">
             <div class="hero-glow"></div>
-            <div class="hero-badge"><i class="bi bi-patch-check-fill"></i> مركز معتمد للاستشفاء الروحي</div>
+            <div class="hero-badge"><i class="bi bi-patch-check-fill"></i> center معتمد للاستشفاء الروحي</div>
             <h1>مركز <span>النور الرباني</span> <br>و<span>النَفَس الرحماني</span></h1>
             <p class="sub-title">﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
             
@@ -70,6 +184,7 @@
             </p>
         </div>
 
+        <!-- وثيقة السرية -->
         <div class="trust-card">
             <div class="trust-icon">
                 <i class="bi bi-shield-shaded"></i>
@@ -95,6 +210,7 @@
             </div>
         </div>
 
+        <!-- العدادات -->
         <div class="trust-counter">
             <div class="counter-item">
                 <i class="bi bi-heart-fill"></i>
@@ -118,6 +234,7 @@
             </div>
         </div>
 
+        <!-- قسم المقالات الروحية -->
         <section class="section">
             <div class="section-header">
                 <h2><i class="bi bi-feather"></i> مقالات روحية</h2>
@@ -126,6 +243,7 @@
             <div id="articlesContainer" class="articles-grid"></div>
         </section>
 
+        <!-- قسم الخدمات -->
         <section class="section">
             <div class="section-header">
                 <h2><i class="bi bi-gem"></i> خدماتنا الروحية</h2>
@@ -161,6 +279,7 @@
             </div>
         </section>
 
+        <!-- قسم الآراء -->
         <section class="section">
             <div class="section-header">
                 <h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2>
@@ -170,10 +289,68 @@
         </section>
     </div>
 
+    <!-- نافذة عرض المقال الكامل المتطورة (Modal) - بدون المربع التقليدي وبديل شريطي نقي -->
+    <div id="articleModal" class="modal-overlay" style="display: none;" onclick="closeArticleModalOnOverlay(event)">
+        <div class="modal-box">
+            <!-- البديل الجديد: شريط نوراني رفيع وزر إغلاق عائم -->
+            <div class="modal-top-bar"></div>
+            <span class="modal-close-floating" onclick="closeArticleModal()">&times;</span>
+            
+            <!-- جسم المحتوى ويشمل هيدر المقال الجديد المدمج (أيقونة ريشة المعرفة متبوعة بالعنوان مباشرة) -->
+            <div class="modal-body" id="modalArticleContent">
+                <div class="modal-article-header">
+                    <div class="badge-icon"><i class="bi bi-feather"></i></div>
+                    <h2>جاري استحضار النور...</h2>
+                </div>
+                <p style="text-align:center; padding:20px; color:#888;"><i class="bi bi-arrow-clockwise btn-spin"></i> يرجى الانتظار ثوانٍ معدودة...</p>
+            </div>
+            
+            <div class="modal-footer">
+                <button onclick="closeArticleModal()" class="btn-modal-close">إغلاق المقال</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة المستشار الذكي -->
+    <div id="chatWindow" class="chat-window" style="display: none;">
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <i class="bi bi-robot" style="color:#F5B041;"></i>
+                <span>المستشار الروحاني الذكي</span>
+            </div>
+            <button onclick="toggleChat()" class="chat-close">&times;</button>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message bot">
+                <div class="message-content">
+                    السلام عليكم ورحمة الله وبركاته 🌙<br>
+                    أنا المستشار الروحاني الذكي، هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.<br>
+                    <strong>هل يمكنك إخباري بما تمر به؟</strong>
+                </div>
+            </div>
+        </div>
+        <div class="chat-footer">
+            <div class="chat-input-wrapper" style="display: flex; width: 100%; gap: 5px; align-items: center;">
+                <button type="button" onclick="startChatDictation(this)" id="micChatBtn" style="background: #e2e8f0; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #4a5a6a;">
+                    <i class="bi bi-mic"></i>
+                </button>
+                <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." style="flex: 1;">
+                <button onclick="sendChatMessage()"><i class="bi bi-send-fill"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
+        <i class="bi bi-robot"></i>
+        <span class="chat-badge" style="display: none;">💬</span>
+        <div class="chat-pulse"></div>
+    </div>
+
+    <!-- تذييل الموقع الأساسي -->
     <footer class="footer-new">
         <div class="footer-content">
             <div class="footer-section">
-                <h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4>
+                <h4><i class="bi bi-shield-check"></i> - مركز النور الرباني والنَفَس الرحماني</h4>
                 <p class="footer-desc">
                     رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.
                 </p>
@@ -205,63 +382,14 @@
         </div>
     </footer>
 
-    <div id="articleModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 id="modalArticleTitle"><i class="bi bi-feather"></i> عنوان المقال</h3>
-                <span class="modal-close" onclick="closeArticleModal()">&times;</span>
-            </div>
-            <div class="modal-body" id="modalArticleContent">
-                <p>جاري تحميل المحتوى...</p>
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeArticleModal()" class="btn-modal-close">إغلاق</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
-        <i class="bi bi-robot"></i>
-        <span class="chat-badge" style="display: none;">💬</span>
-        <div class="chat-pulse"></div>
-    </div>
-
-    <div id="chatWindow" class="chat-window">
-        <div class="chat-header">
-            <div class="chat-header-info">
-                <i class="bi bi-robot" style="color:#F5B041;"></i>
-                <span>المستشار الروحاني الذكي</span>
-            </div>
-            <button onclick="toggleChat()" class="chat-close">&times;</button>
-        </div>
-        <div class="chat-body" id="chatBody">
-            <div class="chat-message bot">
-                <div class="message-content">
-                    السلام عليكم ورحمة الله وبركاته 🌙<br>
-                    أنا المستشار الروحاني الذكي، هنا لمساعدتك في توضيح مشكلتك وتوجيهك إلى الخدمة المناسبة.<br>
-                    <strong>هل يمكنك إخباري بما تمر به؟</strong>
-                </div>
-            </div>
-        </div>
-        <div class="chat-footer">
-            <div class="chat-input-wrapper" style="display: flex; width: 100%; gap: 5px; align-items: center;">
-                <button type="button" onclick="startChatDictation(this)" id="micChatBtn" style="background: #e2e8f0; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #4a5a6a;">
-                    <i class="bi bi-mic"></i>
-                </button>
-                <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." style="flex: 1;">
-                <button onclick="sendChatMessage()"><i class="bi bi-send-fill"></i></button>
-            </div>
-        </div>
-    </div>
-
     <script>
-    // مصفوفة المقالات الروحية المعتمدة
+    // مصفوفة المقالات الروحية (تظهر الـ 3 مقالات كبطاقات ملخصة في البداية)
     let defaultFrontArticles = [
         {
             "id": 1,
             "title": "الفرق بين شفاء الروح والنفس: رحلة العودة إلى الله والتوازن الداخلي",
             "summary": "نستخدم مصطلحي 'شفاء الروح' و'شفاء النفس' وكأنهما أمر واحد، لكن لكل منهما مسار مختلف للتعافي يلتقيان في صلتنا بالله.",
-            "content": "في غمار الحياة وضغوطها، غالباً ما نستخدم مصطلحي 'شفاء الروح' و'شفاء النفس' كأنهما أمر واحد. ولكن في حقيقة الأمر، يمثل كل منهما مساراً مختلفاً للتعافي، يلتقيان معاً في نقطة جوهرية واحدة: مدى عمق وصحة صلتنا بالله سبحانه وتعالى. فالإنسان كائن متكامل، لا يمكنه تذوق طعم السلام الداخلي ما لم يفهم احتياجات نفسه، ويزكي روحه بالتقرب من خالقها.\n\nفما هو الفرق الجوهري بين شفاء النفس والروح من منظور إيماني؟ وكيف تكون العلاقة بالله هي المفتاح الحقيقي لشفائهما؟\n\nأولاً: شفاء النفس (الجهاد، التزكية، والاستقرار العاطفي)\nالنفس هي وعاء العقل، والمشاعر، والرغبات، والذكريات. هي الجزء البشري الذي يتأثر بصدمات الحياة، ويتعرض للضعف، والخطأ، والتقلب، وهي التي وصفها القرآن الكريم بأحوال ثلاث (الأمّارة بالسوء، اللوّامة، والمطمئنة).\nأعراض تعب النفس: القلق، التوتر، الاكتئاب، الخوف من المستقبل، وتراكم الأحقاد أو الشعور بالذنب.\nالشفاء من خلال العلاقة بالله: يبدأ شفاء النفس من التسليم لله وتفويض الأمور إليه (التحرر من وهم السيطرة الكاملة). يتطلب الشفاء هنا جهد الإرادة عبر 'التزكية'، ومواجهة الصدمات بالرضا بالقضاء والقدر، واستبدال الأفكار السلبية بحسن الظن بالله. الصلاة والدعاء في هذا المقام هما تفريغ للشحنات الانفعالية، واعتراف بالضعف البشري بين يدي القوي المتين، مما يمنح النفس الطمأنينة.\n\nثانياً: شفاء الروح (الاتصال بالخالق والارتقاء بالوعي)\nالروح هي النفخة الإلهية النيرة والسر الخفي في هذا الجسد (وَنَفَخْتُ فِيهِ مِن رُّوحِي). الروح لا تمرض بالمعنى المادي، ولكنها تختنق وتُحجب إذا انقطعت عن مصدرها. غذاء الروح وسعادتها لا يكمنان في ملذات الدنيا, بل في الاتصال المباشر بالله.\nأعراض تعب الروح: الشعور بالخواء الوجودي، انعدام المعنى من الحياة، القسوة، والشعور بالانفصال التام عن الله.\nالشفاء من خلال العلاقة بالله: يحدث هذا الشفاء بالذكر الخالص الذي يتجاوز حركة اللسان إلى حضور القلب (أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ)، وبالخلوة مع الله، ومناجاته في جوف الليل، وتدبر كلامه (القرآن). الشفاء الروحي يعيد تعريف علاقتك بالله من مجرد أداء حركات وواجبات، إلى صلة حب، وافتقار، وإدراك لغاية وجودك الأسمى.\n\nكيف يلتقي الشفاءان في رحاب القرب من الله؟\nالشفاء الحقيقي عبارة عن دائرة متكاملة، يغذي فيها الإيمان الروحي استقرار النفس، ويعين فيها استقرار النفس على جودة العبادة:\nحين تقترب من الله بالروح: يفيض نور هذا القرب على نفسك، فتهون عندك مصائب الدنيا، وتتحجم الصدمات والمخاوف؛ لأنك تأوي إلى ركن شديد.\nحين تداوي جراح نفسك: (بالعلاج، أو التفكير السليم، أو التسامح)، تكسر القيود والأغلال التي كانت تمنع روحك من التحليق في آفاق الخشوع والتدبر.\n\nخلاصة القول:\nشفاء النفس هو تحريرها من جراح الدنيا بالتسليم والرضا، وشفاء الروح هو إيقاظها لتستمد نورها من رب العالمين. لن تجد النفس مستقرها، ولن تجد الروح مستودعها، إلا في عتبات العبودية الحقة لله. ابدأ اليوم بتجديد صلتك بخالقك، واجعل من صلاتك، وذكرك، وتفويضك لأمرك بوابتك الكبرى نحو تعافٍ شامل وجسد يملؤه السلام.",
+            "content": "في غمار الحياة وضغوطها، غالباً ما نستخدم مصطلحي 'شفاء الروح' و'شفاء النفس' كأنهما أمر واحد. ولكن في حقيقة الأمر، يمثل كل منهما مساراً مختلفاً للتعافي، يلتقيان معاً في نقطة جوهرية واحدة: مدى عمق وصحة صلتنا بالله سبحانه وتعالى. فالإنسان كائن متكامل، لا يمكنه تذوق طعم السلام الداخلي ما لم يفهم احتياجات نفسه، ويزكي روحه بالتقرب من خالقها.\n\nفما هو الفرق الجوهري بين شفاء النفس والروح من منظور إيماني؟ وكيف تكون العلاقة بالله هي المفتاح الحقيقي لشفائهما؟\n\nأولاً: شفاء النفس (الجهاد، التزكية، والاستقرار العاطفي)\nالنفس هي وعاء العقل، والمشاعر، والرغبات، والذكريات. هي الجزء البشري الذي يتأثر بصدمات الحياة، ويتعرض للضعف، والخطأ، والتقلب، وهي التي وصفها القرآن الكريم بأحوال ثلاث (الأمّارة بالسوء، اللوّامة، والمطمئنة).\nأعراض تعب النفس: القلق، التوتر، الاكتئاب، الخوف من المستقبل، وتراكم الأحقاد أو الشعور بالذنب.\nالشفاء من خلال العلاقة بالله: يبدأ شفاء النفس من التسليم لله وتفويض الأمور إليه (التحرر من وهم السيطرة الكاملة). يتطلب الشفاء هنا جهد الإرادة عبر 'التزكية'، ومواجهة الصدمات بالرضا بالقضاء والقدر، واستبدال الأفكار السلبية بحسن الظن بالله. الصلاة والدعاء في هذا المقام هما تفريغ للشحنات الانفعالية، واعتراف بالضعف البشري بين يدي القوي المتين، مما يمنح النفس الطمأنينة.\n\nثانياً: شفاء الروح (الاتصال بالخالق والارتقاء بالوعي)\nالروح هي النفخة الإلهية النيرة والسر الخفي في هذا الجسد (وَنَفَخْتُ فِيهِ مِن رُّوحِي). الروح لا تمرض بالمعنى المادي، ولكنها تختنق وتُحجب إذا انقطعت عن مصدرها. غذاء الروح وسعادتها لا يكمنان في ملذات الدنيا, بل في الاتصال المباشر بالله.\nأعراض تعب الروح: الشعور بالخواء الوجودي، انعدام المعنى من الحياة، القسوة، والشعور بالانفصال التام عن الله.\nالشفاء من خلال العلاقة بالله: يحدث هذا الشفاء بالذكر الخالص الذي يتجاوز حركة اللسان إلى حضور القلب (أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ)، وبالخلوة مع الله، ومناجاته في جوف الليل، وتدبر كلامه (القرآن). الشفاء الروحي يعيد تعريف علاقتك بالله من مجرد أداء حركات وواجبات، إلى صلة حب، وافتقار، وإدراك لغاية وجودك الأسمى.\n\nكيف يلتقي الشفاءان في رحاب القرب من الله؟\nالشفاء الحقيقي عبارة عن دائرة متكاملة، يغذي فيها الإيمان الروحي استقرار النفس، ويعين فيها استقرار النفس على جودة العبادة:\nحين تقترب من الله بالروح: يفيض نور هذا القرب على نفسك, فتهون عندك مصائب الدنيا، وتتحجم الصدمات والمخاوف؛ لأنك تأوي إلى ركن شديد.\nحين تداوي جراح نفسك: (بالعلاج، أو التفكير السليم، أو التسامح)، تكسر القيود والأغلال التي كانت تمنع روحك من التحليق في آفاق الخشوع والتدبر.\n\nخلاصة القول:\nشفاء النفس هو تحريرها من جراح الدنيا بالتسليم والرضا، وشفاء الروح هو إيقاظها لتستمد نورها من رب العالمين. لن تجد النفس مستقرها، ولن تجد الروح مستودعها، إلا في عتبات العبودية الحقة لله. ابدأ اليوم بتجديد صلتك بخالقك، واجعل من صلاتك، وذكرك، وتفويضك لأمرك بوابتك الكبرى نحو تعافٍ شامل وجسد يملؤه السلام.",
             "date": "2026-06-28",
             "icon": "bi bi-heart-fill"
         },
@@ -269,7 +397,7 @@
             "id": 2,
             "title": "أسرار خفية: سر التسبيح في الساعات الذهبية من اليوم والليلة",
             "summary": "في زحام الحياة اليومية وضجيجها المتواصل، جعل الله في كل يوم وليلة بوابات زمنية خاصة تفيض بالرحمات، فما هي هذه الساعات الذهبية؟",
-            "content": "في زحام الحياة اليومية وضجيجها المتواصل، تتشتت عقولنا وتنهك نفوسنا، ونظل نبحث عن واحة للسلام والأمان الروحي. لكن المفاجأة هي أن الله سبحانه وتعالى قد جعل لنا في كل يوم وليلة 'بوابات زمنية' خاصة، تفيض بالرحمات والسكينة، وتُفتح فيها أبواب الإجابة بشكل فريد. هذه الأوقات ليست مجرد ساعات عادية، بل هي الساعات الذهبية التي يقترن فيها الذكر والتسبيح بأعظم تجليات العافية النفسية والروحية.\n\nفما هي هذه الساعات الذهبية؟ وما هو السر الكامن وراء التسبيح فيها تحديداً؟\n\nالبوابات الزمنية الثلاث: متى تكون الساعات الذهبية؟\nالقرآن الكريم والسنة النبوية وجها الأنظار بدقة شديدة نحو أوقات محددة يتضاعف فيها أثر الذكر، وأبرزها ثلاثة أوقات:\nساعة السَّحَر (ثلث الليل الأخير): وقت النزول الإلهي، حيث الهدوء التام والكون الساكن.\nساعة البكور (ما بعد الفجر حتى الشروق): وقت توزيع الأرزاق وانطلاق البركة في الأرض.\nساعة الأصيل (ما قبل الغروب): وقت تبدل الملائكة وانطواء النهار، وحيث تميل النفس للهدوء بعد عناء العمل.\nوقد لخص القرآن الكريم هذه الأوقات في آية جامعة تدل على عظم سرها: (وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طلُوعِ الشَّمْسِ وَقَبْلَ غُرُوبِهَا وَمِنْ آنَاءِ اللَّيْلِ فَسَبِّحْ وَأَطْرَافَ النَّهَارِ لَعَلَّكَ تَرْضَى).\n\nسر اختيار 'التسبيح' في هذه الأوقات بالذات\nالتسبيح هو قول 'سبحان الله وبحمده'، وهو يعني تنزيه الله عن كل نقص، والاعتراف بكماله وجلاله. وفي الساعات الذهبية، يحمل التسبيح أسراراً مذهلة:\nالتناغم مع الكون: في وقتي الفجر والغروب، تسبح الكائنات كلها، من طيور وشجر ودواب، بلغاتها التي لا نفقهها. عندما تسبح في هذه الأوقات، فإنك تُدخل روحك في 'سيمفونية كونية' من العبودية، فتتحرر من عزلتك الأرضية وتشعر بأنك جزء من منظومة نورانية كبرى.\nسرادق الأمان والرضا النفسي: ختم الله آية التسبيح السابقة بعبارة لافتة جداً: (لَعَلَّكَ تَرْضَى). هذا هو السر النفسي الأكبر؛ التسبيح في هذه الساعات يفرغ الشحنات السلبية، ويزيل القلق والتوتر، وينزل في القلب 'الرضا العارم' بالمقسوم، وكأن التسبيح يعيد ترتيب فوضى مشاعرك الداخلية.\nالاستمداد والتحصين: التسبيح في البكور يمدك بـ 'الوقود الروحي' الذي تحتاجه لمواجهة مشاق يومك، والتسبيح في الأصيل يغسل عنك كدر ما واجهته خلال النهار، أما تسبيح السحر فهو النور الذي يضيء عتمة صدرك.\n\nكيف تستثمر هذه الساعات الذهبية عملياً؟\nالاستفادة من هذه الأوقات لا تتطلب تفريغ ساعات طويلة، بل تتطلب حضور القلب الاستثنائي من خلال خطوات بسيطة:\nاحرص على 'جلسة الشروق' ولو لـ 15 دقيقة: بعد صلاة الفجر، اجلس مكاناً هادئاً، وتأمل خروج النور، وسبّح بقلب حاضر؛ ستجد بركة غريبة في وقتك وصحتك طوال اليوم.\nاستغل وقت العودة من العمل (الأصيل): بدلاً من الانشغال بالهاتف أو الضيق من زحام السير قبل الغروب، اجعل لسانك رطباً بالتسبيح والاستغفار، وراقب كيف يتبدد تعب يومك.\nاستيقظ قبل الفجر بـ 20 دقيقة فقط: انطرح بين يدي الله، وسبحه واستغفره في وقت السحر؛ فالاستغفار والتسبيح هنا لهما مذاق لا يعرفه إلا من تذوقه.\n\nخلاصة القول:\nالساعات الذهبية هي هدايا ربانية مجانية، تمنحنا فرصة يومية لإعادة ضبط المصنع لنفوسنا وأرواحنا. التسبيح فيها ليس مجرد كلمات نرددها، بل هو حبل متين يربطنا بالخالق في أرقى تجليات القرب. اجعل لنفسك حظاً من هذه الساعات، وراقب كيف ستتحول حياتك من الشتات والضيق، إلى الرضا والسكينة والبركة الشاملة.",
+            "content": "في زحام الحياة اليومية وضجيجها المتواصل، تتشتت عقولنا وتنهك نفوسنا، ونظل نبحث عن واحة للسلام والأمان الروحي. لكن المفاجأة هي أن الله سبحانه وتعالى قد جعل لنا في كل يوم وليلة 'بوابات زمنية' خاصة، تفيض بالرحمات والسكينة، وتُفتح فيها أبواب الإجابة بشكل فريد. هذه الأوقات ليست مجرد ساعات عادية، بل هي الساعات الذهبية التي يقترن فيها الذكر والتسبيح بأعظم تجليات العافية النفسية والروحية.\n\nفما هي هذه الساعات الذهبية؟ وما هو السر الكامن وراء التسبيح فيها تحديداً؟\n\nالبوابات الزمنية الثلاث: متى تكون الساعات الذهبية؟\nالقرآن الكريم والسنة النبوية وجها الأنظار بدقة شديدة نحو أوقات محددة يتضاعف فيها أثر الذكر، وأبرزها ثلاثة أوقات:\nساعة السَّحَر (ثلث الليل الأخير): وقت النزول الإلهي، حيث الهدوء التام والكون الساكن.\nساعة البكور (ما بعد الفجر حتى الشروق): وقت توزيع الأرزاق وانطلاق البركة في الأرض.\nساعة الأصيل (ما قبل الغروب): وقت تبدل الملائكة وانطواء النهار، وحيث تميل النفس للهدوء بعد عناء العمل.\nوقد لخص القرآن الكريم هذه الأوقات في آية جامعة تدل على عظم سرها: (وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طلُوعِ الشَّمْسِ وَقَبْلَ غُرُوبِهَا وَمِنْ آنَاءِ اللَّيْلِ فَسَبِّحْ وَأَطْرَافَ النَّهَارِ لَعَلَّكَ تَرْضَى).\n\nسر اختيار 'التسبيح' في هذه الأوقات بالذات\nالتسبيح هو قول 'سبحان الله وبحمده'، وهو يعني تنزيه الله عن كل نقص، والاعتراف بكماله وجلاله. وفي الساعات الذهبية، يحمل التسبيح أسراراً مذهلة:\nالتناغم مع الكون: في وقتي الفجر والغروب، تسبح الكائنات كلها، من طيور وشجر ودواب، بلغاتها التي لا نفقهها. عندما تسبح في هذه الأوقات, فإنك تُدخل روحك في 'سيمفونية كونية' من العبودية، فتتحرر من عزلتك الأرضية وتشعر بأنك جزء من منظومة نورانية كبرى.\nسرادق الأمان والرضا النفسي: ختم الله آية التسبيح السابقة بعبارة لافتة جداً: (لَعَلَّكَ تَرْضَى). هذا هو السر النفسي الأكبر؛ التسبيح في هذه الساعات يفرغ الشحنات السلبية، ويزيل القلق والتوتر، وينزل في القلب 'الرضا العارم' بالمقسوم، وكأن التسبيح يعيد ترتيب فوضى مشاعرك الداخلية.\nالاستمداد والتحصين: التسبيح في البكور يمدك بـ 'الوقود الروحي' الذي تحتاجه لمواجهة مشاق يومك، والتسبيح في الأصيل يغسل عنك كدر ما واجهته خلال النهار، أما تسبيح السحر فهو النور الذي يضيء عتمة صدرك.\n\nكيف تستثمر هذه الساعات الذهبية عملياً؟\nالاستفادة من هذه الأوقات لا تتطلب تفريغ ساعات طويلة، بل تتطلب حضور القلب الاستثنائي من خلال خطوات بسيطة:\nاحرص على 'جلسة الشروق' ولو لـ 15 دقيقة: بعد صلاة الفجر، اجلس مكاناً هادئاً، وتأمل خروج النور، وسبّح بقلب حاضر؛ ستجد بركة غريبة في وقتك وصحتك طوال اليوم.\nاستغل وقت العودة من العمل (الأصيل): بدلاً من الانشغال بالهاتف أو الضيق من زحام السير قبل الغروب، اجعل لسانك رطباً بالتسبيح والاستغفار، وراقب كيف يتبدد تعب يومك.\nاستيقظ قبل الفجر بـ 20 دقيقة فقط: انطرح بين يدي الله، وسبحه واستغفره في وقت السحر؛ فالاستغفار والتسبيح هنا لهما مذاق لا يعرفه إلا من تذوقه.\n\nخلاصة القول:\nالساعات الذهبية هي هدايا ربانية مجانية، تمنحنا فرصة يومية لإعادة ضبط المصنع لنفوسنا وأرواحنا. التسبيح فيها ليس مجرد كلمات نرددها، بل هو حبل متين يربطنا بالخالق في أرقى تجليات القرب. اجعل لنفسك حظاً من هذه الساعات، وراقب كيف ستتحول حياتك من الشتات والضيق، إلى الرضا والسكينة والبركة الشاملة.",
             "date": "2026-06-25",
             "icon": "bi bi-clock-history"
         },
@@ -277,24 +405,20 @@
             "id": 3,
             "title": "البيوت السعيدة.. محراب السكينة ومصدر النجاح المكتوم",
             "summary": "وراء كل قصة نجاح أبهرت العالم، هناك فصْلٌ غير مكتوب جرت أحداثه خلف الأبواب المغلقة. النجاح الحقيقي يبدأ من دفء البيت واستقراره القائم على الارتباط بالله.",
-            "content": "وراء كل قصة نجاح أبهرت العالم، هناك فصْلٌ غير مكتوب جرت أحداثه خلف الأبواب المغلقة. نبحث كثيراً عن أسرار التميز في خطط العمل واستراتيجيات الإدارة، وننسى أن المحرك الأول لكل إنجاز عظيم يبدأ من مكان واحد: دفء البيت واستقراره القائم على الارتباط بالله. السعادة الأسرية ليست مجرد توافق الاجتماعي، بل هي منصة إيمانية ونفسية ينطلق منها الإنسان ليواجه الحياة بثقة, مستمداً قوته من سكينة بيته وتوفيقه من رب العالمين.\n\nفكيف تتحول جدران المنزل البسيطة بفضل القرب من الله إلى وقود للنجاح والتميز؟\n\n1. السكينة الإلهية.. الملاذ الآمن من ضجيج العالم\nالحياة في الخارج مليئة بالتحديات، والضغوط، والمعارك المهنية التي تستنزف طاقة الإنسان العقلية والنفسية.\nالأثر: عندما يعود المرء إلى بيت ذُكر اسم الله فيه، وعُمّر بالطاعة، تتنزل عليه السكينة تلقائياً (هُوَ الَّذِي أَنزَلَ السَّكِينَةَ فِي قُلُوبِ الْمُؤْمِنِينَ).\nالنتيجة: يتحول البيت من مجرد جدران خرسانية إلى واحة للتعافي الروحي، مما يمنح الإنسان القوة الذهنية والقلبية للبدء من جديد كل صباح بكفاءة مضاعفة.\n\n2. البيوت الموصولة بالله تتحرر من القلق والنزاع\nأثبتت التجارب النفسية والواقعية أن البيوت التي تفتقد للروابط الإيمانية تكون أكثر عرضة للخلافات المستمرة، مما يضع عقل الإنسان في حالة 'دفاع واضطراب دائم'.\nالراحة النفسية: الارتباط المشترك بالله بين أفراد الأسرة (كالصلاة جماعة وقراءة القرآن) يطرد الشياطين ويزيل أسباب الشقاق والمشاحنات.\nالإنتاجية: عندما يطمئن البال داخل البيت بذكر الله (أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ القُلُوبُ)، يتفرغ العقل البشري بالكامل للتركيز على الابتكار، والتميز، واتخاذ القرارات الذكية في العمل أو الدراسة.\n\n3. البركة.. السر الخفي وراء التوفيق\nالنجاح ليس مجرد حسابات مادية أو ساعات عمل طويلة، بل هو 'بركة' يضعها الله في الوقت والجهد والأثر.\nصناعة البركة: البيوت السعيدة والمستقرة إيمانياً هي البيوت المستحقة للبركة؛ لأنها تلتزم بحدود الله وتُبنى على المودة والرحمة التي جعلها الله آية من آياته.\nالتيسير: هذا الارتباط يجعل التوفيق حليفاً لصاحب البيت في مسعاه الخارجي، فتُفتح له الأبواب المغلقة بأقل مجهود، ويُدفع عنه السوء بفضل دعوات صادقة تصعد من جوف بيته المستقر.\n\n4. كيف تبني بيتاً موصولاً بالله ليكون منطلقاً لنجاحك؟\nتحويل البيت إلى بيئة داعمة ومباركة يتطلب خطوات إيمانية وعملية بسيطة ومستمرة:\nأحيوا البيت بالذكر والطاعة: اجعل لبيتك حظاً من صلاة النوافل، وقراءة القرآن، وتجنبوا الأجواء التي تطرد الملائكة والبركة.\nاجعل المعاملة قائمة على التقوى: استبدل اللوم والتقريع بـ 'الكلمة الطيبة' والنصح الرفيق، متأسياً بالنبي ﷺ: «خَيرُكُم خَيرُكُم لِأَهلِهِ».\nالتفويض والتوكل المشترك: عند مواجهة أي أزمة مالية أو مهنية، اجمع أسرتك على الدعاء والتفويض لله، ليتعلم الجميع أن مصدر الأمان والرزق هو الله وحده.\n\nخلاصة القول:\nالنجاح الحقيقي ليس هرمًا تبنيه في الخارج بينما تتداعى أساساته الروحية في الداخل. إن تميزك المهني، والمالي، والاجتماعي ما هو إلا انعكاس لسلامك الداخلي الذي تصنعه في بيتك تحت ظلال طاعة الله. استثمر في صلة بيتك برب العالمين أولاً، وستجد أن أبواب التوفيق والبركة في الحياة تفتح لك ولأسرتك تلقائياً وبأبهى صورها.",
+            "content": "وراء كل قصة نجاح أبهرت العالم، هناك فصْلٌ غير مكتوب جرت أحداثه خلف الأبواب المغلقة. نبحث كثيراً عن أسرار التميز في خطط العمل واستراتيجيات الإدارة، وننسى أن المحرك الأول لكل إنجاز عظيم يبدأ من مكان واحد: دفء البيت واستقراره القائم على الارتباط بالله. السعادة الأسرية ليست مجرد توافق الاجتماعي، بل هي منصة إيمانية ونفسية ينطلق منها الإنسان ليواجه الحياة بثقة, مستمداً قوته من سكينة بيته وتوفيقه من رب العالمين.\n\nفكيف تتحول جدران المنزل البسيطة بفضل القرب من الله إلى وقود للنجاح والتميز?\n\n1. السكينة الإلهية.. الملاذ الآمن من ضجيج العالم\nالحياة في الخارج مليئة بالتحديات، والضغوط، والمعارك المهنية التي تستنزف طاقة الإنسان العقلية والنفسية.\nالأثر: عندما يعود المرء إلى بيت ذُكر اسم الله فيه، وعُمّر بالطاعة، تتنزل عليه السكينة تلقائياً (هُوَ الَّذِي أَنزَلَ السَّكِينَةَ فِي قُلُوبِ الْمُؤْمِنِينَ).\nالنتيجة: يتحول البيت من مجرد جدران خرسانية إلى واحة للتعافي الروحي، مما يمنح الإنسان القوة الذهنية والقلبية للبدء من جديد كل صباح بكفاءة مضاعفة.\n\n2. البيوت الموصولة بالله تتحرر من القلق والنزاع\nأثبتت التجارب النفسية والواقعية أن البيوت التي تفتقد للروابط الإيمانية تكون أكثر عرضة للخلافات المستمرة، مما يضع عقل الإنسان في حالة 'دفاع واضطراب دائم'.\nالراحة النفسية: الارتباط المشترك بالله بين أفراد الأسرة (كالصلاة جماعة وقراءة القرآن) يطرد الشياطين ويزيل أسباب الشقاق والمشاحنات.\nالإنتاجية: عندما يطمئن البال داخل البيت بذكر الله (أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ القُلُوبُ)، يتفرغ العقل البشري بالكامل للتركيز على الابتكار، والتميز، واتخاذ القرارات الذكية في العمل أو الدراسة.\n\n3. البركة.. السر الخفي وراء التوفيق\nالنجاح ليس مجرد حسابات مادية أو ساعات عمل طويلة، بل هو 'بركة' يضعها الله في الوقت والجهد والأثر.\nصناعة البركة: البيوت السعيدة والمستقرة إيمانياً هي البيوت المستحقة للبركة؛ لأنها تلتزم بحدود الله وتُبنى على المودة والرحمة التي جعلها الله آية من آياته.\nالتيسير: هذا الارتباط يجعل التوفيق حليفاً لصاحب البيت في مسعاه الخارجي، فتُفتح له الأبواب المغلقة بأقل مجهود، ويُدفع عنه السوء بفضل دعوات صادقة تصعد من جوف بيته المستقر.\n\n4. كيف تبني بيتاً موصولاً بالله ليكون منطلقاً لنجاحك؟\nتحويل البيت إلى بيئة داعمة ومباركة يتطلب خطوات إيمانية وعملية بسيطة ومستمرة:\nأحيوا البيت بالذكر والطاعة: اجعل لبيتك حظاً من صلاة النوافل، وقراءة القرآن، وتجنبوا الأجواء التي تطرد الملائكة والبركة.\nاجعل المعاملة قائمة على التقوى: استبدل اللوم والتقريع بـ 'الكلمة الطيبة' والنصح الرفيق، متأسياً بالنبي ﷺ: «خَيرُكُم خَيرُكُم لِأَهلِهِ».\nالتفويض والتوكل المشترك: عند مواجهة أي أزمة مالية أو مهنية، اجمع أسرتك على الدعاء والتفويض لله، ليتعلم الجميع أن مصدر الأمان والرزق هو الله وحده.\n\nخلاصة القول:\nالنجاح الحقيقي ليس هرمًا تبنيه في الخارج بينما تتداعى أساساته الروحية في الداخل. إن تميزك المهني، والمالي، والاجتماعي ما هو إلا انعكاس لسلامك الداخلي الذي تصنعه في بيتك تحت ظلال طاعة الله. استثمر في صلة بيتك برب العالمين أولاً، وستجد أن أبواب التوفيق والبركة في الحياة تفتح لك ولأسرتك تلقائياً وبأبهى صورها.",
             "date": "2026-06-22",
             "icon": "bi bi-house-chimney-fill"
         }
     ];
 
-    // 1. عرض نظام الإشعارات المنبثقة
     function displayToast(message) {
         const toast = document.getElementById('notification');
         if (!toast) return;
         toast.innerText = message;
         toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 4000);
+        setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
-    // 2. تحديث واجهة المستخدم بناءً على المصادقة
     function handleUserAuthUI() {
         const token = localStorage.getItem('token');
         const loginBtn = document.getElementById('loginBtn');
@@ -314,7 +438,6 @@
         }
     }
 
-    // 3. عرض المقالات الروحية ديناميكياً
     async function displayBlogArticles() {
         const container = document.getElementById('articlesContainer');
         if (!container) return;
@@ -322,24 +445,17 @@
         try {
             const res = await fetch('/api/articles');
             let articles = [];
-            if (res.ok) {
-                articles = await res.json();
-            }
-            
-            if (!articles || articles.length === 0) {
-                articles = defaultFrontArticles;
-            }
-
+            if (res.ok) articles = await res.json();
+            if (!articles || articles.length === 0) articles = defaultFrontArticles;
             renderArticles(container, articles);
         } catch (e) {
-            console.error(e);
             renderArticles(container, defaultFrontArticles);
         }
     }
 
     function renderArticles(container, articles) {
         container.innerHTML = articles.map(art => `
-            <div class="article-card" style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.02); border:1px solid #f1f5f9; display:flex; flex-direction:column; justify-content:space-between; transition:0.3s ease;">
+            <div class="article-card" style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.02); border:1px solid #f1f5f9; display:flex; flex-direction:column; justify-content:space-between;">
                 <div>
                     <div style="font-size:2rem; color:#2c3e50; margin-bottom:15px;"><i class="${art.icon || 'bi bi-feather'}"></i></div>
                     <h3 style="font-size:1.25rem; font-weight:700; color:#2c3e50; margin-bottom:10px; line-height:1.5;">${art.title}</h3>
@@ -353,18 +469,24 @@
         `).join('');
     }
 
-    // 4. فتح المقال كاملاً في الـ Modal (مصححة ومضمونة لعرض النص كاملاً)
+    // فتح المقال داخل النافذة المنبثقة وإدراج ريشة المعرفة والعنوان داخل الـ body مباشرة
     async function readFullArticle(id) {
         const modal = document.getElementById('articleModal');
-        const titleEl = document.getElementById('modalArticleTitle');
         const contentEl = document.getElementById('modalArticleContent');
 
-        if (!modal || !titleEl || !contentEl) return;
+        if (!modal || !contentEl) return;
 
-        titleEl.innerHTML = `<i class="bi bi-hourglass-split"></i> جاري استحضار النور...`;
-        contentEl.innerHTML = `<p style="text-align:center; padding:20px; color:#888;"><i class="bi bi-arrow-clockwise btn-spin"></i> يرجى الانتظار ثوانٍ معدودة...</p>`;
+        // حالة التحميل المؤقتة المدمجة
+        contentEl.innerHTML = `
+            <div class="modal-article-header">
+                <div class="badge-icon"><i class="bi bi-hourglass-split"></i></div>
+                <h2>جاري استحضار النور...</h2>
+            </div>
+            <p style="text-align:center; padding:20px; color:#888;"><i class="bi bi-arrow-clockwise btn-spin"></i> يرجى الانتظار ثوانٍ معدودة...</p>
+        `;
+        
         modal.style.display = 'flex';
-        modal.classList.add('show');
+        setTimeout(() => modal.classList.add('show'), 10);
 
         let matchedArticle = defaultFrontArticles.find(a => String(a.id) === String(id));
 
@@ -373,24 +495,32 @@
             if (res.ok) {
                 const articles = await res.json();
                 const fromServer = articles.find(a => String(a.id) === String(id) || String(a._id) === String(id));
-                if (fromServer) {
-                    matchedArticle = fromServer;
-                }
+                if (fromServer) matchedArticle = fromServer;
             }
         } catch (e) {
-            console.error("تعذر جلب المقال من السيرفر، تم الاعتماد على النسخة المحلية:", e);
+            console.error(e);
         }
 
         if (matchedArticle && matchedArticle.content) {
-            titleEl.innerHTML = `<i class="${matchedArticle.icon || 'bi bi-feather'}"></i> ${matchedArticle.title}`;
+            // البديل الاحترافي: إدراج الأيقونة (الريشة) والعنوان مدمجين في أعلى جسم المحتوى
             contentEl.innerHTML = `
-                <div style="direction:rtl; text-align:right; line-height:1.8; color:#334155; font-size:1.1rem; white-space:pre-wrap; font-family:'Cairo'; padding: 10px;">
+                <div class="modal-article-header">
+                    <div class="badge-icon"><i class="bi bi-feather"></i></div>
+                    <h2>${matchedArticle.title}</h2>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:8px;"><i class="bi bi-calendar3"></i> تاريخ النشر: ${matchedArticle.date}</div>
+                </div>
+                <div style="direction:rtl; text-align:right; line-height:1.8; color:#334155; font-size:1.05rem; white-space:pre-wrap; font-family:'Cairo';">
                     ${matchedArticle.content}
                 </div>
             `;
         } else {
-            titleEl.innerHTML = `❌ خطأ في النظام`;
-            contentEl.innerHTML = `<p style="color:#ef4444; text-align:center; padding:20px;">عذراً، لم نتمكن من العثور على محتوى المقال حالياً.</p>`;
+            contentEl.innerHTML = `
+                <div class="modal-article-header">
+                    <div class="badge-icon" style="color:#ef4444;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <h2>خطأ في النظام</h2>
+                </div>
+                <p style="color:#ef4444; text-align:center; padding:20px;">عذراً، لم نتمكن من العثور على محتوى المقال حالياً.</p>
+            `;
         }
     }
 
@@ -398,19 +528,22 @@
         const modal = document.getElementById('articleModal');
         if (modal) {
             modal.classList.remove('show');
-            modal.style.display = 'none';
+            setTimeout(() => modal.style.display = 'none', 300);
         }
     }
 
-    // 5. محرك الأرقام التفاعلي (Trust Counter)
+    function closeArticleModalOnOverlay(e) {
+        if (e.target.id === 'articleModal') {
+            closeArticleModal();
+        }
+    }
+
     function initializeCounters() {
         const counters = document.querySelectorAll('.counter-number');
-        
         const countUp = (counter) => {
             const target = +counter.getAttribute('data-target');
             const count = +counter.innerText;
             const speed = target / 60;
-
             if (count < target) {
                 counter.innerText = Math.ceil(count + speed);
                 setTimeout(() => countUp(counter), 20);
@@ -418,7 +551,6 @@
                 counter.innerText = target;
             }
         };
-
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -427,11 +559,9 @@
                 }
             });
         }, { threshold: 0.5 });
-
         counters.forEach(counter => observer.observe(counter));
     }
 
-    // 6. عرض آراء المستفيدين
     async function displayApprovedTestimonials() {
         const container = document.getElementById('testimonialsContainer');
         if (!container) return;
@@ -442,7 +572,7 @@
                 const data = await res.json();
                 if (data.success && data.reviews.length > 0) {
                     container.innerHTML = data.reviews.map(rev => `
-                        <div style="background:#fff; border:1px solid #f1f5f9; padding:20px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.01); text-align:right; direction:rtl;">
+                        <div style="background:#fff; border:1px solid #f1f5f9; padding:20px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.01); text-align:right;">
                             <div style="color:#f5b041; margin-bottom:10px;">
                                 <i class="bi bi-star-fill"></i> <i class="bi bi-star-fill"></i> <i class="bi bi-star-fill"></i> <i class="bi bi-star-fill"></i> <i class="bi bi-star-fill"></i>
                             </div>
@@ -453,9 +583,7 @@
                     return;
                 }
             }
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) {}
 
         container.innerHTML = `
             <div style="background:#fff; border:1px solid #f1f5f9; padding:20px; border-radius:16px; text-align:right;">
@@ -471,7 +599,6 @@
         `;
     }
 
-    // 7. تشغيل نافذة المستشار الروحاني الذكي
     function toggleChat() {
         const chatWin = document.getElementById('chatWindow');
         if (chatWin) {
@@ -494,24 +621,14 @@
         input.value = '';
 
         const uMsg = document.createElement('div');
-        uMsg.className = 'chat-message user';
         uMsg.style = 'display:flex; justify-content:flex-end; margin-bottom:10px;';
-        uMsg.innerHTML = `
-            <div class="message-content" style="background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 12px 0 12px 12px; max-width: 80%; line-height: 1.5; font-family: 'Cairo';">
-                ${userText}
-            </div>
-        `;
+        uMsg.innerHTML = `<div style="background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 12px 0 12px 12px; max-width: 80%; font-family: 'Cairo';">${userText}</div>`;
         body.appendChild(uMsg);
         body.scrollTop = body.scrollHeight;
 
         const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'chat-message bot';
         loadingMsg.style = 'display:flex; justify-content:flex-start; margin-bottom:10px;';
-        loadingMsg.innerHTML = `
-            <div class="message-content" style="background: #f8fafc; color: #64748b; padding: 10px 15px; border-radius: 0 12px 12px 12px; max-width: 80%; line-height: 1.5; font-family: 'Cairo';">
-                <i class="bi bi-arrow-clockwise btn-spin"></i> جاري استبصار مشكلتك...
-            </div>
-        `;
+        loadingMsg.innerHTML = `<div style="background: #f8fafc; color: #64748b; padding: 10px 15px; border-radius: 0 12px 12px 12px; max-width: 80%; font-family: 'Cairo';"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري استبصار مشكلتك...</div>`;
         body.appendChild(loadingMsg);
         body.scrollTop = body.scrollHeight;
 
@@ -529,66 +646,45 @@
             if (body.contains(loadingMsg)) body.removeChild(loadingMsg);
 
             const botMsg = document.createElement('div');
-            botMsg.className = 'chat-message bot';
             botMsg.style = 'display:flex; justify-content:flex-start; margin-bottom:10px;';
 
             if (res.ok) {
                 const data = await res.json();
-                botMsg.innerHTML = `
-                    <div class="message-content" style="background: #f1f5f9; color: #1e293b; padding: 10px 15px; border-radius: 0 12px 12px 12px; max-width: 80%; line-height: 1.5; font-family: 'Cairo';">
-                        ${data.reply || 'تم استلام رسالتك بنجاح، سنقوم بالتواصل معك قريباً لمعالجة طلبك.'}
-                    </div>
-                `;
+                botMsg.innerHTML = `<div style="background: #f1f5f9; color: #1e293b; padding: 10px 15px; border-radius: 0 12px 12px 12px; max-width: 80%; line-height: 1.5; font-family: 'Cairo';">${data.reply || 'تم استلام رسالتك.'}</div>`;
             } else {
-                botMsg.innerHTML = `
-                    <div class="message-content" style="background: #fdf2f2; color: #991b1b; padding: 10px 15px; border-radius: 0 12px 12px 12px; max-width: 80%; line-height: 1.5; font-family: 'Cairo';">
-                        عذراً، واجهنا مشكلة في الاتصال بالخادم. يمكنك المحاولة مرة أخرى أو حجز طلب استشارة مباشرة.
-                    </div>
-                `;
+                botMsg.innerHTML = `<div style="background: #fdf2f2; color: #991b1b; padding: 10px 15px; border-radius: 0 12px 12px 12px; max-width: 80%; font-family: 'Cairo';">عذراً، واجهنا مشكلة في الاتصال بالخادم.</div>`;
             }
             body.appendChild(botMsg);
             body.scrollTop = body.scrollHeight;
-
         } catch (e) {
-            console.error(e);
             if (body.contains(loadingMsg)) body.removeChild(loadingMsg);
             displayToast('حدث خطأ في الاتصال بشبكة المستشار الذكي');
         }
     }
 
-    // 8. ميزة الإدخال الصوتي وتحويل الكلام إلى نص (Speech Recognition)
     let recognition;
     function startChatDictation(btn) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            displayToast('خاصية الإدخال الصوتي غير مدعومة في متصفحك الحالي');
+            displayToast('خاصية الإدخال الصوتي غير مدعومة في متصفحك');
             return;
         }
-
         if (!recognition) {
             recognition = new SpeechRecognition();
-            recognition.lang = 'ar-YE'; 
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
+            recognition.lang = 'ar-YE';
             recognition.onstart = () => {
                 btn.style.background = '#ef4444';
                 btn.style.color = '#ffffff';
-                displayToast('نظام الاستماع نشط.. تحدث الآن بمشكلتك بكل خصوصية');
+                displayToast('نظام الاستماع نشط.. تحدث بمشكلتك');
             };
-
-            recognition.onerror = (event) => {
-                console.error(event.error);
+            recognition.onerror = () => {
                 btn.style.background = '#e2e8f0';
                 btn.style.color = '#4a5a6a';
-                displayToast('تعذر التقاط الصوت، يرجى التحقق من صلاحيات المايكروفون');
             };
-
             recognition.onend = () => {
                 btn.style.background = '#e2e8f0';
                 btn.style.color = '#4a5a6a';
             };
-
             recognition.onresult = (event) => {
                 const speechResult = event.results[0][0].transcript;
                 const input = document.getElementById('chatInput');
@@ -598,11 +694,9 @@
                 }
             };
         }
-
         recognition.start();
     }
 
-    // 9. تشغيل الدوال عند تحميل الصفحة بالكامل
     document.addEventListener('DOMContentLoaded', () => {
         handleUserAuthUI();
         displayBlogArticles();
