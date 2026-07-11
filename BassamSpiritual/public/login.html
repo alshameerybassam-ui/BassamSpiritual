@@ -7,149 +7,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
     <style>
-        .auth-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #F8FAFC;
-            padding: 20px;
-            background-image: radial-gradient(circle at 10% 0%, rgba(245, 176, 65, 0.06) 0%, transparent 60%);
-        }
-        .auth-card {
-            max-width: 420px;
-            width: 100%;
-            background: #fff;
-            border-radius: 24px;
-            padding: 40px 35px;
-            box-shadow: 0 20px 60px rgba(10, 22, 40, 0.1);
-            border-top: 6px solid #F5B041;
-        }
-        .auth-card .logo {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .auth-card .logo h2 {
-            color: #0A1628;
-            font-size: 1.8rem;
-            margin: 0;
-        }
-        .auth-card .logo h2 span {
-            color: #F5B041;
-        }
-        .auth-card .logo p {
-            color: #6A7A8A;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #0A1628;
-        }
-        .form-group .input-wrapper {
-            position: relative;
-        }
-        .form-group .input-wrapper i {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #B0B8C8;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-        }
-        .form-group .input-wrapper input {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            border: 2px solid #E2E8F0;
-            border-radius: 12px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 1rem;
-            transition: 0.3s;
-        }
-        .form-group .input-wrapper input:focus {
-            border-color: #F5B041;
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15);
-        }
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #F5B041, #E67E22);
-            color: #0A1628;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Cairo', sans-serif;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-submit:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(245, 176, 65, 0.4);
-        }
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        /* كلاس الدوران الخاص بأيقونة التحميل لبوتستراب */
-        .spinner-rotate {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .auth-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #6A7A8A;
-            font-size: 0.95rem;
-        }
-        .auth-link a {
-            color: #F5B041;
-            text-decoration: none;
-            font-weight: 700;
-        }
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 25px;
-            border-radius: 12px;
-            color: #fff;
-            font-weight: 600;
-            z-index: 9999;
-            display: none;
-            min-width: 300px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
+        body { font-family: 'Cairo', sans-serif; margin: 0; background: #F8FAFC; }
+        .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background-image: radial-gradient(circle at 10% 0%, rgba(245, 176, 65, 0.06) 0%, transparent 60%); }
+        .auth-card { max-width: 420px; width: 100%; background: #fff; border-radius: 24px; padding: 40px 35px; box-shadow: 0 20px 60px rgba(10, 22, 40, 0.1); border-top: 6px solid #F5B041; }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo h2 { color: #0A1628; font-size: 1.8rem; margin: 0; }
+        .logo h2 span { color: #F5B041; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #0A1628; }
+        .input-wrapper { position: relative; }
+        .input-wrapper i, .toggle-password { position: absolute; top: 50%; transform: translateY(-50%); color: #B0B8C8; }
+        .input-wrapper i { right: 15px; }
+        .toggle-password { left: 15px; cursor: pointer; font-size: 1.2rem; }
+        .input-wrapper input { width: 100%; padding: 12px 45px; border: 2px solid #E2E8F0; border-radius: 12px; font-family: 'Cairo', sans-serif; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
+        .input-wrapper input:focus { border-color: #F5B041; outline: none; box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15); }
+        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #F5B041, #E67E22); border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 800; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .spinner-rotate { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600; z-index: 9999; display: none; text-align: center; }
         .notification.success { background: #27ae60; }
         .notification.error { background: #e74c3c; }
         .notification.show { display: block; }
-        @media (max-width: 500px) {
-            .auth-card { padding: 25px 20px; }
-        }
     </style>
 </head>
 <body>
@@ -160,11 +40,7 @@
         <div class="auth-card">
             <div class="logo">
                 <h2>مركز <span>النور الرباني</span></h2>
-                <p>﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
             </div>
-
-            <h3 style="text-align:center; color:#0A1628; margin-bottom:20px;">🔐 تسجيل الدخول</h3>
-
             <form id="loginForm">
                 <div class="form-group">
                     <label>البريد الإلكتروني</label>
@@ -173,29 +49,16 @@
                         <input type="email" id="email" placeholder="example@email.com" required>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label>كلمة المرور</label>
                     <div class="input-wrapper">
                         <i class="bi bi-lock"></i>
                         <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+                        <i class="bi bi-eye toggle-password" id="toggleIcon" onclick="togglePassword()"></i>
                     </div>
                 </div>
-
-                <button type="submit" class="btn-submit" id="loginBtn">
-                    <i class="bi bi-box-arrow-in-right"></i> دخول
-                </button>
+                <button type="submit" class="btn-submit" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> دخول</button>
             </form>
-
-            <div class="auth-link">
-                ليس لديك حساب؟ <a href="/register.html">إنشاء حساب جديد</a>
-            </div>
-
-            <div style="text-align:center; margin-top:15px;">
-                <a href="/" style="color:#6A7A8A; text-decoration:none; font-size:0.9rem; display: inline-flex; align-items: center; gap: 5px;">
-                    <i class="bi bi-arrow-right"></i> العودة إلى الرئيسية
-                </a>
-            </div>
         </div>
     </div>
 
@@ -210,76 +73,45 @@
             setTimeout(() => notification.classList.remove('show'), 6000);
         }
 
-        function redirectUserBasedOnRole(user) {
-            if (user && user.role === 'admin') {
-                showNotification('✨ مرحباً بك يا فضيلة الشيخ بسام! جاري توجيهك للوحة الإدارة...', 'success');
-                setTimeout(() => {
-                    window.location.href = '/admin.html';
-                }, 1500);
-            } else {
-                showNotification('✅ مرحباً بعودتك! جاري تحويلك إلى لوحة التحكم...', 'success');
-                setTimeout(() => {
-                    window.location.href = '/dashboard.html';
-                }, 1500);
-            }
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('toggleIcon');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.className = input.type === 'password' ? 'bi bi-eye toggle-password' : 'bi bi-eye-slash toggle-password';
         }
 
-        (function checkExistingSession() {
+        async function apiRequest(url, method = 'POST', data = {}) {
             const token = localStorage.getItem('token');
-            if (token) {
-                fetch('/api/auth/verify', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.user) {
-                        redirectUserBasedOnRole(data.user);
-                    } else {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                    }
-                })
-                .catch(() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                });
-            }
-        })();
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', ...(token && { 'Authorization': `Bearer ${token}` }) },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        }
 
-        loginForm.addEventListener('submit', async function(e) {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                showNotification('⚠️ الرجاء إدخال البريد الإلكتروني وكلمة المرور.', 'error');
-                return;
-            }
+            
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showNotification('⚠️ البريد الإلكتروني غير صحيح', 'error');
 
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري تسجيل الدخول...';
+            loginBtn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري التحقق...';
 
             try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const json = await res.json();
-
-                if (json.success) {
-                    localStorage.setItem('token', json.token);
-                    localStorage.setItem('user', JSON.stringify(json.user));
-                    
-                    redirectUserBasedOnRole(json.user);
+                const res = await apiRequest('/api/auth/login', 'POST', { email, password });
+                if (res.success) {
+                    localStorage.setItem('token', res.token);
+                    localStorage.setItem('user', JSON.stringify(res.user));
+                    showNotification(`أهلاً بك يا ${res.user.name || 'عزيزي'}، جارٍ التوجيه...`);
+                    setTimeout(() => window.location.href = res.user.role === 'admin' ? '/admin.html' : '/dashboard.html', 1500);
                 } else {
-                    showNotification('❌ ' + (json.error || 'بيانات الدخول غير صحيحة.'), 'error');
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> دخول';
+                    throw new Error(res.error || 'فشل تسجيل الدخول');
                 }
-            } catch (e) {
-                showNotification('⚠️ خطأ في الاتصال بالخادم.', 'error');
+            } catch (err) {
+                showNotification(err.message, 'error');
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> دخول';
             }
