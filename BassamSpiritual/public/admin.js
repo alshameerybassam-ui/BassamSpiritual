@@ -58,11 +58,16 @@ function switchTab(tabName) {
     const navButtons = document.querySelectorAll('.sidebar-menu li, .sidebar-menu a');
     navButtons.forEach(btn => btn.classList.remove('active'));
 
+    // تفعيل الخلفية الملونة للتبويب الحالي النشط
+    const activeNav = document.getElementById(`nav${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+    if (activeNav) activeNav.classList.add('active');
+
     // إظهار القسم المطلوب وتفعيل زره
     const activeSection = document.getElementById(`${tabName}Section`);
     if (activeSection) activeSection.style.display = 'block';
 
     if (tabName === 'requests') loadRequests();
+    if (tabName === 'articles') fetchAdminArticles();
     if (tabName === 'reviews') loadAdminReviews();
     if (tabName === 'ai') loadAiInstructions();
 }
@@ -147,7 +152,143 @@ function updateStats(requests) {
     document.getElementById('rejectedCount').innerText = requests.filter(r => r.status === 'rejected').length;
 }
 
-// ===== 6. جلب وإشراف على آراء وتقييمات المستفيدين (جديد واحترافي) =====
+// ===== [نظام مدمج جديد]: إدارة ومراقبة المقالات الروحية (CRUD) =====
+
+// 1. فتح نموذج إضافة مقال جديد فارغ
+function openNewArticleForm() {
+    document.getElementById('adminArticleForm').reset();
+    document.getElementById('adminArticleId').value = '';
+    document.getElementById('articleFormTitle').innerHTML = '<i class="fas fa-feather-alt"></i> نشر مقال جديد في المدونة';
+    document.getElementById('articleFormContainer').style.display = 'block';
+}
+
+// 2. إغلاق نموذج إضافة/تعديل المقالات
+function closeArticleForm() {
+    document.getElementById('articleFormContainer').style.display = 'none';
+}
+
+// 3. جلب جميع المقالات الروحية من السيرفر وعرضها في الجدول
+async function fetchAdminArticles() {
+    const token = localStorage.getItem('token');
+    const tbody = document.getElementById('adminArticlesTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#888;"><i class="fas fa-spinner fa-spin"></i> جاري جلب المقالات الموثقة من السيرفر...</td></tr>';
+
+    try {
+        const res = await fetch('/api/articles');
+        const articles = await res.json();
+
+        if (!articles || articles.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#888;">📭 لا توجد مقالات منشورة حالياً في واجهة الموقع.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = articles.map(article => {
+            const artId = article.id || article._id;
+            const artDate = article.date || '—';
+            return `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px; color: #2c3e50; font-weight: 600;">${article.title}</td>
+                    <td style="padding: 12px; color: #64748b;">${artDate}</td>
+                    <td style="padding: 12px; text-align: center; display: flex; gap: 8px; justify-content: center;">
+                        <button onclick="editArticle('${artId}')" style="background:#3498db; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-family:'Cairo';"><i class="fas fa-edit"></i> تعديل</button>
+                        <button onclick="deleteArticle('${artId}')" style="background:#e74c3c; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-family:'Cairo';"><i class="fas fa-trash-alt"></i> حذف</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#e74c3c;">❌ فشل الاتصال بقاعدة البيانات السحابية لجلب المقالات.</td></tr>';
+    }
+}
+
+// 4. دالة حفظ المقال الروحي (إرسال POST للمقال الجديد أو PUT للتعديل)
+async function saveArticle(event) {
+    event.preventDefault();
+    const token = localStorage.getItem('token');
+    const id = document.getElementById('adminArticleId').value;
+    const title = document.getElementById('adminArticleTitle').value.trim();
+    const summary = document.getElementById('adminArticleSummary').value.trim();
+    const content = document.getElementById('adminArticleContent').value.trim();
+
+    const url = id ? `/api/articles/${id}` : '/api/articles';
+    const method = id ? 'PUT' : 'POST';
+
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                title,
+                summary,
+                content,
+                date: new Date().toLocaleDateString('ar-YE', { year: 'numeric', month: 'long', day: 'numeric' })
+            })
+        });
+
+        const data = await res.json();
+        if (data.success || res.ok) {
+            showNotification('✅ تم حفظ ونشر المقال الروحي وتوثيقه بنجاح مذهل.');
+            closeArticleForm();
+            fetchAdminArticles();
+        } else {
+            showNotification('❌ فشل خادم حفظ المقالات في معالجة الطلب.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('⚠️ حدث خطأ في الاتصال أثناء محاولة مزامنة المقال سحابياً.', 'error');
+    }
+}
+
+// 5. دالة جلب بيانات المقال المحدد ووضعها في النموذج للتعديل
+async function editArticle(id) {
+    try {
+        const res = await fetch('/api/articles');
+        const articles = await res.json();
+        const article = articles.find(a => a.id == id || a._id == id);
+        
+        if (article) {
+            document.getElementById('adminArticleId').value = article.id || article._id;
+            document.getElementById('adminArticleTitle').value = article.title;
+            document.getElementById('adminArticleSummary').value = article.summary || '';
+            document.getElementById('adminArticleContent').value = article.content || '';
+            document.getElementById('articleFormTitle').innerHTML = '<i class="fas fa-sync-alt"></i> تعديل وتحسين المقال الحالي المختار';
+            document.getElementById('articleFormContainer').style.display = 'block';
+            window.scrollTo({ top: document.getElementById('articleFormContainer').offsetTop - 30, behavior: 'smooth' });
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('❌ تعذر استحضار بيانات المقال للتهيئة والتعديل.', 'error');
+    }
+}
+
+// 6. دالة حذف مقال نهائياً من النظام السحابي
+async function deleteArticle(id) {
+    if (!confirm('⚠️ تنبيه فقهي وإداري: هل أنت متأكد تماماً من رغبتك في حذف هذا المقال نهائياً من واجهة الموقع؟')) return;
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/articles/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            showNotification('🗑️ تم إزالة المقال بنجاح وتحديث واجهات الموقع تلقائياً.');
+            fetchAdminArticles();
+        } else {
+            showNotification('❌ فشل السيرفر في حذف المقال المقيد.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('⚠️ خطأ اتصال في الشبكة، تعذر معالجة طلب الحذف.', 'error');
+    }
+}
+
+// ===== 6. جلب وإشراف على آراء وتقييمات المستفيدين =====
 async function loadAdminReviews() {
     const token = localStorage.getItem('token');
     const container = document.getElementById('reviewsContainer');
@@ -173,10 +314,10 @@ async function loadAdminReviews() {
                     </div>
                     <div style="display:flex; gap:10px;">
                         ${!rev.is_approved ? 
-                            `<button onclick="toggleReviewApproval('${rev.id}', true)" style="background:#2ecc71; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fas fa-check"></i> موافقة ونشر</button>` :
-                            `<button onclick="toggleReviewApproval('${rev.id}', false)" style="background:#f39c12; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fas fa-eye-slash"></i> سحب النشر</button>`
+                            `<button onclick="toggleReviewApproval('${rev.id}', true)" style="background:#2ecc71; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-family:'Cairo';"><i class="fas fa-check"></i> موافقة ونشر</button>` :
+                            `<button onclick="toggleReviewApproval('${rev.id}', false)" style="background:#f39c12; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-family:'Cairo';"><i class="fas fa-eye-slash"></i> سحب النشر</button>`
                         }
-                        <button onclick="deleteReview('${rev.id}')" style="background:#e74c3c; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;"><i class="fas fa-trash-alt"></i> حذف</button>
+                        <button onclick="deleteReview('${rev.id}')" style="background:#e74c3c; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-family:'Cairo';"><i class="fas fa-trash-alt"></i> حذف</button>
                     </div>
                 </div>
             `).join('');
@@ -227,7 +368,7 @@ async function deleteReview(id) {
     }
 }
 
-// ===== 7. الإشراف الكامل على محرك الذكاء الاصطناعي السحابي (جديد واحترافي) =====
+// ===== 7. الإشراف الكامل على محرك الذكاء الاصطناعي السحابي =====
 async function loadAiInstructions() {
     const token = localStorage.getItem('token');
     const textarea = document.getElementById('aiInstructionsText');
@@ -281,6 +422,7 @@ async function viewDetails(id) {
 
     mBody.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin fa-2x"></i> جاري استحضار بيانات المستفيد من قاعدة البيانات...</div>';
     modal.classList.add('show'); 
+    modal.style.display = 'flex';
 
     try {
         const req = currentRequests.find(r => r.id === id) || {};
@@ -303,7 +445,7 @@ async function viewDetails(id) {
 
             <div style="margin-bottom:15px; text-align: right; direction:rtl;">
                 <label style="font-weight:700; color:#2c3e50;">⏳ خطة سير العمل (الحالة):</label>
-                <select id="statusSelect" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:5px;">
+                <select id="statusSelect" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:5px; font-family:'Cairo';">
                     <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>⏳ قيد الانتظار والمراجعة الأولية</option>
                     <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>⚙️ قيد العلاج والمتابعة الروحية</option>
                     <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>✅ تم الانتهاء وإرسال الخطة العلاجية</option>
@@ -314,16 +456,16 @@ async function viewDetails(id) {
             <div style="margin-bottom:15px; text-align: right; direction:rtl;">
                 <label style="font-weight:700; color:#2c3e50;">🌿 البرنامج العلاجي والرد الروحي (الروشتة الشرعية):</label>
                 <div style="display: flex; gap: 5px; align-items: center; margin-bottom: 5px;">
-                    <button type="button" onclick="startAdminDictation(this)" style="background:#e67e22; color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.85rem;">
+                    <button type="button" onclick="startAdminDictation(this)" style="background:#e67e22; color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:'Cairo';">
                         <i class="fas fa-microphone"></i> إملاء البرنامج صوتاً
                     </button>
                 </div>
-                <textarea id="replyText" rows="5" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;" placeholder="اكتب الآيات والأذكار المخصصة للمريض...">${req.treatmentDetails || ''}</textarea>
+                <textarea id="replyText" rows="5" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-family:'Cairo';" placeholder="اكتب الآيات والأذكار المخصصة للمريض...">${req.treatmentDetails || ''}</textarea>
             </div>
 
             <div style="text-align:left; margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
-                <button onclick="closeModal()" style="background:#95a5a6; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">إلغاء</button>
-                <button onclick="saveChanges()" style="background:#27ae60; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">💾 حفظ البيانات وإرسال العلاج</button>
+                <button onclick="closeModal()" style="background:#95a5a6; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:'Cairo';">إلغاء</button>
+                <button onclick="saveChanges()" style="background:#27ae60; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-family:'Cairo';">💾 حفظ البيانات وإرسال العلاج</button>
             </div>
         `;
     } catch (e) {
@@ -337,13 +479,57 @@ async function saveChanges() {
     const status = document.getElementById('statusSelect').value;
     const treatmentDetails = document.getElementById('replyText').value.trim();
     
-    showNotification('✅ تم تدوين خطتك العلاجية وحفظ حالة المستفيد سحابياً.', 'success');
-    closeModal();
+    try {
+        const res = await fetch(`/api/admin/requests/${selectedRequestId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status, treatmentDetails })
+        });
+        
+        if (res.ok) {
+            showNotification('✅ تم تدوين خطتك العلاجية وحفظ حالة المستفيد سحابياً بنجاح.', 'success');
+            closeModal();
+            loadRequests();
+        } else {
+            showNotification('❌ فشل السيرفر في حفظ التعديلات على ملف المستفيد.', 'error');
+        }
+    } catch (e) {
+        showNotification('⚠️ حدث خطأ اتصال أثناء تحديث الخطة العلاجية سحابياً.', 'error');
+    }
 }
 
 function closeModal() {
     const modal = document.getElementById('detailsModal');
-    if (modal) modal.classList.remove('show');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+}
+
+// دالة تصفية وفرز الطلبات من خلال شريط البحث المطور
+function filterTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('requestsTable');
+    if (!table) return;
+    const tr = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < tr.length; i++) {
+        let tdName = tr[i].getElementsByTagName('td')[1];
+        let tdEmail = tr[i].getElementsByTagName('td')[2];
+        if (tdName || tdEmail) {
+            let txtValueName = tdName.textContent || tdName.innerText;
+            let txtValueEmail = tdEmail.textContent || tdEmail.innerText;
+            if (txtValueName.toLowerCase().indexOf(filter) > -1 || txtValueEmail.toLowerCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
 }
 
 // ===== 10. الساعة التلقائية المحدثة لضبط الوقت باللوحة =====
