@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
@@ -124,8 +123,7 @@
                 <h2><i class="bi bi-feather"></i> مقالات روحية</h2>
                 <span>كنوز من النور والمعرفة</span>
             </div>
-            <div id="articlesContainer" class="articles-grid">
-                </div>
+            <div id="articlesContainer" class="articles-grid"></div>
         </section>
 
         <section class="section">
@@ -168,8 +166,7 @@
                 <h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2>
                 <span>ما قالوه عن رحلة الشفاء</span>
             </div>
-            <div id="testimonialsContainer" class="testimonials-grid">
-                </div>
+            <div id="testimonialsContainer" class="testimonials-grid"></div>
         </section>
     </div>
 
@@ -225,7 +222,7 @@
 
     <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
         <i class="bi bi-robot"></i>
-        <span class="chat-badge">💬</span>
+        <span class="chat-badge" style="display: none;">💬</span>
         <div class="chat-pulse"></div>
     </div>
 
@@ -247,44 +244,16 @@
             </div>
         </div>
         <div class="chat-footer">
-            <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-            <button onclick="sendChatMessage()"><i class="bi bi-send-fill"></i></button>
+            <div class="chat-input-wrapper" style="display: flex; width: 100%; gap: 5px; align-items: center;">
+                <button type="button" onclick="startChatDictation(this)" id="micChatBtn" style="background: #e2e8f0; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #4a5a6a;">
+                    <i class="bi bi-mic"></i>
+                </button>
+                <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." style="flex: 1;">
+                <button onclick="sendChatMessage()"><i class="bi bi-send-fill"></i></button>
+            </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const counters = document.querySelectorAll('.counter-number');
-            
-            const animateCounter = (counter) => {
-                const target = +counter.getAttribute('data-target');
-                let count = 0;
-                const speed = target / 80; 
-
-                const updateCount = () => {
-                    count += speed;
-                    if (count < target) {
-                        counter.innerText = Math.floor(count);
-                        requestAnimationFrame(updateCount);
-                    } else {
-                        counter.innerText = target; 
-                    }
-                };
-                
-                updateCount();
-            };
-
-            counters.forEach(counter => animateCounter(counter));
-
-            // ✨ لمسة ذكية: إظهار وإخفاء أزرار الحساب بناءً على وجود الـ Token في المتصفح
-            const token = localStorage.getItem('token');
-            if (token) {
-                if(document.getElementById('dashboardLink')) document.getElementById('dashboardLink').style.display = 'inline-block';
-                if(document.getElementById('registerBtn')) document.getElementById('registerBtn').style.display = 'none';
-                if(document.getElementById('loginBtn')) document.getElementById('loginBtn').style.display = 'none';
-            }
-        });
-    </script>
     <script src="script.js"></script>
 </body>
 </html>
