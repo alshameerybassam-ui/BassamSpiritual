@@ -15,7 +15,7 @@
             color: #1A2530;
             border: 12px double #D4AF37; /* إطار مذهب فاخر */
             border-radius: 4px;
-            line-height: 2.2; /* زيادة تباعد الأسطر للفخامة */
+            line-height: 2.2;
             box-shadow: 0 25px 70px rgba(0,0,0,0.08);
             position: relative;
             direction: rtl;
@@ -257,70 +257,91 @@
             color: #D4AF37;
         }
 
-        /* 📱 تخصيصات ذكية وفخمة جداً لشاشات الجوال 📱 */
-        @media (max-width: 768px) {
+        /* 📱 التحديث البرمجي الجديد: تهيئة الواجهة الأمامية الديناميكية القريبة للجوال 📱 */
+        @media (max-width: 600px) {
             .noble-document-container { 
-                padding: 35px 20px; /* تقليص الحواف لإعطاء النص مساحة أكبر */
-                border-width: 8px; /* تنحيف الإطار قليلاً ليناسب شاشة الجوال */
-                margin: 15px 10px;
-                line-height: 2.4; /* زيادة التباعد بين الأسطر لراحة العين أثناء القراءة من الجوال */
+                padding: 25px 12px; /* تقليص الحواف الجانبية لأقصى حد لتقريب النصوص من أطراف الشاشة */
+                border-width: 6px; /* ضبط سمك الإطار المذهب ليناسب المساحة الحرة للجوال */
+                margin: 10px 5px; /* تقليص الهوامش الخارجية لتثبيت الصفحة ديناميكياً */
+                line-height: 2.0; /* موازنة المسافة العمودية لتناسق الأسطر القريبة */
+            }
+            .noble-document-container::before, .noble-document-container::after {
+                display: none; /* إخفاء نجوم الأركان الثابتة لمنع تداخلها مع النص القريب */
             }
             .doc-header h2 { 
-                font-size: 2.1rem; /* حجم خط عنوان مناسب وعريض على الجوال */
-            }
-            .doc-header p {
-                font-size: 1.2rem;
-            }
-            .basmala {
                 font-size: 1.8rem;
             }
+            .doc-header p {
+                font-size: 1.1rem;
+            }
+            .basmala {
+                font-size: 1.6rem;
+                margin-bottom: 15px;
+            }
             .intro-text {
-                font-size: 1.35rem; /* تكبير خط القراءة على الجوال ليكون واضحاً ومريحاً جداً */
-                text-indent: 15px;
-                text-align: right; /* إلغاء التوزيع الكامل لسهولة المتابعة بالعين على الشاشات الضيقة */
+                font-size: 1.2rem; /* حجم خط مثالي وديناميكي عند القراءة القريبة */
+                text-indent: 10px; /* تقريب بداية الفقرات */
+                margin-bottom: 15px;
+                text-align: justify; /* محاذاة النص بالكامل لملء الفراغات الجانبية */
             }
             .tree-title {
-                font-size: 1.4rem;
+                font-size: 1.3rem;
+                margin: 30px 0 15px;
             }
             .lineage-tree {
-                padding: 25px 10px;
+                padding: 20px 8px;
+                margin: 15px 0;
             }
             .lineage-node { 
-                min-width: 95%; /* جعل عُقد النسب تأخذ كامل العرض تقريباً لخط واضح */
-                font-size: 1.3rem; /* تكبير أسماء شجرة النسب */
-                padding: 12px 15px;
+                min-width: 98%; /* تمديد العُقد لتملأ مساحة الشاشة بشكل متناسق وقريب */
+                font-size: 1.15rem;
+                padding: 10px 8px;
             }
             .lineage-node.prophet {
-                font-size: 1.4rem;
+                font-size: 1.25rem;
+                padding: 12px 10px;
+            }
+            .lineage-connector {
+                height: 18px; /* تقريب المسافة العمودية بين حلقات النسب */
             }
             .section-heading {
-                font-size: 1.4rem;
+                font-size: 1.3rem;
+                margin-top: 30px;
+                margin-bottom: 15px;
             }
             .docs-item {
-                padding-right: 45px;
+                padding-right: 38px; /* تقريب المسافة بين أرقام التوثيق وبداية السطور */
+                margin-bottom: 20px;
             }
             .docs-content {
-                font-size: 1.3rem; /* تكبير نصوص المستندات التاريخية على الجوال */
+                font-size: 1.15rem;
             }
             .docs-content strong {
-                font-size: 1.35rem;
-            }
-            .docs-index {
-                width: 32px;
-                height: 32px;
-                top: 6px;
-            }
-            .doc-footer-text {
                 font-size: 1.2rem;
             }
+            .docs-index {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85rem;
+                top: 4px;
+            }
+            .doc-footer-text {
+                font-size: 1.1rem;
+                margin: 30px 0 20px;
+            }
+            .signature-card {
+                padding: 20px 15px; /* إحكام بطاقة التوقيع لتبدو أنيقة وقريبة */
+                border-radius: 10px;
+            }
             .signature-card h4 {
-                font-size: 1.4rem;
+                font-size: 1.25rem;
             }
             .signature-meta { 
                 flex-direction: column; 
-                gap: 15px; 
-                align-items: center;
-                font-size: 1.1rem;
+                gap: 12px; 
+                align-items: flex-start; /* محاذاة روابط الاتصال لليمين تماماً على الجوال */
+                font-size: 1rem;
+                padding-top: 12px;
             }
         }
     </style>
@@ -425,7 +446,7 @@
         هذا الإمام الجليل هو أول من انتقل من حضرموت إلى تعز، واستوطن منطقة عُرفت بـ <strong>الكدهية</strong>، فاشتهر بين الناس بلقب <strong>"صاحب الكده"</strong>، وبه عُرف هو وعقبه من بعده. ومن صلبه تفرع السادة <strong>آل الكدهي</strong> الذين أقاموا في تعز قرونًا متطاولة، وكان لهم شأن في العلم والصلاح، واشتهر منهم أعلام كالسيد <strong>برهان الدين إبراهيم الكدهي</strong>، وولده الفقيه <strong>عبيد الله</strong>، الذي تنتظم إليه سلسلة نسبنا مباشرة.
     </p>
     <p class="intro-text">
-        أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً، فقد أضافه الوالد <strong>محمد بن هزاع</strong>، عندما اختار الانتساب إلى مخلاف شمير الأشمل بدلاً من النسبة إلى القرية الخاصة. وهذا الاجتهاد في الانتساب المكاني لا يعارض الأصل العلوي الثابت، بل هو مرحلة طارئة من مراحل الاستيطان، والدليل القاطع على ذلك أن عم الشيخ تخير لنفسه لقب <strong>(الخليدي)</strong>؛ فاختلاف الألقاب بين الإخوة هو البرهان الساطع على أن الأصل واحد، وأن النسب الشريف هو الجامع، ولا تعارض بين اللقبين، بل هما يُثبتان أن الأصل واحد، والرحم موصولة، والنسب محفوظ بحمد الله.
+        أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً، فقد أضافه الوالد <strong>محمد بن هزاع</strong>، عندما اختار الانتساب إلى مخلاف شمير الأشمل بدلاً من النسبة إلى القرية الخاصة. وهذا الاجتهاد في الانتساب المكاني لا يعارض الأصل العلوي الثابت، بل هو مرحلة طارئة من مراحل الاستيطان، والدليل القاطع على ذلك أن عم الشيخ تخير لنفسه لقب <strong>(الخليدي)</strong>؛ فاختلاف الألقاب بين الإخوة هو البرهان الساطع على أن الأصل واحد، وأن النسب الشريف هو الجامع, ولا تعارض بين اللقبين، بل هما يُثبتان أن الأصل واحد، والرحم موصولة، والنسب محفوظ بحمد الله.
     </p>
 
     <h3 class="section-heading"><i class="bi bi-shield-check"></i> مستندات التوثيق والتحقيق التاريخي</h3>
