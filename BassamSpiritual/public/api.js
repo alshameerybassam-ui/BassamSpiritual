@@ -1,5 +1,5 @@
 // =================================================================
-// api.js - الدماغ الواحد الموحد للمنصة (v3.0)
+// api.js - الدماغ الواحد الموحد للمنصة (v3.1 - الإصدار النهائي)
 // =================================================================
 
 // -------------------------------------------------------------------
@@ -318,7 +318,7 @@ const DashboardPage = {
                     });
                 }, 100);
             } else if (req.status === 'completed') {
-                html += `<p><strong>العلاج:</strong> ${req.treatment_plan || '—'}</p>`;
+                html += `<p><strong>العلاج:</strong> ${req.treatmentPlan || '—'}</p>`;
             }
 
             modal.innerHTML = html;
@@ -356,6 +356,7 @@ const DashboardPage = {
 // -------------------------------------------------------------------
 const AdminPage = {
     allRequests: [],
+    currentFilter: 'all',
 
     async init() {
         await this.checkAdmin();
@@ -376,12 +377,21 @@ const AdminPage = {
     },
 
     switchTab(tab) {
+        // إغلاق القائمة الجانبية تلقائياً على الجوال
+        const sidebar = document.getElementById('sidebarPanel');
+        if (sidebar) sidebar.classList.remove('active');
+
         ['requestsSection', 'articlesSection', 'reviewsSection', 'aiSection'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
         });
         const section = document.getElementById(`${tab}Section`);
         if (section) section.style.display = 'block';
+
+        // إزالة التحديد عن كل الأزرار ثم تفعيل الزر الحالي
+        document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+        const activeNav = document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+        if (activeNav) activeNav.classList.add('active');
 
         if (tab === 'requests') this.loadRequests();
         if (tab === 'articles') this.loadAdminArticles();
@@ -390,7 +400,7 @@ const AdminPage = {
     async loadRequests() {
         try {
             this.allRequests = await apiRequest('/api/admin/requests');
-            this.renderTable(this.allRequests);
+            this.renderFilteredTable();
             this.updateStats(this.allRequests);
         } catch (e) {
             showNotification('❌ تعذر تحميل الطلبات.', 'error');
@@ -402,6 +412,41 @@ const AdminPage = {
         document.getElementById('pendingCount').textContent = list.filter(r => r.status === 'pending').length;
         document.getElementById('completedCount').textContent = list.filter(r => r.status === 'completed' || r.status === 'closed').length;
         document.getElementById('rejectedCount').textContent = list.filter(r => r.status === 'rejected_by_admin').length;
+    },
+
+    filterRequests(status, btn) {
+        this.currentFilter = status;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        this.renderFilteredTable();
+    },
+
+    searchTable() {
+        this.renderFilteredTable();
+    },
+
+    renderFilteredTable() {
+        const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        let filtered = this.allRequests;
+
+        // تطبيق الفلتر
+        if (this.currentFilter !== 'all') {
+            if (this.currentFilter === 'processing') {
+                filtered = filtered.filter(r => r.status === 'processing' || r.status === 'completed');
+            } else {
+                filtered = filtered.filter(r => r.status === this.currentFilter);
+            }
+        }
+
+        // تطبيق البحث
+        if (searchTerm) {
+            filtered = filtered.filter(r =>
+                (r.fullName || '').toLowerCase().includes(searchTerm) ||
+                (r.serviceType || '').toLowerCase().includes(searchTerm)
+            );
+        }
+
+        this.renderTable(filtered);
     },
 
     renderTable(list) {
@@ -425,7 +470,7 @@ const AdminPage = {
         tbody.innerHTML = list.map((r, i) => `
             <tr>
                 <td>${i + 1}</td>
-                <td>${r.fullName || '—'}</td>
+                <td><strong style="color:#2C3E50; cursor:pointer; text-decoration:underline;" onclick="AdminPage.viewDetails('${r.id}')">👤 ${r.fullName || '—'}</strong></td>
                 <td>${r.email || '—'}</td>
                 <td>${r.serviceType || '—'}</td>
                 <td>${map[r.status] || r.status}</td>
@@ -444,60 +489,106 @@ const AdminPage = {
         const body = document.getElementById('modalBody');
         if (!modal || !body) return;
 
+        // إظهار المودال مع رسالة تحميل
         modal.classList.add('show');
         modal.style.display = 'flex';
-        body.innerHTML = '<p>جاري التحميل...</p>';
+        body.innerHTML = '<p>جاري تحميل التفاصيل...</p>';
 
         const req = this.allRequests.find(r => String(r.id) === String(id)) || {};
+
+        // بناء محتوى النافذة
         let html = `
-            <p><strong>المستفيد:</strong> ${req.fullName}</p>
-            <p><strong>الخدمة:</strong> ${req.serviceType}</p>
-            <p><strong>الحالة:</strong> ${req.status}</p>
-            <p><strong>الوصف:</strong> ${req.description || '—'}</p>
-            <hr>
+            <div style="text-align: right; direction: rtl; line-height: 1.8;">
+                <p><strong>👤 المستفيد:</strong> ${req.fullName || '—'}</p>
+                <p><strong>📧 البريد:</strong> ${req.email || '—'}</p>
+                <p><strong>🛠 الخدمة:</strong> ${req.serviceType || '—'}</p>
+                <p><strong>📌 الحالة:</strong> ${req.status || '—'}</p>
+                <p><strong>📝 الوصف:</strong></p>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">${req.description || '—'}</div>
         `;
 
+        // جلب سجل المراسلات
+        try {
+            const messagesRes = await apiRequest(`/api/requests/${id}/messages`);
+            const messages = messagesRes.messages || [];
+            if (messages.length > 0) {
+                html += `<strong>💬 سجل المراسلات:</strong><div style="max-height:200px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; padding:8px; margin-bottom:12px;">`;
+                messages.forEach(msg => {
+                    const isAdmin = msg.senderRole === 'admin';
+                    html += `
+                        <div style="margin-bottom:6px; padding:6px; background:${isAdmin ? '#e8f5e9' : '#f5f5f5'}; border-radius:6px;">
+                            <small style="color:#64748b;">${isAdmin ? 'الشيخ' : 'المستفيد'} - ${new Date(msg.createdAt).toLocaleString('ar-YE')}</small>
+                            <p style="margin:4px 0 0;">${msg.messageText}</p>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+        } catch (e) {
+            console.error('خطأ في جلب المراسلات:', e);
+        }
+
+        // أزرار الإجراءات
+        html += `<div style="margin-top:15px; display:flex; gap:8px; flex-wrap:wrap;">`;
         if (req.status === 'pending') {
             html += `
-                <button onclick="AdminPage.acceptRequest('${req.id}')" style="background:#2ecc71; color:#fff; padding:10px; border:none; border-radius:6px; margin:5px;">قبول</button>
-                <button onclick="AdminPage.rejectRequest('${req.id}')" style="background:#e74c3c; color:#fff; padding:10px; border:none; border-radius:6px; margin:5px;">رفض</button>
+                <button onclick="AdminPage.acceptRequest('${req.id}')" style="background:#2ecc71; color:#fff; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-family:'Cairo';">✅ قبول</button>
+                <button onclick="AdminPage.rejectRequest('${req.id}')" style="background:#e74c3c; color:#fff; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-family:'Cairo';">❌ رفض</button>
             `;
         } else if (req.status === 'payment_submitted') {
             html += `
-                <p><strong>الإيصال:</strong> ${req.paymentSenderName} - ${req.paymentTransferNumber}</p>
-                <button onclick="AdminPage.approvePayment('${req.id}')" style="background:#2ecc71; color:#fff; padding:10px; border:none; border-radius:6px; margin:5px;">اعتماد الدفع</button>
-                <button onclick="AdminPage.rejectPayment('${req.id}')" style="background:#e74c3c; color:#fff; padding:10px; border:none; border-radius:6px; margin:5px;">رفض الدفع</button>
+                <button onclick="AdminPage.approvePayment('${req.id}')" style="background:#2ecc71; color:#fff; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-family:'Cairo';">💰 اعتماد الدفع</button>
+                <button onclick="AdminPage.rejectPayment('${req.id}')" style="background:#e74c3c; color:#fff; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-family:'Cairo';">🚫 رفض الدفع</button>
             `;
         }
+        html += `</div></div>`;
 
         body.innerHTML = html;
     },
 
     closeModal() {
         const modal = document.getElementById('detailsModal');
-        if (modal) { modal.classList.remove('show'); modal.style.display = 'none'; }
+        if (modal) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        }
     },
 
-    async acceptRequest(id) { await apiRequest(`/api/admin/requests/${id}/accept-initial`, 'PUT'); this.closeModal(); this.loadRequests(); },
-    async rejectRequest(id) {
-        const reason = prompt('سبب الرفض:'); if (!reason) return;
-        await apiRequest(`/api/admin/requests/${id}/reject-initial`, 'PUT', { reason });
-        this.closeModal(); this.loadRequests();
+    async acceptRequest(id) {
+        await apiRequest(`/api/admin/requests/${id}/accept-initial`, 'PUT');
+        showNotification('✅ تم قبول الطلب.');
+        this.closeModal();
+        this.loadRequests();
     },
-    async approvePayment(id) { await apiRequest(`/api/admin/requests/${id}/approve-payment`, 'PUT'); this.closeModal(); this.loadRequests(); },
+    async rejectRequest(id) {
+        const reason = prompt('سبب الرفض (اختياري):');
+        await apiRequest(`/api/admin/requests/${id}/reject-initial`, 'PUT', { reason: reason || 'بدون سبب' });
+        showNotification('🔴 تم رفض الطلب.');
+        this.closeModal();
+        this.loadRequests();
+    },
+    async approvePayment(id) {
+        await apiRequest(`/api/admin/requests/${id}/approve-payment`, 'PUT');
+        showNotification('✅ تم اعتماد الدفع.');
+        this.closeModal();
+        this.loadRequests();
+    },
     async rejectPayment(id) {
-        const reason = prompt('سبب رفض الدفع:'); if (!reason) return;
-        await apiRequest(`/api/admin/requests/${id}/reject-payment`, 'PUT', { reason });
-        this.closeModal(); this.loadRequests();
+        const reason = prompt('سبب رفض الدفع (اختياري):');
+        await apiRequest(`/api/admin/requests/${id}/reject-payment`, 'PUT', { reason: reason || 'بدون سبب' });
+        showNotification('🔴 تم رفض الدفع.');
+        this.closeModal();
+        this.loadRequests();
     },
     async deleteRequest(id) {
-        if (!confirm('متأكد من حذف الطلب؟')) return;
+        if (!confirm('متأكد من حذف الطلب نهائياً؟')) return;
         await apiRequest(`/api/admin/requests/${id}`, 'DELETE');
+        showNotification('🗑️ تم حذف الطلب.');
         this.loadRequests();
     },
 
     async loadAdminArticles() {
-        const container = document.getElementById('articlesSection');
+        const container = document.getElementById('adminArticlesContainer');
         if (!container) return;
         try {
             const articles = await apiRequest('/api/articles');
