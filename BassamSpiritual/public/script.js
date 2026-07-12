@@ -216,7 +216,6 @@ async function sendChatMessage() {
         reply = scenario?.message || 'أنا هنا لمساعدتك. أخبرني أكثر.';
     }
 
-    // محاكاة تأخير بسيط للرد لمنح إحساس الذكاء الاصطناعي الحي
     setTimeout(() => {
         const botDiv = document.createElement('div');
         botDiv.className = 'chat-message bot';
@@ -375,7 +374,7 @@ async function loadArticles() {
         }).join('');
         container.querySelectorAll('.article-card').forEach(card => {
             card.addEventListener('click', function() {
-                const id = parseInt(this.getAttribute('data-id'));
+                const id = this.getAttribute('data-id'); // تعديل: جلب المعرف الأصلي مباشرة بدلاً من الأرقام الصارمة
                 if (id) openArticle(id);
             });
         });
@@ -389,7 +388,10 @@ async function openArticle(articleId) {
         const res = await fetch('/api/articles');
         if (!res.ok) throw new Error('فشل جلب المقالات');
         const articles = await res.json();
-        const article = articles.find(a => a.id === articleId);
+        
+        // تعديل جوهري: تحويل معرفات البحث إلى نصوص (Strings) لمطابقتها بدقة من السيرفر
+        const article = articles.find(a => String(a.id) === String(articleId));
+        
         if (!article) {
             showNotification('⚠️ المقال غير موجود', 'error');
             return;
