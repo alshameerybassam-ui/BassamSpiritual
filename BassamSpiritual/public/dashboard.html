@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لوحة التحكم | مركز النور الرباني</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
@@ -52,7 +54,6 @@
         .card .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
         .card .stat-item:last-child { border-bottom: none; }
         
-        /* كلاسات نصوص وجداول منسقة لمطابقة الحالات السحابية */
         .table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: right; }
         .table th, .table td { padding: 12px; border-bottom: 1px solid #E2E8F0; font-size: 0.9rem; }
         .table th { background-color: #F8FAFC; color: #4A5A6A; font-weight: 700; }
@@ -67,11 +68,6 @@
         .btn-sm { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; border: none; font-family: 'Cairo'; }
         .btn-primary.btn-sm { background: #F5B041; color: #0A1628; font-weight: 600; }
         
-        .review-box textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.9rem; resize: none; margin-bottom: 10px; transition: 0.3s; }
-        .review-box textarea:focus { border-color: #27ae60; outline: none; box-shadow: 0 0 8px rgba(39,174,96,0.15); }
-        .btn-review-submit { background: #27ae60; color: #fff; border: none; padding: 8px 18px; border-radius: 30px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: 0.3s; font-family: 'Cairo', sans-serif; }
-        .btn-review-submit:hover { background: #219653; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(39,174,96,0.3); }
-
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
@@ -91,11 +87,6 @@
         .modal-box textarea { min-height: 80px; }
         .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; }
         
-        /* فئة حقول الإدخال الصوتي */
-        .input-group { position: relative; width: 100%; }
-        .btn-mic-dictate { position: absolute; left: 10px; bottom: 20px; background: #F1F5F9; border: none; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: 'Cairo'; color: #475569; }
-        .btn-mic-dictate.recording { background: #FEE2E2; color: #EF4444; }
-
         .notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600;
@@ -106,10 +97,7 @@
         .notification.error { background: #e74c3c; }
         .notification.show { display: block; }
         
-        /* استمارات الحوالات */
-        .form-control-sm { padding: 6px 10px !important; font-size: 0.85rem !important; }
         .alert { padding: 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.6; }
-        .alert-danger { background-color: #FEE2E2; color: #991B1B; border-right: 4px solid #EF4444; }
         .alert-info { background-color: #E0F2FE; color: #0369A1; border-right: 4px solid #0EA5E9; }
 
         @media (max-width: 768px) {
@@ -129,16 +117,16 @@
                 <p id="userEmail">...</p>
             </div>
             <div class="actions">
-                <a href="/" class="btn-outline"><i class="fas fa-home"></i> الرئيسية</a>
-                <button onclick="openNewRequestModal()" class="btn-primary"><i class="fas fa-plus-circle"></i> طلب جديد</button>
-                <button onclick="logout()" class="btn-danger-outline"><i class="fas fa-sign-out-alt"></i> خروج</button>
+                <a href="/" class="btn-outline"><i class="bi bi-house"></i> الرئيسية</a>
+                <button onclick="DashboardPage.openNewRequestModal()" class="btn-primary"><i class="bi bi-plus-circle"></i> طلب جديد</button>
+                <a href="/login.html" class="btn-danger-outline" onclick="localStorage.clear()"><i class="bi bi-box-arrow-right"></i> خروج</a>
             </div>
         </div>
 
         <div class="dashboard-grid">
             <div class="dashboard-sidebar">
                 <div class="card">
-                    <h4><i class="fas fa-user-circle"></i> ملفي الشخصي</h4>
+                    <h4><i class="bi bi-person-circle"></i> ملفي الشخصي</h4>
                     <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
                         <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#F5B041,#E67E22); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.8rem; font-weight:700;">
                             <span id="userInitial">ب</span>
@@ -154,23 +142,8 @@
                     </div>
                 </div>
 
-                <div class="card" style="border-right-color: #27ae60;">
-                    <h4><i class="fas fa-heart-circle-check" style="color: #27ae60;"></i> تجربتك الروحية مع المركز</h4>
-                    <div class="review-box" style="margin-top: 8px;">
-                        <p style="font-size: 0.85rem; color: #6A7A8A; margin-bottom: 10px; line-height: 1.5;">رأيك يهمنا ويساعد الآخرين في الاستشفاء. اكتب تجربتك وسيقوم فضيلة الشيخ بسام بمراجعتها ونشرها على الموقع.</p>
-                        <form id="reviewForm">
-                            <textarea id="reviewComment" rows="3" placeholder="شاركنا تجربتك الصادقة مع الرقية والبرامج العلاجية بالمركز..." required></textarea>
-                            <div style="text-align: left;">
-                                <button type="submit" class="btn-review-submit">
-                                    <i class="fas fa-paper-plane"></i> إرسال تعليقي
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
                 <div class="card">
-                    <h4><i class="fas fa-chart-pie"></i> إحصائياتي</h4>
+                    <h4><i class="bi bi-chart-pie"></i> إحصائياتي</h4>
                     <div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div>
                     <div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div>
                     <div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div>
@@ -179,29 +152,22 @@
             </div>
 
             <div>
-                <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                    <button class="btn-primary" id="tabRequestsBtn">
-                        <i class="fas fa-list-ul"></i> قائمة طلباتي الحالية
-                    </button>
-                </div>
-
-                <div id="tabRequests" class="tab-content">
-                    <div class="card" style="border-right-color:#1B4D3D;">
-                        <h4><i class="fas fa-list"></i> تتبع الخطط البرامجية والعلاجات المخصصة لك</h4>
-                        <div id="requestsList" style="margin-top: 15px;">
-                            <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات السحابية وتحديث الحساب...</p>
-                        </div>
+                <div class="card" style="border-right-color:#1B4D3D;">
+                    <h4><i class="bi bi-list"></i> طلباتي</h4>
+                    <div id="requestsList" style="margin-top: 15px;">
+                        <p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- نافذة تقديم طلب جديد -->
     <div id="newRequestModal" class="modal-overlay">
         <div class="modal-box">
-            <span class="close-modal" onclick="closeNewRequestModal()">&times;</span>
-            <h3><i class="fas fa-hand-holding-heart"></i> تقديم ملف حالة جديد للشيخ</h3>
-            <form id="newRequestForm">
+            <span class="close-modal" onclick="DashboardPage.closeNewRequestModal()">&times;</span>
+            <h3><i class="bi bi-heart-pulse"></i> تقديم ملف حالة جديد</h3>
+            <form id="newRequestForm" onsubmit="DashboardPage.submitNewRequest(event)">
                 <label>نوع الخدمة المطلوبة <span style="color:#e74c3c;">*</span></label>
                 <select id="reqServiceType" required>
                     <option value="استشارة روحانية">استشارة روحانية (100 ر.س)</option>
@@ -211,38 +177,27 @@
                     <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
                 </select>
 
-                <label>طريقة التواصل المعتمدة <span style="color:#e74c3c;">*</span></label>
-                <select id="reqContactMethod" required>
-                    <option value="whatsapp">الواتساب المباشر</option>
-                    <option value="email">البريد الإلكتروني</option>
-                </select>
-
-                <label>وصف وشرح الحالة بالتفصيل الشرعي <span style="color:#e74c3c;">*</span></label>
-                <div class="input-group">
-                    <textarea id="reqDescription" rows="5" placeholder="اكتب ما تعاني منه بكل وضوح وتفصيل للتشخيص الدقيق..." required></textarea>
-                    <button type="button" class="btn-mic-dictate" onclick="startDictation(this)"><i class="bi bi-mic"></i> تحدث صوتاً</button>
-                </div>
+                <label>وصف الحالة بالتفصيل <span style="color:#e74c3c;">*</span></label>
+                <textarea id="reqDescription" rows="5" placeholder="اكتب ما تعاني منه بكل وضوح وتفصيل..." required></textarea>
 
                 <button type="submit" class="btn-primary" style="width:100%; margin-top:20px; justify-content:center;">
-                    <i class="fas fa-paper-plane"></i> إرسال طلب العلاج والكشف الشرعي
+                    <i class="bi bi-send"></i> إرسال الطلب
                 </button>
             </form>
-            <p style="font-size:0.85rem; color:#6A7A8A; margin-top:12px; text-align:center;">
-                قيمة الطلب المبدئي ثابتة: <strong>100 ريال سعودي</strong> (تُدفع وتُحقق بعد قبول الملف).
-            </p>
         </div>
     </div>
 
+    <!-- نافذة عرض تفاصيل الطلب -->
     <div id="viewRequestModal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal" onclick="document.getElementById('viewRequestModal').classList.remove('show')">&times;</span>
-            <h3><i class="fas fa-file-alt"></i> مراجعة البرنامج والرد العلاجي المعتمد</h3>
+            <h3><i class="bi bi-file-text"></i> مراجعة الطلب</h3>
             <div id="requestDetailsContainer" style="margin-top: 15px;">
-                <p>جاري استحضار الرد الشرعي من السيرفر السحابي...</p>
+                <p>جاري التحميل...</p>
             </div>
         </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <script src="api.js"></script>
 </body>
 </html>
