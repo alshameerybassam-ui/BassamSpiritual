@@ -1,11 +1,11 @@
-<div class="noble-document-container">
-    <!-- استدعاء خطوط وأيقونات متناسقة تخدم هيبة النص -->
+<div class="noble-document-container" dir="rtl">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
+        /* التصميم الافتراضي للشاشات الكبيرة (الكمبيوتر) */
         .noble-document-container {
             max-width: 900px;
             margin: 40px auto;
@@ -15,9 +15,11 @@
             color: #1A2530;
             border: 12px double #D4AF37; /* إطار مذهب فاخر */
             border-radius: 4px;
-            line-height: 2;
+            line-height: 2.2; /* زيادة تباعد الأسطر للفخامة */
             box-shadow: 0 25px 70px rgba(0,0,0,0.08);
             position: relative;
+            direction: rtl;
+            text-align: right;
         }
         
         /* زخارف أركان كلاسيكية مذهبة */
@@ -41,7 +43,7 @@
         }
         .doc-header h2 {
             font-family: 'Amiri', serif;
-            font-size: 2.6rem;
+            font-size: 2.8rem;
             color: #0F1E36;
             margin: 0 0 10px 0;
             font-weight: 700;
@@ -49,7 +51,7 @@
         }
         .doc-header p {
             color: #5C6B73;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             margin: 0;
         }
         
@@ -64,7 +66,7 @@
             content: "";
             flex: 1;
             height: 1px;
-            background: linear-gradient(to var(--direction, right), transparent, #D4AF37, transparent);
+            background: linear-gradient(to left, transparent, #D4AF37, transparent);
         }
         .gold-divider i {
             color: #D4AF37;
@@ -75,24 +77,24 @@
         .basmala {
             text-align: center;
             font-family: 'Amiri', serif;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: bold;
             color: #0F1E36;
             margin-bottom: 25px;
         }
         .intro-text {
             text-align: justify;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: #334155;
-            margin-bottom: 20px;
-            text-indent: 20px;
+            margin-bottom: 22px;
+            text-indent: 25px;
         }
 
         /* هيكل شجرة النسب العمودي المتصل */
         .tree-title {
             text-align: center;
             color: #0F1E36;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin: 40px 0 25px;
             display: flex;
             align-items: center;
@@ -112,14 +114,14 @@
         .lineage-node {
             background: #FFFFFF;
             border: 1px solid #E2E8F0;
-            padding: 8px 25px;
+            padding: 10px 30px;
             border-radius: 30px;
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: 600;
             color: #1E293B;
             box-shadow: 0 4px 10px rgba(0,0,0,0.02);
             position: relative;
-            min-width: 260px;
+            min-width: 280px;
             text-align: center;
             transition: all 0.3s ease;
         }
@@ -127,7 +129,6 @@
             color: #B8860B;
             font-weight: 700;
         }
-        /* العُقد المميزة في عمود النسب */
         .lineage-node.highlight {
             border-color: #D4AF37;
             background: linear-gradient(135deg, #FFFDF4, #FFFFFF);
@@ -137,8 +138,8 @@
             background: linear-gradient(135deg, #0F1E36, #1D3557);
             color: #FFFFFF;
             border-color: #D4AF37;
-            font-size: 1.3rem;
-            padding: 12px 35px;
+            font-size: 1.4rem;
+            padding: 14px 40px;
         }
         .lineage-node.prophet strong {
             color: #F5B041;
@@ -162,9 +163,9 @@
         /* أقسام البيانات والمستندات */
         .section-heading {
             color: #0F1E36;
-            font-size: 1.4rem;
-            margin-top: 40px;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            margin-top: 45px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -175,7 +176,6 @@
             color: #D4AF37;
         }
         
-        /* قائمة مستندات التوثيق الدائرية */
         .docs-list {
             list-style: none;
             padding: 0;
@@ -183,16 +183,16 @@
         }
         .docs-item {
             position: relative;
-            padding-right: 45px;
-            margin-bottom: 25px;
+            padding-right: 50px;
+            margin-bottom: 30px;
             text-align: justify;
         }
         .docs-index {
             position: absolute;
             right: 0;
-            top: 2px;
-            width: 30px;
-            height: 30px;
+            top: 4px;
+            width: 34px;
+            height: 34px;
             background: #0F1E36;
             color: #D4AF37;
             border-radius: 50%;
@@ -200,12 +200,15 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 1rem;
             border: 1px solid #D4AF37;
+        }
+        .docs-content {
+            font-size: 1.15rem;
         }
         .docs-content strong {
             color: #0F1E36;
-            font-size: 1.1rem;
+            font-size: 1.25rem;
         }
 
         /* خاتمة وبطاقة التوقيع الدبلوماسية */
@@ -213,22 +216,22 @@
             text-align: center;
             font-style: italic;
             color: #64748B;
-            margin: 40px 0 25px;
-            font-size: 1.05rem;
+            margin: 45px 0 30px;
+            font-size: 1.15rem;
         }
         .signature-card {
-            margin-top: 30px;
+            margin-top: 35px;
             background: #0F1E36;
             border: 1px solid #D4AF37;
             border-radius: 14px;
-            padding: 30px;
+            padding: 35px;
             color: #F8FAFC;
             text-align: center;
             box-shadow: 0 10px 35px rgba(15, 30, 54, 0.15);
         }
         .signature-card h4 {
             margin: 0 0 15px 0;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             color: #D4AF37;
             font-weight: 700;
         }
@@ -237,7 +240,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 25px;
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             border-top: 1px solid rgba(255,255,255,0.08);
             padding-top: 15px;
             margin-top: 15px;
@@ -254,15 +257,74 @@
             color: #D4AF37;
         }
 
-        @media (max-width: 600px) {
-            .noble-document-container { padding: 25px 20px; border-width: 6px; }
-            .doc-header h2 { font-size: 1.9rem; }
-            .lineage-node { min-width: 100%; font-size: 1rem; }
-            .signature-meta { flex-direction: column; gap: 10px; }
+        /* 📱 تخصيصات ذكية وفخمة جداً لشاشات الجوال 📱 */
+        @media (max-width: 768px) {
+            .noble-document-container { 
+                padding: 35px 20px; /* تقليص الحواف لإعطاء النص مساحة أكبر */
+                border-width: 8px; /* تنحيف الإطار قليلاً ليناسب شاشة الجوال */
+                margin: 15px 10px;
+                line-height: 2.4; /* زيادة التباعد بين الأسطر لراحة العين أثناء القراءة من الجوال */
+            }
+            .doc-header h2 { 
+                font-size: 2.1rem; /* حجم خط عنوان مناسب وعريض على الجوال */
+            }
+            .doc-header p {
+                font-size: 1.2rem;
+            }
+            .basmala {
+                font-size: 1.8rem;
+            }
+            .intro-text {
+                font-size: 1.35rem; /* تكبير خط القراءة على الجوال ليكون واضحاً ومريحاً جداً */
+                text-indent: 15px;
+                text-align: right; /* إلغاء التوزيع الكامل لسهولة المتابعة بالعين على الشاشات الضيقة */
+            }
+            .tree-title {
+                font-size: 1.4rem;
+            }
+            .lineage-tree {
+                padding: 25px 10px;
+            }
+            .lineage-node { 
+                min-width: 95%; /* جعل عُقد النسب تأخذ كامل العرض تقريباً لخط واضح */
+                font-size: 1.3rem; /* تكبير أسماء شجرة النسب */
+                padding: 12px 15px;
+            }
+            .lineage-node.prophet {
+                font-size: 1.4rem;
+            }
+            .section-heading {
+                font-size: 1.4rem;
+            }
+            .docs-item {
+                padding-right: 45px;
+            }
+            .docs-content {
+                font-size: 1.3rem; /* تكبير نصوص المستندات التاريخية على الجوال */
+            }
+            .docs-content strong {
+                font-size: 1.35rem;
+            }
+            .docs-index {
+                width: 32px;
+                height: 32px;
+                top: 6px;
+            }
+            .doc-footer-text {
+                font-size: 1.2rem;
+            }
+            .signature-card h4 {
+                font-size: 1.4rem;
+            }
+            .signature-meta { 
+                flex-direction: column; 
+                gap: 15px; 
+                align-items: center;
+                font-size: 1.1rem;
+            }
         }
     </style>
 
-    <!-- ====== رأس الوثيقة ====== -->
     <div class="doc-header">
         <h2>📜 وثيقة النسب الشريف</h2>
         <p>للشيخ الفاضل <strong>بسام بن محمد بن هزاع الشميري</strong> (آل الكدهي)</p>
@@ -272,7 +334,6 @@
         </div>
     </div>
 
-    <!-- ====== البسملة والمقدمة ====== -->
     <div class="basmala">بسم الله الرحمن الرحيم</div>
     
     <p class="intro-text">
@@ -282,7 +343,6 @@
         أما بعد، فإن النسب الشريف المحفوظ والمتصل للشيخ <strong>بسام بن محمد بن هزاع الشميري</strong>، والمُثبَت في مشجرات الأسرة وكتب الأنساب المعتمدة المعوّل عليها، ينتظم ويرتفع حلقة بحلقة على هذا الوجه المبارك:
     </p>
 
-    <!-- ====== شجرة النسب الهابطة السيادية ====== -->
     <h3 class="tree-title"><i class="bi bi-tree"></i> عمود النسب المتصل</h3>
     
     <div class="lineage-tree">
@@ -357,7 +417,6 @@
         <div class="lineage-node prophet">سيدنا <strong>محمد</strong> رسول الله ﷺ</div>
     </div>
 
-    <!-- ====== بيان الألقاب ====== -->
     <h3 class="section-heading"><i class="bi bi-journal-bookmark-fill"></i> بيان الألقاب وأصل النسب</h3>
     <p class="intro-text">
         ينحدر الشيخ <strong>بسام بن محمد بن هزاع الشميري</strong> من دوحة السادة <strong>آل الكدهي</strong>، وهم فرع علوي شريف من أفنان السادة آل أبي علوي، يرتفعون بنسبهم إلى الإمام <strong>علي بن محمد الفقيه المقدم</strong>.
@@ -369,7 +428,6 @@
         أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً، فقد أضافه الوالد <strong>محمد بن هزاع</strong>، عندما اختار الانتساب إلى مخلاف شمير الأشمل بدلاً من النسبة إلى القرية الخاصة. وهذا الاجتهاد في الانتساب المكاني لا يعارض الأصل العلوي الثابت، بل هو مرحلة طارئة من مراحل الاستيطان، والدليل القاطع على ذلك أن عم الشيخ تخير لنفسه لقب <strong>(الخليدي)</strong>؛ فاختلاف الألقاب بين الإخوة هو البرهان الساطع على أن الأصل واحد، وأن النسب الشريف هو الجامع، ولا تعارض بين اللقبين، بل هما يُثبتان أن الأصل واحد، والرحم موصولة، والنسب محفوظ بحمد الله.
     </p>
 
-    <!-- ====== مستند التوثيق ====== -->
     <h3 class="section-heading"><i class="bi bi-shield-check"></i> مستندات التوثيق والتحقيق التاريخي</h3>
     
     <ul class="docs-list">
@@ -403,8 +461,7 @@
         </li>
     </ul>
 
-    <!-- ====== خاتمة وتوقيع ====== -->
-    <div class="gold-divider" style="--direction: left; margin-top: 40px;">
+    <div class="gold-divider" style="margin-top: 40px;">
         <i class="bi bi-patch-check-fill"></i>
     </div>
     
