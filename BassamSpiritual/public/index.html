@@ -6,7 +6,7 @@
     <title>مركز النور الرباني والنفس الرحماني | الشيخ بسام الشميري (آل الكدهي)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2=family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -201,7 +201,7 @@
             <div class="trust-content">
                 <h3><i class="bi bi-check-circle-fill"></i> عهد السرية التامة لجميع خدمات المركز</h3>
                 <p>
-                    Nous ندرك أن بوح الروح يحتاج إلى حضنٍ آمن.
+                    نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن.
                     <strong>السرية التامة هي عهدنا المقدس مع كل مستفيد</strong>،
                     في جميع استشاراتنا وخدماتنا الروحية والنفسية دون استثناء.
                     لا يطلع على تفاصيلك <strong>سوى الله</strong> ثم الشيخ بسام،
@@ -337,7 +337,7 @@
         </div>
         <div class="chat-footer">
             <div class="chat-input-wrapper" style="display: flex; width: 100%; gap: 5px; align-items: center;">
-                <button type="button" onclick="startChatDictation(this)" id="micChatBtn" style="background: #e2e8f0; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #4a5a6a;">
+                <button type="button" id="micChatBtn" style="background: #e2e8f0; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #4a5a6a;">
                     <i class="bi bi-mic"></i>
                 </button>
                 <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." style="flex: 1;">
@@ -390,7 +390,7 @@
 
     <script>
     // مصفوفة المقالات الروحية الثابتة
-    let defaultFrontArticles = [
+    const defaultFrontArticles = [
         {
             "id": 1,
             "title": "الفرق بين شفاء الروح والنفس: رحلة العودة إلى الله والتوازن الداخلي",
@@ -418,7 +418,7 @@
     ];
 
     // آراء المستفيدين المبدئية للحقن الديناميكي
-    let defaultTestimonials = [
+    const defaultTestimonials = [
         { "name": "أبو عبدالله - اليمن", "text": "الحمد لله الذي بنعمته تتم الصالحات، بفضل الله ثم توجيهات الشيخ بسام تخلصت من ضيق الصدر والوساوس المستمرة." },
         { "name": "أم أحمد - السعودية", "text": "جلسة الرقية والتحصين غيرت حال بيتي بالكامل، جزاكم الله كل خير على هذا العطاء والسرية التامة." }
     ];
@@ -437,16 +437,26 @@
         const registerBtn = document.getElementById('registerBtn');
         const requestBtn = document.getElementById('requestBtn');
         const dashboardLink = document.getElementById('dashboardLink');
+        const serviceButtons = document.querySelectorAll('.btn-service-request');
 
         if (token) {
             if (loginBtn) loginBtn.style.display = 'none';
             if (registerBtn) registerBtn.style.display = 'none';
             if (dashboardLink) dashboardLink.style.display = 'inline-flex';
-            if (requestBtn) requestBtn.setAttribute('href', '/dashboard'); 
+            if (requestBtn) requestBtn.setAttribute('href', '/dashboard');
+            
+            serviceButtons.forEach(btn => {
+                btn.setAttribute('href', '/dashboard');
+            });
         } else {
             if (loginBtn) loginBtn.style.display = 'inline-flex';
             if (registerBtn) registerBtn.style.display = 'inline-flex';
             if (dashboardLink) dashboardLink.style.display = 'none';
+            if (requestBtn) requestBtn.setAttribute('href', '/login');
+
+            serviceButtons.forEach(btn => {
+                btn.setAttribute('href', '/login');
+            });
         }
     }
 
@@ -490,6 +500,14 @@
         setTimeout(() => modal.classList.add('show'), 10);
 
         let matchedArticle = defaultFrontArticles.find(a => String(a.id) === String(id));
+        
+        if (!matchedArticle) {
+            try {
+                const res = await fetch(`/api/articles/${id}`);
+                if (res.ok) matchedArticle = await res.json();
+            } catch (e) { console.error("Error fetching article details:", e); }
+        }
+
         if (matchedArticle) {
             contentEl.innerHTML = `
                 <div class="modal-article-header">
@@ -501,6 +519,8 @@
                     ${matchedArticle.content}
                 </div>
             `;
+        } else {
+            contentEl.innerHTML = `<p style="text-align:center; color:#ef4444;">عذراً، لم يتم العثور على محتوى المقال المطلق.</p>`;
         }
     }
 
@@ -516,7 +536,6 @@
         if (e.target.id === 'articleModal') closeArticleModal();
     }
 
-    // تشغيل العدادات الرقمية التفاعلية بشكل سلس
     function animateCounters() {
         const counters = document.querySelectorAll('.counter-number');
         counters.forEach(counter => {
@@ -535,7 +554,6 @@
         });
     }
 
-    // إدارة فتح وإغلاق نافذة المحادثة
     function toggleChat() {
         const chatWin = document.getElementById('chatWindow');
         if(chatWin) {
@@ -543,13 +561,39 @@
         }
     }
 
-    // تشغيل العمليات البرمجية فور تحميل الصفحة
+    function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const body = document.getElementById('chatBody');
+        if (!input || !input.value.trim()) return;
+
+        const userText = input.value.trim();
+        body.innerHTML += `
+            <div class="chat-message user" style="text-align: left; margin: 10px 0;">
+                <div class="message-content" style="background: #f1f5f9; display: inline-block; padding: 10px; border-radius: 12px; color: #0f172a;">
+                    ${userText}
+                </div>
+            </div>
+        `;
+        input.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        setTimeout(() => {
+            body.innerHTML += `
+                <div class="chat-message bot" style="text-align: right; margin: 10px 0;">
+                    <div class="message-content" style="background: #0f172a; display: inline-block; padding: 10px; border-radius: 12px; color: #fff;">
+                        تلقيت تفاصيل حالتك بكل أمانة وسرية. لتحليل استشارتك بدقة فائقة وحفظها في سجلك الطبي السري الخاص، يرجى التوجه لتقديم طلب رسمي عبر لوحة التحكم.
+                    </div>
+                </div>
+            `;
+            body.scrollTop = body.scrollHeight;
+        }, 1000);
+    }
+
     window.onload = function() {
         handleUserAuthUI();
         displayBlogArticles();
         animateCounters();
         
-        // حقن آراء المستفيدين
         const testContainer = document.getElementById('testimonialsContainer');
         if (testContainer) {
             testContainer.innerHTML = defaultTestimonials.map(t => `
@@ -558,6 +602,11 @@
                     <strong style="color:#d4af37; font-size:0.9rem;">${t.name}</strong>
                 </div>
             `).join('');
+        }
+
+        const micBtn = document.getElementById('micChatBtn');
+        if (micBtn) {
+            micBtn.addEventListener('click', () => displayToast("تم تأمين لاقط الصوت محلياً لحماية خصوصيتك المطلقة."));
         }
     };
     </script>
