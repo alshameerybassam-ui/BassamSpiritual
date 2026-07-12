@@ -1,21 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { Pool } = require('pg'); // استدعاء محرك PostgreSQL
+const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
 
 // ==============================================
 // 1. البرمجيات الوسيطة الأساسية (Middlewares)
 // ==============================================
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// تشغيل الملفات الساكنة
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==============================================
@@ -23,26 +24,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ==============================================
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false // مطلوب لتأمين الاتصال مع سيرفرات Render
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 pool.connect()
-    .then(() => console.log("🐘 [نظام النور] تم الاتصال بقاعدة بيانات PostgreSQL السحابية بنجاح!"))
-    .catch(err => console.error("❌ خطأ في الاتصال بقاعدة البيانات:", err.message));
+    .then(() => console.log("🐘 [قاعدة البيانات] تم الاتصال بـ PostgreSQL بنجاح!"))
+    .catch(err => console.error("❌ [قاعدة البيانات] خطأ في الاتصال:", err.message));
 
-// مشاركة الـ pool فوراً مع التطبيق لمنع خطأ undefined 'query'
 app.set('db', pool);
 
 // ==============================================
-// 2.5 تهيئة وبناء الجداول سحابياً واستقرار الهيكل البرمجي
+// 3. تهيئة وبناء الجداول سحابياً
 // ==============================================
 const initializeDatabase = async () => {
     try {
-        console.log("🧹 جاري فحص وتحديث الجداول السحابية للتوافق مع النظام...");
-
-        // أ. جدول المستخدمين (المستفيدين والإدارة)
+        console.log("🧹 [قاعدة البيانات] جاري فحص وتحديث الجداول...");
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -50,11 +46,10 @@ const initializeDatabase = async () => {
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(50) DEFAULT 'user',
+                phone VARCHAR(50),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // ب. بناء جدول الطلبات (تمت إزالة DROP TABLE الكارثية لحماية البيانات)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS requests (
                 id SERIAL PRIMARY KEY,
@@ -62,7 +57,7 @@ const initializeDatabase = async () => {
                 service_type VARCHAR(255) DEFAULT 'استشارة عامة',
                 description TEXT NOT NULL,
                 contact_method VARCHAR(100) DEFAULT 'واتساب',
-                status VARCHAR(50) DEFAULT 'pending', 
+                status VARCHAR(50) DEFAULT 'pending',
                 initial_diagnosis TEXT,
                 treatment_plan TEXT,
                 additional_treatment_cost NUMERIC DEFAULT 0.00,
@@ -74,13 +69,11 @@ const initializeDatabase = async () => {
                 payment_transfer_number VARCHAR(100),
                 payment_submitted_at TIMESTAMP,
                 payment_rejection_reason TEXT,
-                initial_rejection_reason TEXT, 
+                initial_rejection_reason TEXT,
                 total_paid_amount NUMERIC DEFAULT 0.00,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // ج. جدول الرسائل والمراجعات والاستفسارات الداخلية
         await pool.query(`
             CREATE TABLE IF NOT EXISTS request_messages (
                 id SERIAL PRIMARY KEY,
@@ -91,20 +84,16 @@ const initializeDatabase = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // د. جدول المقالات الديناميكي 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 summary TEXT,
                 content TEXT,
-                icon VARCHAR(100) DEFAULT 'fa-solid fa-heart',
+                icon VARCHAR(100) DEFAULT 'bi bi-heart-fill',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // هـ. جدول آراء المستفيدين المحمي
         await pool.query(`
             CREATE TABLE IF NOT EXISTS reviews (
                 id SERIAL PRIMARY KEY,
@@ -116,421 +105,264 @@ const initializeDatabase = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-        // و. جدول إعدادات النظام وتوجيهات الذكاء الاصطناعي
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS system_settings (
-                key VARCHAR(100) PRIMARY KEY,
-                value TEXT NOT NULL
-            );
-        `);
-
-        // حقن توجيه آلي للذكاء الاصطناعي
-        await pool.query(`
-            INSERT INTO system_settings (key, value) 
-            VALUES ('ai_prompt', 'أنت المعالج الروحي المساعد المعتمد من قبل فضيلة الشيخ بسام...')
-            ON CONFLICT (key) DO NOTHING;
-        `);
-
-        console.log("⚙️ [نظام النور] تمت ترقية بنية الجداول السحابية بنجاح واستقرار تام!");
+        console.log("✅ [قاعدة البيانات] جميع الجداول جاهزة ومحدثة.");
     } catch (err) {
-        console.error("❌ خطأ حرج أثناء التهيئة السحابية:", err.message);
+        console.error("❌ [قاعدة البيانات] خطأ حرج أثناء التهيئة:", err.message);
     }
 };
 initializeDatabase();
 
 // ==============================================
-// 3. البرمجيات الوسيطة للتحقق من الصلاحيات (JWT)
+// 4. البرمجيات الوسيطة للتحقق من الصلاحيات (JWT)
 // ==============================================
-
-const verifyUserToken = (req, res, next) => {
+const verifyToken = (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ success: false, error: 'غير مصرح بالدخول، الرمز مفقود' });
-
-        const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
+        if (!token) return res.status(401).json({ success: false, error: 'الرجاء تسجيل الدخول.' });
         const decoded = jwt.verify(token, JWT_SECRET);
         req.userId = decoded.id;
+        req.userRole = decoded.role;
         next();
     } catch (e) {
-        res.status(401).json({ success: false, error: 'انتهت الجلسة الأمنية، يرجى تسجيل الدخول.' });
+        res.status(401).json({ success: false, error: 'جلسة غير صالحة.' });
     }
 };
 
-const verifyAdminToken = async (req, res, next) => {
+const verifyAdmin = (req, res, next) => {
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ success: false, error: 'غير مصرح. هذه الصلاحية للإدارة فقط.' });
+    }
+    next();
+};
+
+// ==============================================
+// 5. مسارات المصادقة (Auth)
+// ==============================================
+app.post('/api/auth/register', [
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 6 })
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, error: 'بيانات غير صالحة.', details: errors.array() });
+
+    const { fullName, email, password, phone } = req.body;
+    const finalName = fullName || "مستفيد جديد";
+
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ error: 'غير مصرح بالدخول، الرمز مفقود' });
+        const userExists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (userExists.rows.length > 0) return res.status(409).json({ success: false, error: 'البريد مسجل مسبقاً.' });
 
-        const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const result = await pool.query(
+            'INSERT INTO users (full_name, email, password, role, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email, role',
+            [finalName, email, hashedPassword, 'user', phone || null]
+        );
 
-        const adminCheck = await pool.query('SELECT role FROM users WHERE id = $1', [decoded.id]);
-        if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
-            return res.status(403).json({ error: 'عذراً، هذه الصلاحية خاصة بفضيلة الشيخ بسام!' });
-        }
-        req.adminId = decoded.id;
-        next();
-    } catch (e) {
-        res.status(401).json({ error: 'انتهت الجلسة الأمنية، يرجى إعادة تسجيل الدخول.' });
+        const newUser = result.rows[0];
+        const token = jwt.sign({ id: newUser.id, email: newUser.email, role: newUser.role }, JWT_SECRET, { expiresIn: '30d' });
+        res.status(201).json({
+            success: true,
+            token,
+            user: { id: newUser.id, fullName: newUser.full_name, email: newUser.email, role: newUser.role }
+        });
+    } catch (err) {
+        console.error('❌ [Auth] خطأ أثناء التسجيل:', err.message);
+        res.status(500).json({ success: false, error: 'حدث خطأ في النظام.' });
     }
-};
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length === 0) return res.status(401).json({ success: false, error: 'البريد أو كلمة المرور غير صحيحة.' });
+
+        const user = result.rows[0];
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ success: false, error: 'البريد أو كلمة المرور غير صحيحة.' });
+
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+        res.json({
+            success: true,
+            token,
+            user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role }
+        });
+    } catch (err) {
+        console.error('❌ [Auth] خطأ أثناء تسجيل الدخول:', err.message);
+        res.status(500).json({ success: false, error: 'حدث خطأ في النظام.' });
+    }
+});
+
+app.get('/api/auth/verify', verifyToken, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, full_name, email, role FROM users WHERE id = $1', [req.userId]);
+        if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'مستخدم غير موجود.' });
+        res.json({ success: true, user: result.rows[0] });
+    } catch (e) {
+        res.status(500).json({ success: false, error: 'خطأ في التحقق.' });
+    }
+});
 
 // ==============================================
-// 4. مسارات مستخدمي النظام الأساسيين (المستفيدين)
+// 6. مسارات لوحة تحكم المستفيد (Dashboard)
 // ==============================================
+app.get('/api/dashboard/me', verifyToken, async (req, res) => {
+    try {
+        const user = await pool.query('SELECT id, full_name, email, role, phone, created_at FROM users WHERE id = $1', [req.userId]);
+        if (user.rows.length === 0) return res.status(404).json({ success: false, error: 'مستخدم غير موجود.' });
 
-app.post('/api/requests', verifyUserToken, async (req, res) => {
+        const requests = await pool.query(
+            `SELECT id, service_type, status, description, initial_diagnosis, treatment_plan, created_at
+             FROM requests WHERE user_id = $1 ORDER BY created_at DESC`,
+            [req.userId]
+        );
+
+        res.json({
+            success: true,
+            user: user.rows[0],
+            requests: requests.rows
+        });
+    } catch (err) {
+        console.error('❌ [Dashboard] خطأ في /me:', err.message);
+        res.status(500).json({ success: false, error: 'خطأ في تحميل البيانات.' });
+    }
+});
+
+app.post('/api/dashboard/request', verifyToken, async (req, res) => {
     const { serviceType, description, contactMethod } = req.body;
+    if (!description || description.trim().length < 10) {
+        return res.status(400).json({ success: false, error: 'الرجاء كتابة وصف دقيق للحالة (10 أحرف على الأقل).' });
+    }
     try {
-        if (!description) {
-            return res.status(400).json({ success: false, error: 'وصف الحالة مطلوب شرحه بالتفصيل' });
-        }
-        await pool.query(
-            'INSERT INTO requests (user_id, service_type, description, contact_method, status) VALUES ($1, $2, $3, $4, $5)',
+        const result = await pool.query(
+            'INSERT INTO requests (user_id, service_type, description, contact_method, status) VALUES ($1, $2, $3, $4, $5) RETURNING id',
             [req.userId, serviceType || 'استشارة عامة', description, contactMethod || 'واتساب', 'pending']
         );
-        res.json({ success: true, message: 'تم رفع طلبك السحابي بنجاح للشيخ بسام، وهو قيد المراجعة الفقهية الآن.' });
-    } catch (error) {
-        console.error("❌ خطأ سحابي عند حفظ الطلب:", error.message);
-        res.status(500).json({ success: false, error: 'فشل خادم السيرفر في معالجة طلبك وحفظه' });
+        res.json({ success: true, requestId: result.rows[0].id, message: '✅ تم تقديم طلبك بنجاح.' });
+    } catch (err) {
+        console.error('❌ [Dashboard] خطأ في تقديم الطلب:', err.message);
+        res.status(500).json({ success: false, error: 'حدث خطأ في حفظ الطلب.' });
     }
 });
 
-app.put('/api/requests/:id/submit-payment', verifyUserToken, async (req, res) => {
+app.get('/api/dashboard/request/:id', verifyToken, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
+        if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'الطلب غير موجود.' });
+        if (parseInt(result.rows[0].user_id) !== parseInt(req.userId)) return res.status(403).json({ success: false, error: 'غير مصرح.' });
+        res.json({ success: true, request: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: 'خطأ في جلب الطلب.' });
+    }
+});
+
+app.put('/api/dashboard/request/:id/submit-payment', verifyToken, async (req, res) => {
     const { paymentMethod, paymentSenderName, paymentTransferNumber } = req.body;
-    try {
-        if (!paymentMethod || !paymentSenderName || !paymentTransferNumber) {
-            return res.status(400).json({ success: false, error: 'يرجى ملء جميع بيانات إيصال التحويل المالي بالتفصيل' });
-        }
-        const result = await pool.query(
-            `UPDATE requests 
-             SET payment_method = $1, payment_sender_name = $2, payment_transfer_number = $3, status = $4, payment_submitted_at = CURRENT_TIMESTAMP
-             WHERE id = $5 AND user_id = $6 RETURNING id`,
-            [paymentMethod, paymentSenderName, paymentTransferNumber, 'payment_submitted', req.params.id, req.userId]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب غير موجود أو غير تابع لحسابك' });
-        }
-        res.json({ success: true, message: 'تم إرسال بيانات إيصال الحوالة لفضيلة الشيخ بسام للتحقق المالي المباشر.' });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'خطأ خادم داخلي أثناء معالجة بيانات الحوالة' });
+    if (!paymentMethod || !paymentSenderName || !paymentTransferNumber) {
+        return res.status(400).json({ success: false, error: 'يرجى ملء جميع بيانات التحويل.' });
     }
-});
-
-app.post('/api/requests/:id/messages', verifyUserToken, async (req, res) => {
-    const { messageText } = req.body;
     try {
-        const reqCheck = await pool.query('SELECT status, is_message_locked FROM requests WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
-        if (reqCheck.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'لم يتم العثور على هذا الملف.' });
-        }
-        if (reqCheck.rows[0].is_message_locked) {
-            return res.status(403).json({ success: false, error: 'لقد أغلق فضيلة الشيخ باب المراسلات والمراجعات لهذا الطلب نظراً لشفاء الحالة تماماً.' });
-        }
-        await pool.query(
-            'INSERT INTO request_messages (request_id, sender_id, sender_role, message_text) VALUES ($1, $2, $3, $4)',
-            [req.params.id, req.userId, 'user', messageText]
+        const result = await pool.query(
+            `UPDATE requests SET payment_method = $1, payment_sender_name = $2, payment_transfer_number = $3,
+             status = 'payment_submitted', payment_submitted_at = CURRENT_TIMESTAMP
+             WHERE id = $4 AND user_id = $5 RETURNING id`,
+            [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id, req.userId]
         );
-        res.json({ success: true, message: 'تم إرسال مراجعتك بنجاح للوحة الشيخ.' });
-    } catch (e) {
-        res.status(500).json({ success: false, error: 'فشل إرسال الرسالة السحابية.' });
+        if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'الطلب غير موجود.' });
+        res.json({ success: true, message: '✅ تم إرسال إيصال التحويل.' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: 'خطأ في حفظ بيانات الدفع.' });
     }
 });
 
 // ==============================================
-// 5. مسارات التحكم الكاملة الخاصة بالإدارة (الشيخ بسام)
+// 7. مسارات لوحة تحكم الشيخ (Admin)
 // ==============================================
-
-app.get('/api/admin/requests', verifyAdminToken, async (req, res) => {
-    try {
-        const allRequests = await pool.query(`
-            SELECT r.id, r.user_id, r.user_id as "userId", u.full_name, u.full_name as "fullName", u.email, 
-                   r.service_type, r.service_type as "serviceType", r.status, r.created_at, r.created_at as "createdAt",
-                   r.description, r.initial_diagnosis, r.initial_diagnosis as "initialDiagnosis", r.treatment_plan,
-                   r.treatment_plan as "treatmentPlan", r.additional_treatment_cost, r.additional_treatment_cost as "additionalTreatmentCost",
-                   r.treatment_duration_days, r.treatment_duration_days as "treatmentDurationDays", r.treatment_expires_at,
-                   r.treatment_expires_at as "treatmentExpiresAt", r.is_message_locked, r.is_message_locked as "isMessageLocked",
-                   r.payment_method, r.payment_method as "paymentMethod", r.payment_sender_name, r.payment_sender_name as "paymentSenderName",
-                   r.payment_transfer_number, r.payment_transfer_number as "paymentTransferNumber", r.payment_submitted_at,
-                   r.payment_submitted_at as "paymentSubmittedAt", r.payment_rejection_reason, r.payment_rejection_reason as "paymentRejectionReason",
-                   r.initial_rejection_reason, r.initial_rejection_reason as "initialRejectionReason", r.total_paid_amount,
-                   r.total_paid_amount as "totalPaidAmount"
-            FROM requests r
-            JOIN users u ON r.user_id = u.id
-            ORDER BY r.created_at DESC
-        `);
-        res.json(allRequests.rows);
-    } catch (e) {
-        console.error("❌ خطأ في مسار جلب طلبات الإدارة:", e.message);
-        res.status(200).json([]);
-    }
-});
-
-app.put('/api/admin/requests/:id/accept-initial', verifyAdminToken, async (req, res) => {
+app.get('/api/admin/requests', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const result = await pool.query(
-            `UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1 RETURNING id`,
-            [req.params.id]
+            `SELECT r.*, u.full_name, u.email FROM requests r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`
         );
-        if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'الملف غير موجود' });
-        res.json({ success: true, message: 'تم قبول استقبال الحالة مبدئياً والمستفيد ملزم برفع الحوالة الآن.' });
+        res.json(result.rows);
     } catch (e) {
-        res.status(500).json({ error: 'حدث خطأ سيرفر أثناء تحديث حالة قبول الملف.' });
+        console.error('❌ [Admin] خطأ في جلب الطلبات:', e.message);
+        res.status(500).json({ success: false, error: 'خطأ في جلب الطلبات.' });
     }
 });
 
-app.put('/api/admin/requests/:id/reject-initial', verifyAdminToken, async (req, res) => {
+app.put('/api/admin/requests/:id/accept-initial', verifyToken, verifyAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(`UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1 RETURNING id`, [req.params.id]);
+        if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'الطلب غير موجود.' });
+        res.json({ success: true, message: '✅ تم قبول الطلب.' });
+    } catch (e) { res.status(500).json({ success: false, error: 'خطأ.' }); }
+});
+
+app.put('/api/admin/requests/:id/reject-initial', verifyToken, verifyAdmin, async (req, res) => {
     const { reason } = req.body;
     try {
-        const result = await pool.query(
-            `UPDATE requests SET status = 'rejected_by_admin', initial_rejection_reason = $1, is_message_locked = true WHERE id = $2 RETURNING id`,
-            [reason || 'تم الاعتذار عن استقبال الحالة لعدم الاختصاص الروحي.', req.params.id]
-        );
-        if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'الملف غير موجود' });
-        res.json({ success: true, message: 'تم رفض الملف بنجاح وإغلاقه كلياً.' });
-    } catch (e) {
-        res.status(500).json({ error: 'حدث خطأ سيرفر أثناء معالجة الاعتذار.' });
-    }
+        await pool.query(`UPDATE requests SET status = 'rejected_by_admin', initial_rejection_reason = $1 WHERE id = $2`, [reason || 'بدون سبب', req.params.id]);
+        res.json({ success: true, message: '🔴 تم رفض الطلب.' });
+    } catch (e) { res.status(500).json({ success: false, error: 'خطأ.' }); }
 });
 
-app.put('/api/admin/requests/:id/diagnose', verifyAdminToken, async (req, res) => {
-    const { initialDiagnosis } = req.body;
+app.put('/api/admin/requests/:id/approve-payment', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        if (!initialDiagnosis) return res.status(400).json({ error: 'يرجى كتابة الملاحظات التشخيصية' });
-        await pool.query(
-            `UPDATE requests SET initial_diagnosis = $1, status = $2 WHERE id = $3`,
-            [initialDiagnosis, 'processing', req.params.id]
-        );
-        res.json({ success: true, message: 'تم حفظ التشخيص، وإشعار المستفيد بنجاح.' });
-    } catch (e) {
-        res.status(500).json({ error: 'حدث خطأ سيرفر أثناء تحديث التشخيص المبدئي.' });
-    }
+        await pool.query(`UPDATE requests SET status = 'processing' WHERE id = $1`, [req.params.id]);
+        res.json({ success: true, message: '✅ تم اعتماد الدفع.' });
+    } catch (e) { res.status(500).json({ success: false, error: 'خطأ.' }); }
 });
 
-app.put('/api/admin/requests/:id/approve-payment', verifyAdminToken, async (req, res) => {
-    try {
-        await pool.query(
-            `UPDATE requests SET total_paid_amount = total_paid_amount + 100.00, status = $1 WHERE id = $2`,
-            ['processing', req.params.id] 
-        );
-        res.json({ success: true, message: '🟢 تم اعتماد الحوالة وتأكيد استلام مبلغ الكشفية بنجاح.' });
-    } catch (e) {
-        res.status(500).json({ error: 'فشل خادم الاعتماد المالي.' });
-    }
-});
-
-app.put('/api/admin/requests/:id/reject-payment', verifyAdminToken, async (req, res) => {
+app.put('/api/admin/requests/:id/reject-payment', verifyToken, verifyAdmin, async (req, res) => {
     const { reason } = req.body;
     try {
-        if (!reason) return res.status(400).json({ error: 'يرجى كتابة سبب رفض إيصال الحوالة' });
-        await pool.query(
-            `UPDATE requests SET payment_rejection_reason = $1, status = $2 WHERE id = $3`,
-            [reason, 'payment_rejected', req.params.id]
-        );
-        res.json({ success: true, message: '🔴 تم رفض الحوالة بنجاح وإشعار المستفيد.' });
-    } catch (e) {
-        res.status(500).json({ error: 'فشل خادم معالجة الرفض المالي.' });
-    }
+        await pool.query(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1 WHERE id = $2`, [reason || 'بدون سبب', req.params.id]);
+        res.json({ success: true, message: '🔴 تم رفض الدفع.' });
+    } catch (e) { res.status(500).json({ success: false, error: 'خطأ.' }); }
 });
 
-app.put('/api/admin/requests/:id/complete-treatment', verifyAdminToken, async (req, res) => {
-    const { treatmentPlan, additionalCost, durationDays } = req.body;
-    try {
-        if (!treatmentPlan) return res.status(400).json({ error: 'يرجى كتابة تفاصيل الخطة العلاجية بالكامل' });
-        const days = parseInt(durationDays) || 0;
-        const expiryDate = days > 0 ? new Date(Date.now() + days * 24 * 60 * 60 * 1000) : null;
-        const addCost = parseFloat(additionalCost) || 0.00;
-
-        await pool.query(
-            `UPDATE requests SET treatment_plan = $1, additional_treatment_cost = $2, treatment_duration_days = $3, treatment_expires_at = $4, status = $5 WHERE id = $6`,
-            [treatmentPlan, addCost, days, expiryDate, 'completed', req.params.id]
-        );
-        res.json({ success: true, message: '✅ تم إرسال البرامج العلاجية بنجاح تام وتحويل الحالة لمكتمل.' });
-    } catch (e) {
-        res.status(500).json({ error: 'خطأ أثناء حفظ الخطة العلاجية النهائية.' });
-    }
-});
-
-app.put('/api/admin/requests/:id/lock-messages', verifyAdminToken, async (req, res) => {
-    const { lock } = req.body; 
-    try {
-        await pool.query(
-            `UPDATE requests SET is_message_locked = $1, status = $2 WHERE id = $3`,
-            [lock, lock ? 'closed' : 'completed', req.params.id]
-        );
-        res.json({ success: true, message: lock ? '🔒 تم إغلاق باب المراسلات بنجاح.' : '🔓 تم إعادة فتح باب المراجعات.' });
-    } catch (e) {
-        res.status(500).json({ error: 'فشل نظام التحكم في أمن المراسلات.' });
-    }
-});
-
-app.post('/api/admin/requests/:id/messages', verifyAdminToken, async (req, res) => {
-    const { messageText } = req.body;
-    try {
-        if (!messageText) return res.status(400).json({ error: 'نص التوجيه لا يمكن أن يكون فارغاً' });
-        await pool.query(
-            'INSERT INTO request_messages (request_id, sender_id, sender_role, message_text) VALUES ($1, $2, $3, $4)',
-            [req.params.id, req.adminId, 'admin', messageText]
-        );
-        res.json({ success: true, message: 'تم إرسال ردك وتوجيهك الروحي بنجاح.' });
-    } catch (e) {
-        res.status(500).json({ error: 'حدث خطأ أثناء إرسال الرسالة من لوحة الشيخ.' });
-    }
-});
-
-app.get('/api/requests/:id/messages', async (req, res) => {
-    try {
-        const messages = await pool.query(
-            `SELECT m.id, m.sender_role, m.sender_role as "senderRole", m.message_text, m.message_text as "messageText", 
-                    m.created_at, m.created_at as "createdAt", u.full_name, u.full_name as "senderName"
-             FROM request_messages m
-             JOIN users u ON m.sender_id = u.id
-             WHERE m.request_id = $1
-             ORDER BY m.created_at ASC`,
-            [req.params.id]
-        );
-        res.json({ success: true, messages: messages.rows });
-    } catch (e) {
-        res.status(500).json({ success: false, error: 'تعذر جلب سجل المحادثات.' });
-    }
-});
-
-app.delete('/api/admin/requests/:id', verifyAdminToken, async (req, res) => {
+app.delete('/api/admin/requests/:id', verifyToken, verifyAdmin, async (req, res) => {
     try {
         await pool.query('DELETE FROM requests WHERE id = $1', [req.params.id]);
-        res.json({ success: true, message: '🗑️ تم حذف ملف المستفيد من السجلات السحابية بنجاح.' });
-    } catch (e) {
-        res.status(500).json({ error: 'فشل السيرفر في مسح الطلب.' });
-    }
+        res.json({ success: true, message: '🗑️ تم حذف الطلب.' });
+    } catch (e) { res.status(500).json({ success: false, error: 'خطأ في الحذف.' }); }
 });
 
 // ==============================================
-// 6. مسارات التحكم بالمقالات وآراء المستفيدين والذكاء الاصطناعي
+// 8. مسارات المقالات والمراجعات
 // ==============================================
-
 app.get('/api/articles', async (req, res) => {
     try {
-        const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
-        res.json(articles.rows);
-    } catch (error) {
-        res.status(500).json({ error: "حدث خطأ أثناء تحميل المقالات السحابية" });
-    }
+        const result = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (e) { res.status(500).json({ error: 'خطأ في تحميل المقالات.' }); }
 });
 
-app.get('/api/articles/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const articleId = parseInt(id, 10);
-        if (isNaN(articleId)) return res.status(400).json({ error: "معرف المقال غير صالح" });
-        const result = await pool.query('SELECT * FROM articles WHERE id = $1', [articleId]);
-        if (result.rows.length === 0) return res.status(404).json({ error: "المقال غير موجود" });
-        res.json(result.rows[0]);
-    } catch (error) {
-        res.status(500).json({ error: "حدث خطأ أثناء تحميل تفاصيل المقال" });
-    }
-});
-
-app.post('/api/admin/articles', verifyAdminToken, async (req, res) => {
-    const { title, summary, content, icon } = req.body;
-    try {
-        await pool.query(
-            'INSERT INTO articles (title, summary, content, icon) VALUES ($1, $2, $3, $4)',
-            [title, summary, content, icon || 'fa-solid fa-heart']
-        );
-        res.json({ success: true, message: '✅ تم نشر المقال الجديد بنجاح في الموقع.' });
-    } catch (e) {
-        res.status(500).json({ error: 'فشل حفظ المقال الجديد' });
-    }
-});
-
-app.get('/api/admin/reviews', verifyAdminToken, async (req, res) => {
+app.get('/api/admin/reviews', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC');
         res.json({ success: true, reviews: result.rows });
-    } catch (e) {
-        res.status(500).json({ success: false, error: 'تعذر جلب المراجعات' });
-    }
-});
-
-app.put('/api/admin/reviews/:id/approve', verifyAdminToken, async (req, res) => {
-    const { approve } = req.body;
-    try {
-        await pool.query('UPDATE reviews SET is_approved = $1 WHERE id = $2', [approve, req.params.id]);
-        res.json({ success: true, message: 'تم تحديث حالة الرأي بنجاح والمزامنة بالواجهة.' });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
-});
-
-app.delete('/api/admin/reviews/:id', verifyAdminToken, async (req, res) => {
-    try {
-        await pool.query('DELETE FROM reviews WHERE id = $1', [req.params.id]);
-        res.json({ success: true, message: 'تم حذف الرأي نهائياً.' });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
-});
-
-app.get('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
-    try {
-        const result = await pool.query("SELECT value FROM system_settings WHERE key = 'ai_prompt'");
-        res.json({ success: true, instructions: result.rows[0]?.value || '' });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
-});
-
-app.put('/api/admin/ai-instructions', verifyAdminToken, async (req, res) => {
-    const { instructions } = req.body;
-    try {
-        await pool.query("UPDATE system_settings SET value = $1 WHERE key = 'ai_prompt'", [instructions]);
-        res.json({ success: true, message: '⚙️ تم تحديث البنية التوجيهية لحاكم الذكاء الاصطناعي بنجاح.' });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    } catch (e) { res.status(500).json({ success: false, error: 'خطأ في تحميل المراجعات.' }); }
 });
 
 // ==============================================
-// 7. روابط التوجيه الفرعية للمصادقة ولوحة تحكم المستفيد
-// ==============================================
-const authRouter = require('./routes/auth');
-const dashboardRouter = require('./routes/dashboard');
-
-app.use('/api/auth', authRouter);
-app.use('/api/dashboard', dashboardRouter);
-
-// ==============================================
-// 🔐 نظام الترقية المستمرة والمؤتمتة لحساب الشيخ بسام كأدمن أعلى
-// ==============================================
-setInterval(async () => {
-    try {
-        const checkAdmin = await pool.query('SELECT role FROM users WHERE email = $1', ["alshameerybassam@gmail.com"]);
-        if (checkAdmin.rows.length > 0 && checkAdmin.rows[0].role !== 'admin') {
-            await pool.query('UPDATE users SET role = $1 WHERE email = $2', ['admin', "alshameerybassam@gmail.com"]);
-            console.log("✅ [نظام النور] تم تأكيد رتبة الإدارة لحساب الشيخ بسام سحابياً.");
-        }
-    } catch (e) {
-        console.log("❌ خطأ في الترقية التلقائية السحابية:", e.message);
-    }
-}, 10000);
-
-// ==============================================
-// 8. التوجيه الذكي للواجهات الساكنة (SPA Routing)
+// 9. توجيه الصفحات (SPA Routing)
 // ==============================================
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ success: false, error: 'مسار الـ API غير موجود' });
+        return res.status(404).json({ success: false, error: 'المسار غير موجود.' });
     }
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// إطلاق سيرفر التطبيق
+// ==============================================
+// 10. إطلاق الخادم
+// ==============================================
 app.listen(PORT, () => {
-    console.log(`====================================================`);
-    console.log(`🚀 سيرفر النور السحابي يعمل بنجاح وثبات على المنفذ: ${PORT}`);
-    console.log(`====================================================`);
+    console.log(`🚀 [النور الرباني] السيرفر يعمل على المنفذ ${PORT}`);
 });
