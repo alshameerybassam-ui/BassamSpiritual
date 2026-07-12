@@ -212,14 +212,26 @@ app.get('/api/dashboard/me', verifyToken, async (req, res) => {
         if (user.rows.length === 0) return res.status(404).json({ success: false, error: 'مستخدم غير موجود.' });
 
         const requests = await pool.query(
-            `SELECT id, service_type, status, description, initial_diagnosis, treatment_plan, created_at
+            `SELECT id, 
+                    service_type AS "serviceType", 
+                    status, 
+                    description, 
+                    initial_diagnosis AS "initialDiagnosis", 
+                    treatment_plan AS "treatmentPlan", 
+                    created_at AS "createdAt"
              FROM requests WHERE user_id = $1 ORDER BY created_at DESC`,
             [req.userId]
         );
 
+        const userData = user.rows[0];
         res.json({
             success: true,
-            user: user.rows[0],
+            user: {
+                id: userData.id,
+                fullName: userData.full_name,
+                email: userData.email,
+                role: userData.role
+            },
             requests: requests.rows
         });
     } catch (err) {
@@ -247,7 +259,15 @@ app.post('/api/dashboard/request', verifyToken, async (req, res) => {
 
 app.get('/api/dashboard/request/:id', verifyToken, async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
+        const result = await pool.query(
+            `SELECT *, 
+                    service_type AS "serviceType", 
+                    created_at AS "createdAt", 
+                    treatment_plan AS "treatmentPlan",
+                    initial_diagnosis AS "initialDiagnosis"
+             FROM requests WHERE id = $1`,
+            [req.params.id]
+        );
         if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'الطلب غير موجود.' });
         if (parseInt(result.rows[0].user_id) !== parseInt(req.userId)) return res.status(403).json({ success: false, error: 'غير مصرح.' });
         res.json({ success: true, request: result.rows[0] });
@@ -281,7 +301,18 @@ app.put('/api/dashboard/request/:id/submit-payment', verifyToken, async (req, re
 app.get('/api/admin/requests', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT r.*, u.full_name, u.email FROM requests r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`
+            `SELECT r.*, 
+                    r.service_type AS "serviceType", 
+                    r.created_at AS "createdAt", 
+                    r.total_paid_amount AS "totalPaidAmount",
+                    r.initial_rejection_reason AS "initialRejectionReason",
+                    r.payment_sender_name AS "paymentSenderName",
+                    r.payment_transfer_number AS "paymentTransferNumber",
+                    u.full_name AS "fullName", 
+                    u.email 
+             FROM requests r 
+             JOIN users u ON r.user_id = u.id 
+             ORDER BY r.created_at DESC`
         );
         res.json(result.rows);
     } catch (e) {
