@@ -469,23 +469,32 @@
 
         try {
             const res = await fetch('/api/articles');
-            let articles = [];
-            if (res.ok) articles = await res.json();
-            if (!articles || articles.length === 0) {
-                articles = defaultFrontArticles;
+            if (res.ok) {
+                const apiData = await res.json();
+                
+                // التعامل الفائق مع مصفوفة الـ Rows الخاصة بـ PostgreSQL أو المصفوفات المباشرة
+                const fetchedArticles = apiData.rows ? apiData.rows : (Array.isArray(apiData) ? apiData : []);
+                
+                if (fetchedArticles.length > 0) {
+                    allArticles = [...fetchedArticles, ...defaultFrontArticles];
+                } else {
+                    allArticles = defaultFrontArticles;
+                }
+            } else {
+                allArticles = defaultFrontArticles;
             }
-            allArticles = articles; // تحديث المصفوفة العامة بالمقالات المستلمة
-            renderArticles(container, articles);
         } catch (e) {
+            console.warn("استخدام المقالات الاحتياطية (قاعدة البيانات قد تكون في وضع الخمول مؤقتاً):", e);
             allArticles = defaultFrontArticles;
-            renderArticles(container, defaultFrontArticles);
         }
+
+        renderArticles(container, allArticles);
     }
 
     function renderArticles(container, articles) {
         container.innerHTML = articles.map(art => {
-            // استخراج المعرف بأمان تامة وضمان أنه نصي
-            const articleId = art.id || art._id;
+            // معالجة مرنة لمعرفات PostgreSQL لضمان التحويل لنص واستخراج الـ ID بأي صيغة
+            const articleId = String(art.id || art.ID || art._id || '');
             return `
                 <div class="article-card" style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.02); border:1px solid #f1f5f9; display:flex; flex-direction:column; justify-content:space-between;">
                     <div>
@@ -494,7 +503,7 @@
                         <p style="color:#64748b; font-size:0.95rem; line-height:1.6; margin-bottom:15px;">${art.summary}</p>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:15px; margin-top:15px;">
-                        <span style="font-size:0.85rem; color:#94a3b8;"><i class="bi bi-calendar3"></i> ${art.date}</span>
+                        <span style="font-size:0.85rem; color:#94a3b8;"><i class="bi bi-calendar3"></i> ${art.date || ''}</span>
                         <button onclick="readFullArticle('${articleId}')" style="background:none; border:none; color:#2c3e50; font-weight:700; font-family:'Cairo'; cursor:pointer; display:flex; align-items:center; gap:5px; font-size:0.9rem;">إقرأ المزيد <i class="bi bi-arrow-left"></i></button>
                     </div>
                 </div>
@@ -507,7 +516,7 @@
         const contentEl = document.getElementById('modalArticleContent');
         if (!modal || !contentEl) return;
 
-        // إظهار نافذة الانتظار فوراً
+        // إظهار نافذة الانتظار فوراً لمنع أي جمود في الواجهة
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('show'), 10);
         
@@ -519,34 +528,37 @@
             <p style="text-align:center; padding:20px; color:#888;"><i class="bi bi-arrow-clockwise btn-spin"></i> يرجى الانتظار ثوانٍ معدودة...</p>
         `;
 
-        // البحث المرن داخل المصفوفة المحلية أولاً (بالمقارنة العادية == وتأمين الأنواع)
-        let matchedArticle = allArticles.find(a => (a.id == id || a._id == id));
+        // الخطوة 1: البحث المطابق الصارم مع تحويل كافة العناصر لنصوص لمنع مشاكل اختلاف النوع (String vs Number)
+        let matchedArticle = allArticles.find(a => String(a.id || a.ID || a._id) === String(id));
         
-        // إذا لم يعثر عليه محلياً، يقوم بطلبه من السيرفر
+        // الخطوة 2: إذا لم يعثر عليه محلياً، يقوم بطلبه فوراً من الخلفية عبر الـ API
         if (!matchedArticle) {
             try {
                 const res = await fetch(`/api/articles/${id}`);
-                if (res.ok) matchedArticle = await res.json();
+                if (res.ok) {
+                    const data = await res.json();
+                    matchedArticle = data.rows ? data.rows[0] : data;
+                }
             } catch (e) { 
-                console.error("Error fetching article details:", e); 
+                console.error("Error fetching article details from PostgreSQL:", e); 
             }
         }
 
+        // الخطوة 3: عرض المقال بالكامل مع تجميل الأسطر والمحتوى النثري
         if (matchedArticle) {
-            // تحويل السطور البرمجية الجديدة لوسوم HTML لضمان التنسيق الجمالي للمقال
-            const formattedContent = matchedArticle.content ? matchedArticle.content.replace(/\n/g, '<br>') : '';
+            const formattedContent = matchedArticle.content ? matchedArticle.content.replace(/\n/g, '<br>') : 'لا يوجد محتوى لهذا المقال حالياً.';
             contentEl.innerHTML = `
                 <div class="modal-article-header">
                     <div class="badge-icon"><i class="${matchedArticle.icon || 'bi bi-feather'}"></i></div>
                     <h2>${matchedArticle.title}</h2>
-                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:8px;"><i class="bi bi-calendar3"></i> تاريخ النشر: ${matchedArticle.date}</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:8px;"><i class="bi bi-calendar3"></i> تاريخ النشر: ${matchedArticle.date || ''}</div>
                 </div>
                 <div style="direction:rtl; text-align:right; line-height:1.8; color:#334155; font-size:1.05rem; font-family:'Cairo';">
                     ${formattedContent}
                 </div>
             `;
         } else {
-            contentEl.innerHTML = `<p style="text-align:center; color:#ef4444; padding: 20px;">عذراً، لم يتم العثور على محتوى المقال المطلوب حالياً.</p>`;
+            contentEl.innerHTML = `<p style="text-align:center; color:#ef4444; padding: 20px; font-family:'Cairo'; font-weight:700;">عذراً، لم يتم العثور على محتوى المقال في قاعدة بيانات المركز حالياً.</p>`;
         }
     }
 
