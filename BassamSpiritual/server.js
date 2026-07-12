@@ -474,6 +474,7 @@ app.delete('/api/admin/requests/:id', verifyAdminToken, async (req, res) => {
 // 6. مسارات التحكم بالمقالات وآراء المستفيدين والذكاء الاصطناعي
 // ==============================================
 
+// 1. جلب كافة المقالات لصفحة العرض العامة
 app.get('/api/articles', async (req, res) => {
     try {
         const articles = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
@@ -483,6 +484,30 @@ app.get('/api/articles', async (req, res) => {
     }
 });
 
+// 🛠️ [المسار الحاسم والجديد]: جلب تفاصيل مقال فردي محدد لعرض النص الكامل (Content) 
+app.get('/api/articles/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const articleId = parseInt(id, 10);
+        if (isNaN(articleId)) {
+            return res.status(400).json({ error: "معرف المقال غير صالح" });
+        }
+
+        const result = await pool.query('SELECT * FROM articles WHERE id = $1', [articleId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "المقال غير موجود أو تم حذفه" });
+        }
+
+        // إرجاع كائن المقال الفردي كاملاً ومباشرة للواجهة
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("❌ خطأ سحابي عند جلب تفاصيل المقال الفردي:", error.message);
+        res.status(500).json({ error: "حدث خطأ أثناء تحميل تفاصيل المقال" });
+    }
+});
+
+// 2. مسار إضافة مقال جديد من لوحة تحكم الأدمن
 app.post('/api/admin/articles', verifyAdminToken, async (req, res) => {
     const { title, summary, content, icon } = req.body;
     try {
