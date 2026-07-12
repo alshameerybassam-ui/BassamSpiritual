@@ -163,7 +163,8 @@ async function viewRequest(id) {
     const token = localStorage.getItem('token');
     
     try {
-        const res = await fetch(`/api/dashboard/requests/${id}`, {
+        // تم الإصلاح الجذري هنا: تعديل المسار من /requests/ إلى /request/ ليتوافق مع السيرفر وينهي خطأ 404
+        const res = await fetch(`/api/dashboard/request/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -260,7 +261,8 @@ async function submitPaymentData(event, requestId) {
     }
 
     try {
-        const res = await fetch(`/api/requests/${requestId}/submit-payment`, {
+        // تم ضبط هذا المسار ليتلائم أيضاً مع هيكلية السيرفر المقابلة والموحدة
+        const res = await fetch(`/api/dashboard/request/${requestId}/submit-payment`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -320,7 +322,7 @@ document.getElementById('newRequestForm')?.addEventListener('submit', async func
     if(!description) { showNotification('⚠️ الرجاء شرح الأعراض أو الحالة بدقة.', 'error'); return; }
 
     try {
-        const res = await fetch('/api/requests', {
+        const res = await fetch('/api/dashboard/request', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
