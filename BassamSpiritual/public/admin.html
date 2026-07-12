@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="admin.css">
     
     <style>
-        /* أنماط إضافية للوحة التحكم */
         .filter-bar {
             display: flex;
             gap: 8px;
@@ -42,7 +41,6 @@
     <div id="notification" class="notification"></div>
 
     <div class="admin-wrapper">
-        <!-- القائمة الجانبية -->
         <aside class="sidebar" id="sidebarPanel">
             <div class="logo">
                 <i class="bi bi-shield-fill"></i>
@@ -67,12 +65,11 @@
                     </li>
                 </ul>
             </nav>
-            <div class="sidebar-footer" id="sidebarAdminName">
+            <div class="sidebar-footer">
                 <i class="bi bi-lock-fill"></i> إشراف: الشيخ بسام الشميري
             </div>
         </aside>
 
-        <!-- المحتوى الرئيسي -->
         <main class="main-content">
             <header>
                 <div class="header-title" style="display:flex; align-items:center; gap:12px;">
@@ -91,7 +88,6 @@
                 </div>
             </header>
 
-            <!-- الإحصائيات -->
             <section class="stats-grid">
                 <div class="stat-card gold">
                     <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
@@ -111,7 +107,6 @@
                 </div>
             </section>
 
-            <!-- قسم الطلبات -->
             <section class="table-section" id="requestsSection">
                 <div class="table-header">
                     <h2><i class="bi bi-people"></i> ملفات طلبات المستفيدين الحية</h2>
@@ -148,7 +143,6 @@
                 </div>
             </section>
 
-            <!-- قسم المقالات -->
             <section class="table-section" id="articlesSection" style="display:none;">
                 <div class="table-header">
                     <h2><i class="bi bi-book-open"></i> إدارة المقالات الروحية</h2>
@@ -158,7 +152,6 @@
                 </div>
             </section>
 
-            <!-- قسم الآراء -->
             <section class="table-section" id="reviewsSection" style="display:none;">
                 <div class="table-header">
                     <h2><i class="bi bi-chat-quote"></i> إدارة آراء المستفيدين</h2>
@@ -166,7 +159,6 @@
                 <p style="text-align:center; padding:20px;">قسم إدارة الآراء قيد التطوير.</p>
             </section>
 
-            <!-- قسم الذكاء الاصطناعي -->
             <section class="table-section" id="aiSection" style="display:none;">
                 <div class="table-header">
                     <h2><i class="bi bi-cpu"></i> توجيه الذكاء الاصطناعي</h2>
@@ -176,11 +168,10 @@
         </main>
     </div>
 
-    <!-- نافذة التفاصيل -->
     <div id="detailsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="bi bi-file-text"></i> مراجعة ملف المستفيد</h3>
+                <h3><i class="bi bi-file-text"></i> مراجعة ملف المستفيد وإصدار الخطة العلاجية</h3>
                 <span class="close-modal" onclick="AdminPage.closeModal()">&times;</span>
             </div>
             <div class="modal-body" id="modalBody"></div>
