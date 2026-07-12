@@ -138,9 +138,9 @@ router.post('/request', authenticate, async (req, res) => {
 });
 
 // ==============================================
-// 3️⃣ الحصول على تفاصيل طلب روحي معين للمستفيد
+// 3️⃣ الحصول على تفاصيل طلب روحي معين للمستفيد (يدعم المفرد والجمع)
 // ==============================================
-router.get('/request/:id', authenticate, async (req, res) => {
+const getSingleRequest = async (req, res) => {
     const { id } = req.params;
     const pool = req.app.get('db');
 
@@ -175,7 +175,11 @@ router.get('/request/:id', authenticate, async (req, res) => {
         console.error('❌ خطأ في جلب تفاصيل الطلب المفرد:', err.message);
         res.status(500).json({ success: false, error: 'حدث خطأ غير متوقع بالخادم.' });
     }
-});
+};
+
+// حل ذكي: استقبال الطلب سواء كتب المتصفح request أو requests
+router.get('/request/:id', authenticate, getSingleRequest);
+router.get('/requests/:id', authenticate, getSingleRequest);
 
 // ==============================================
 // 4️⃣ جلب جميع طلبات المستفيدين الكلية (خاص بلوحة الإدارة للشيخ بسام)
