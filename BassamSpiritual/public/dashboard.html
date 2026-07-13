@@ -1,177 +1,30 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لوحة التحكم | مركز النور الرباني</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; }
-        .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .dashboard-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #fff; padding: 15px 25px; border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
-            flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041;
-        }
-        .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; }
-        .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; }
-        .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-        .btn-primary {
-            background: linear-gradient(135deg, #F5B041, #E67E22);
-            color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px;
-            font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s;
-            font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-        }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,176,65,0.4); }
-        .btn-outline {
-            background: transparent; color: #0A1628; border: 2px solid #E2E8F0;
-            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
-            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-        }
-        .btn-outline:hover { border-color: #F5B041; color: #F5B041; }
-        .btn-danger-outline {
-            background: transparent; color: #e74c3c; border: 2px solid #e74c3c;
-            padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem;
-            cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif;
-        }
-        .btn-danger-outline:hover { background: #e74c3c; color: #fff; }
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
-        .dashboard-sidebar { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-right: 4px solid #F5B041; }
-        .card h4 { color: #0A1628; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .card h4 i { color: #F5B041; }
-        .card .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-        .card .stat-item:last-child { border-bottom: none; }
-        .table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: right; }
-        .table th, .table td { padding: 12px; border-bottom: 1px solid #E2E8F0; font-size: 0.9rem; }
-        .table th { background-color: #F8FAFC; color: #4A5A6A; font-weight: 700; }
-        .badge { padding: 4px 10px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
-        .bg-warning { background-color: #FEF3C7; }
-        .bg-info { background-color: #E0F2FE; }
-        .bg-success { background-color: #D1FAE5; color: #065F46; }
-        .bg-danger { background-color: #FEE2E2; color: #991B1B; }
-        .bg-secondary { background-color: #F1F5F9; color: #475569; }
-        .bg-primary { background-color: #DBEAFE; color: #1E40AF; }
-        .bg-dark { background-color: #E2E8F0; color: #1E293B; }
-        .btn-sm { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; border: none; font-family: 'Cairo'; }
-        .btn-primary.btn-sm { background: #F5B041; color: #0A1628; font-weight: 600; }
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center;
-            padding: 20px; backdrop-filter: blur(4px);
-        }
-        .modal-overlay.show { display: flex; }
-        .modal-box {
-            background: #fff; border-radius: 20px; max-width: 600px; width: 100%;
-            max-height: 85vh; overflow-y: auto; padding: 30px; border-top: 8px solid #F5B041;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
-        }
-        .modal-box h3 { color: #0A1628; margin-bottom: 15px; }
-        .modal-box .close-modal { float: left; font-size: 1.8rem; cursor: pointer; color: #999; transition: 0.3s; }
-        .modal-box .close-modal:hover { color: #e74c3c; transform: rotate(90deg); }
-        .modal-box label { display: block; font-weight: 700; margin-top: 15px; margin-bottom: 5px; font-size: 0.9rem; }
-        .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.95rem; margin-bottom: 10px; }
-        .modal-box textarea { min-height: 80px; }
-        .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; }
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600;
-            z-index: 99999; display: none; min-width: 300px; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); font-family: 'Cairo';
-        }
-        .notification.success { background: #27ae60; }
-        .notification.error { background: #e74c3c; }
-        .notification.show { display: block; }
-        .alert { padding: 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.6; }
-        .alert-info { background-color: #E0F2FE; color: #0369A1; border-right: 4px solid #0EA5E9; }
-        @media (max-width: 768px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .dashboard-header { flex-direction: column; align-items: flex-start; }
-            .dashboard-header .actions { width: 100%; justify-content: flex-start; }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'Cairo', sans-serif; background: #F8FAFC; color: #1A2835; } .dashboard-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; } .dashboard-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; flex-wrap: wrap; gap: 10px; border-right: 6px solid #F5B041; } .dashboard-header .user-info h3 { color: #0A1628; font-size: 1.2rem; } .dashboard-header .user-info p { color: #6A7A8A; font-size: 0.9rem; } .dashboard-header .actions { display: flex; gap: 12px; flex-wrap: wrap; } .btn-primary { background: linear-gradient(135deg, #F5B041, #E67E22); color: #0A1628; border: none; padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; } .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,176,65,0.4); } .btn-outline { background: transparent; color: #0A1628; border: 2px solid #E2E8F0; padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; } .btn-outline:hover { border-color: #F5B041; color: #F5B041; } .btn-danger-outline { background: transparent; color: #e74c3c; border: 2px solid #e74c3c; padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; font-family: 'Cairo', sans-serif; } .btn-danger-outline:hover { background: #e74c3c; color: #fff; } .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; } .dashboard-sidebar { display: flex; flex-direction: column; gap: 20px; } .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-right: 4px solid #F5B041; } .card h4 { color: #0A1628; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; } .card h4 i { color: #F5B041; } .card .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; } .card .stat-item:last-child { border-bottom: none; } .table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: right; } .table th, .table td { padding: 12px; border-bottom: 1px solid #E2E8F0; font-size: 0.9rem; } .table th { background-color: #F8FAFC; color: #4A5A6A; font-weight: 700; } .badge { padding: 4px 10px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; display: inline-block; } .bg-warning { background-color: #FEF3C7; } .bg-info { background-color: #E0F2FE; } .bg-success { background-color: #D1FAE5; color: #065F46; } .bg-danger { background-color: #FEE2E2; color: #991B1B; } .bg-secondary { background-color: #F1F5F9; color: #475569; } .bg-primary { background-color: #DBEAFE; color: #1E40AF; } .bg-dark { background-color: #E2E8F0; color: #1E293B; } .btn-sm { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; border: none; font-family: 'Cairo'; } .btn-primary.btn-sm { background: #F5B041; color: #0A1628; font-weight: 600; } .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,22,40,0.7); z-index: 9999; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); } .modal-overlay.show { display: flex; } .modal-box { background: #fff; border-radius: 20px; max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 30px; border-top: 8px solid #F5B041; box-shadow: 0 30px 80px rgba(0,0,0,0.3); } .modal-box h3 { color: #0A1628; margin-bottom: 15px; } .modal-box .close-modal { float: left; font-size: 1.8rem; cursor: pointer; color: #999; transition: 0.3s; } .modal-box .close-modal:hover { color: #e74c3c; transform: rotate(90deg); } .modal-box label { display: block; font-weight: 700; margin-top: 15px; margin-bottom: 5px; font-size: 0.9rem; } .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 0.95rem; margin-bottom: 10px; } .modal-box textarea { min-height: 80px; } .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #F5B041; outline: none; } .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 15px 25px; border-radius: 12px; color: #fff; font-weight: 600; z-index: 99999; display: none; min-width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); font-family: 'Cairo'; } .notification.success { background: #27ae60; } .notification.error { background: #e74c3c; } .notification.show { display: block; } .alert { padding: 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.6; } .alert-info { background-color: #E0F2FE; color: #0369A1; border-right: 4px solid #0EA5E9; } @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } .dashboard-header { flex-direction: column; align-items: flex-start; } .dashboard-header .actions { width: 100%; justify-content: flex-start; } }
     </style>
 </head>
 <body>
     <div id="notification" class="notification"></div>
-
     <div class="dashboard-wrapper">
-        <div class="dashboard-header">
-            <div class="user-info"><h3 id="userName">مرحباً، <span>...</span></h3><p id="userEmail">...</p></div>
-            <div class="actions">
-                <a href="/" class="btn-outline"><i class="bi bi-house"></i> الرئيسية</a>
-                <button onclick="DashboardPage.openNewRequestModal()" class="btn-primary"><i class="bi bi-plus-circle"></i> طلب جديد</button>
-                <a href="/login.html" class="btn-danger-outline" onclick="localStorage.clear()"><i class="bi bi-box-arrow-right"></i> خروج</a>
-            </div>
-        </div>
-
+        <div class="dashboard-header"><div class="user-info"><h3 id="userName">مرحباً، <span>...</span></h3><p id="userEmail">...</p></div><div class="actions"><a href="/" class="btn-outline"><i class="bi bi-house"></i> الرئيسية</a><button onclick="DashboardPage.openNewRequestModal()" class="btn-primary"><i class="bi bi-plus-circle"></i> طلب جديد</button><a href="/login.html" class="btn-danger-outline" onclick="localStorage.clear()"><i class="bi bi-box-arrow-right"></i> خروج</a></div></div>
         <div class="dashboard-grid">
             <div class="dashboard-sidebar">
-                <div class="card">
-                    <h4><i class="bi bi-person-circle"></i> ملفي الشخصي</h4>
-                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
-                        <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#F5B041,#E67E22); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.8rem; font-weight:700;"><span id="userInitial">ب</span></div>
-                        <div><div style="font-weight:700; font-size:1.1rem;" id="sidebarName">...</div><div style="color:#6A7A8A; font-size:0.85rem;" id="sidebarEmail">...</div></div>
-                    </div>
-                    <div style="border-top:1px solid #eee; padding-top:10px; margin-top:5px;">
-                        <div class="stat-item"><span>📱 الهاتف</span> <span id="sidebarPhone">غير مضاف</span></div>
-                        <div class="stat-item"><span>📅 تاريخ التسجيل</span> <span id="sidebarJoined">...</span></div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h4><i class="bi bi-chart-pie"></i> إحصائياتي</h4>
-                    <div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div>
-                    <div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div>
-                    <div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div>
-                    <div class="stat-item"><span>❌ مرفوضة</span> <span id="statRejected">0</span></div>
-                </div>
+                <div class="card"><h4><i class="bi bi-person-circle"></i> ملفي الشخصي</h4><div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;"><div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#F5B041,#E67E22); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.8rem; font-weight:700;"><span id="userInitial">ب</span></div><div><div style="font-weight:700; font-size:1.1rem;" id="sidebarName">...</div><div style="color:#6A7A8A; font-size:0.85rem;" id="sidebarEmail">...</div></div></div><div style="border-top:1px solid #eee; padding-top:10px; margin-top:5px;"><div class="stat-item"><span>📱 الهاتف</span> <span id="sidebarPhone">غير مضاف</span></div><div class="stat-item"><span>📅 تاريخ التسجيل</span> <span id="sidebarJoined">...</span></div></div></div>
+                <div class="card"><h4><i class="bi bi-chart-pie"></i> إحصائياتي</h4><div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div><div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div><div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div><div class="stat-item"><span>❌ مرفوضة</span> <span id="statRejected">0</span></div></div>
             </div>
-
-            <div>
-                <div class="card" style="border-right-color:#1B4D3D;">
-                    <h4><i class="bi bi-list"></i> طلباتي</h4>
-                    <div id="requestsList" style="margin-top: 15px;"><p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p></div>
-                </div>
-            </div>
+            <div><div class="card" style="border-right-color:#1B4D3D;"><h4><i class="bi bi-list"></i> طلباتي</h4><div id="requestsList" style="margin-top: 15px;"><p style="text-align:center; color:#6A7A8A; padding:20px;">جاري تحميل الطلبات...</p></div></div></div>
         </div>
     </div>
-
-    <div id="newRequestModal" class="modal-overlay">
-        <div class="modal-box">
-            <span class="close-modal" onclick="DashboardPage.closeNewRequestModal()">&times;</span>
-            <h3><i class="bi bi-heart-pulse"></i> تقديم ملف حالة جديد</h3>
-            <form id="newRequestForm" onsubmit="DashboardPage.submitNewRequest(event)">
-                <label>نوع الخدمة المطلوبة <span style="color:#e74c3c;">*</span></label>
-                <select id="reqServiceType" required>
-                    <option value="استشارة روحانية">استشارة روحانية (100 ر.س)</option>
-                    <option value="علاج روحي">علاج روحي (100 ر.س)</option>
-                    <option value="تفسير رؤيا">تفسير رؤيا (100 ر.س)</option>
-                    <option value="حل مشكلة أسرية">حل مشكلة أسرية (100 ر.س)</option>
-                    <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
-                </select>
-                <label>وصف الحالة بالتفصيل <span style="color:#e74c3c;">*</span></label>
-                <textarea id="reqDescription" rows="5" placeholder="اكتب ما تعاني منه بكل وضوح وتفصيل..." required></textarea>
-                <button type="submit" class="btn-primary" style="width:100%; margin-top:20px; justify-content:center;"><i class="bi bi-send"></i> إرسال الطلب</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="viewRequestModal" class="modal-overlay">
-        <div class="modal-box">
-            <span class="close-modal" onclick="document.getElementById('viewRequestModal').classList.remove('show')">&times;</span>
-            <h3><i class="bi bi-file-text"></i> مراجعة الطلب</h3>
-            <div id="requestDetailsContainer" style="margin-top: 15px;"><p>جاري التحميل...</p></div>
-        </div>
-    </div>
-
+    <div id="newRequestModal" class="modal-overlay"><div class="modal-box"><span class="close-modal" onclick="DashboardPage.closeNewRequestModal()">&times;</span><h3><i class="bi bi-heart-pulse"></i> تقديم ملف حالة جديد</h3><form id="newRequestForm" onsubmit="DashboardPage.submitNewRequest(event)"><label>نوع الخدمة المطلوبة <span style="color:#e74c3c;">*</span></label><select id="reqServiceType" required><option value="استشارة روحانية">استشارة روحانية (100 ر.س)</option><option value="علاج روحي">علاج روحي (100 ر.س)</option><option value="تفسير رؤيا">تفسير رؤيا (100 ر.س)</option><option value="حل مشكلة أسرية">حل مشكلة أسرية (100 ر.س)</option><option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option></select><label>وصف الحالة بالتفصيل <span style="color:#e74c3c;">*</span></label><textarea id="reqDescription" rows="5" placeholder="اكتب ما تعاني منه بكل وضوح وتفصيل..." required></textarea><button type="submit" class="btn-primary" style="width:100%; margin-top:20px; justify-content:center;"><i class="bi bi-send"></i> إرسال الطلب</button></form></div></div>
+    <div id="viewRequestModal" class="modal-overlay"><div class="modal-box"><span class="close-modal" onclick="document.getElementById('viewRequestModal').classList.remove('show')">&times;</span><h3><i class="bi bi-file-text"></i> مراجعة الطلب</h3><div id="requestDetailsContainer" style="margin-top: 15px;"><p>جاري التحميل...</p></div></div></div>
     <script src="api.js"></script>
 </body>
 </html>
