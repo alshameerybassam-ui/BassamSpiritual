@@ -29,7 +29,7 @@ async function apiRequest(url, method = 'GET', body = null) {
     return data;
 }
 
-// --------------- 1. الصفحة الرئيسية + المستشار الذكي (HomePage) ---------------
+// --------------- 1. الصفحة الرئيسية + المستشار الذكي ---------------
 const HomePage = {
     articles: [],
     chatState: { step: 'intro', userData: {}, isProcessing: false },
@@ -238,7 +238,7 @@ function sendMessage() { HomePage.sendChatMessage(); }
 function closeArticleModal() { HomePage.closeArticleModal(); }
 function closeArticleModalOnOverlay(e) { if (e.target.id === 'articleModal') closeArticleModal(); }
 
-// --------------- 2. لوحة تحكم المستفيد (DashboardPage) ---------------
+// --------------- 2. لوحة تحكم المستفيد ---------------
 const DashboardPage = {
     async init() { await this.loadProfile(); },
 
@@ -306,7 +306,7 @@ const DashboardPage = {
     closeNewRequestModal() { document.getElementById('newRequestModal')?.classList.remove('show'); }
 };
 
-// --------------- 3. لوحة تحكم المدير (AdminPage) ---------------
+// --------------- 3. لوحة تحكم المدير ---------------
 const AdminPage = {
     allRequests: [], allArticles: [],
     currentFilter: 'all',
