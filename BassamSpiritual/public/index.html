@@ -5,19 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مركز النور الرباني والنفس الرحماني | الشيخ بسام الشميري (آل الكدهي)</title>
     
-    <!-- الخطوط -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
-    <!-- الأيقونات -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
-    <!-- الأنماط الأساسية -->
     <link rel="stylesheet" href="style.css">
     
     <style>
-        /* أنماط خاصة بالصفحة الرئيسية */
         .hero-section {
             background: linear-gradient(135deg, #0A1628 0%, #1B2A3D 100%);
             border-radius: 32px;
@@ -52,44 +47,9 @@
             0%, 100% { opacity: 0.4; }
             50% { opacity: 1; }
         }
-
-        .article-card-modern {
-            background: #fff;
-            border-radius: 20px;
-            padding: 28px 24px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
-            border: 1px solid rgba(0,0,0,0.04);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .article-card-modern:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(10, 22, 40, 0.12);
-            border-color: rgba(245, 176, 65, 0.3);
-        }
-        .article-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(245,176,65,0.1), rgba(245,176,65,0.05));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: #D4AF37;
-            margin-bottom: 18px;
-        }
-
         @media (max-width: 768px) {
-            .hero-section {
-                padding: 30px 15px 25px;
-                border-radius: 20px;
-            }
-            .hero-section h1 {
-                font-size: 1.8rem !important;
-            }
+            .hero-section { padding: 30px 15px 25px; border-radius: 20px; }
+            .hero-section h1 { font-size: 1.8rem !important; }
         }
     </style>
 </head>
@@ -97,7 +57,6 @@
 
     <div id="notification" class="notification"></div>
     
-    <!-- شريط الأزرار العلوي -->
     <div class="header-actions">
         <div class="header-buttons">
             <a href="/login" class="btn-header btn-request" id="requestBtn">
@@ -116,197 +75,96 @@
     </div>
 
     <div class="container">
-        <!-- ===== القسم الرئيسي (الهيرو) ===== -->
         <div class="hero-section">
             <div class="hero-glow"></div>
-            
             <div style="text-align: center; position: relative; z-index: 2;">
-                <!-- شارة -->
-                <div class="hero-badge">
-                    <i class="bi bi-patch-check-fill"></i> مركز معتمد للاستشفاء الروحي
-                </div>
-                
-                <!-- العنوان -->
+                <div class="hero-badge"><i class="bi bi-patch-check-fill"></i> مركز معتمد للاستشفاء الروحي</div>
                 <h1 style="font-size: 3.2rem; font-weight: 800; color: #fff; margin: 20px 0 12px; line-height: 1.4;">
-                    مركز <span style="color:#F5B041;">النور الرباني</span>
-                    <br>و<span style="color:#F5B041;">النَفَس الرحماني</span>
+                    مركز <span style="color:#F5B041;">النور الرباني</span><br>و<span style="color:#F5B041;">النَفَس الرحماني</span>
                 </h1>
-                <p class="sub-title" style="font-size:1.3rem; color:#E0C88A; font-weight:400; margin-bottom:20px; letter-spacing:2px;">
-                    ﴿ لإعادة اتزان الروح والنفس والجسد ﴾
-                </p>
+                <p class="sub-title" style="font-size:1.3rem; color:#E0C88A; font-weight:400; margin-bottom:20px; letter-spacing:2px;">﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
                 
-                <!-- إدارة الشيخ -->
                 <div class="management-line" style="color:#ccc;">
                     <i class="bi bi-award-fill" style="color:#F5B041;"></i>
-                    بإدارة الشيخ <strong style="color:#fff;">بسام الشميري</strong>
-                    <span class="lineage-tag">(آل الكدهي)</span>
+                    بإدارة الشيخ <strong style="color:#fff;">بسام الشميري</strong> <span class="lineage-tag">(آل الكدهي)</span>
                 </div>
                 
-                <!-- الشارات -->
                 <div class="expert-badges" style="justify-content: center; margin: 25px 0;">
-                    <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
-                        <i class="bi bi-book-half" style="color:#F5B041;"></i> راقي شرعي
-                    </span>
-                    <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
-                        <i class="bi bi-heart-pulse-fill" style="color:#F5B041;"></i> معالج روحاني
-                    </span>
-                    <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
-                        <i class="bi bi-activity" style="color:#F5B041;"></i> مستشار نفسي
-                    </span>
+                    <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;"><i class="bi bi-book-half" style="color:#F5B041;"></i> راقي شرعي</span>
+                    <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;"><i class="bi bi-heart-pulse-fill" style="color:#F5B041;"></i> معالج روحاني</span>
+                    <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;"><i class="bi bi-activity" style="color:#F5B041;"></i> مستشار نفسي</span>
                 </div>
                 
-                <!-- رابط النسب -->
                 <div style="margin: 20px 0 30px;">
                     <a href="/about-sheikh.html" style="color:#F5B041; text-decoration:none; font-weight:600; font-size:1rem; border-bottom:2px solid transparent; padding-bottom:4px; transition:0.3s;" onmouseover="this.style.borderColor='#F5B041'" onmouseout="this.style.borderColor='transparent'">
                         <i class="bi bi-tree-fill"></i> النسب الشريف للشيخ بسام الشميري
                     </a>
                 </div>
                 
-                <!-- زر المستشار الذكي -->
                 <div>
                     <button onclick="toggleChat()" style="background: linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; border:none; padding:16px 42px; border-radius:60px; font-size:1.25rem; font-weight:800; cursor:pointer; box-shadow:0 12px 35px rgba(245,176,65,0.45); display:inline-flex; align-items:center; gap:12px; transition:0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 18px 45px rgba(245,176,65,0.6)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 12px 35px rgba(245,176,65,0.45)';">
-                        <i class="bi bi-robot" style="font-size:1.8rem;"></i>
-                        تحدث مع المستشار الروحاني الذكي
+                        <i class="bi bi-robot" style="font-size:1.8rem;"></i> تحدث مع المستشار الروحاني الذكي
                     </button>
-                    <p style="font-size:0.85rem; color:#8A9AA8; margin-top:12px;">
-                        <i class="bi bi-shield-fill-check" style="color:#F5B041;"></i> محادثة آمنة وسرية تامة
-                    </p>
+                    <p style="font-size:0.85rem; color:#8A9AA8; margin-top:12px;"><i class="bi bi-shield-fill-check" style="color:#F5B041;"></i> محادثة آمنة وسرية تامة</p>
                 </div>
                 
-                <p style="color:#8A9AA8; margin-top:25px; font-size:1.05rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px;">
-                    رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.
-                </p>
+                <p style="color:#8A9AA8; margin-top:25px; font-size:1.05rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px;">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
             </div>
         </div>
 
-        <!-- ===== وثيقة السرية ===== -->
         <div class="trust-card">
-            <div class="trust-icon">
-                <i class="bi bi-shield-shaded"></i>
-                <i class="bi bi-lock-fill lock-overlay"></i>
-            </div>
+            <div class="trust-icon"><i class="bi bi-shield-shaded"></i><i class="bi bi-lock-fill lock-overlay"></i></div>
             <div class="trust-content">
                 <h3><i class="bi bi-check-circle-fill"></i> عهد السرية التامة لجميع خدمات المركز</h3>
-                <p>
-                    نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن.
-                    <strong>السرية التامة هي عهدنا المقدس مع كل مستفيد</strong>،
-                    في جميع استشاراتنا وخدماتنا الروحية والنفسية دون استثناء.
-                    لا يطلع على تفاصيلك <strong>سوى الله</strong> ثم الشيخ بسام،
-                    لا تتجاوز أسرارك جدران هذا المركز المبارك، مهما كان نوع الخدمة التي تختارها.
-                </p>
-                <p class="trust-assurance">
-                    <i class="bi bi-feather"></i>
-                    تحدث بكل راحة واطمئنان.. فأنت في ملاذٍ آمنٍ بإذن الله.
-                </p>
-                <div class="trust-seal">
-                    <i class="bi bi-patch-check-fill"></i>
-                    <span>سياسة السرية تشمل جميع الخدمات: الاستشارات، العلاج، والجلسات الصوتية</span>
-                </div>
+                <p>نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن. <strong>السرية التامة هي عهدنا المقدس مع كل مستفيد</strong>، في جميع استشاراتنا وخدماتنا الروحية والنفسية دون استثناء. لا يطلع على تفاصيلك <strong>سوى الله</strong> ثم الشيخ بسام، لا تتجاوز أسرارك جدران هذا المركز المبارك، مهما كان نوع الخدمة التي تختارها.</p>
+                <p class="trust-assurance"><i class="bi bi-feather"></i> تحدث بكل راحة واطمئنان.. فأنت في ملاذٍ آمنٍ بإذن الله.</p>
+                <div class="trust-seal"><i class="bi bi-patch-check-fill"></i> <span>سياسة السرية تشمل جميع الخدمات: الاستشارات، العلاج، والجلسات الصوتية</span></div>
             </div>
         </div>
 
-        <!-- ===== العدادات ===== -->
         <div class="trust-counter">
-            <div class="counter-item">
-                <i class="bi bi-heart-fill"></i>
-                <span class="counter-number" data-target="963">0</span>
-                <p>حالة تم علاجها</p>
-            </div>
-            <div class="counter-item">
-                <i class="bi bi-star-fill"></i>
-                <span class="counter-number" data-target="98">0</span>
-                <p>% نسبة الرضا الإجمالية</p>
-            </div>
-            <div class="counter-item">
-                <i class="bi bi-people-fill"></i>
-                <span class="counter-number" data-target="498">0</span>
-                <p>حالة استشفاء روحي</p>
-            </div>
-            <div class="counter-item">
-                <i class="bi bi-clock-history"></i>
-                <span class="counter-number" data-target="9">0</span>
-                <p>سنوات من الخبرة والعطاء</p>
-            </div>
+            <div class="counter-item"><i class="bi bi-heart-fill"></i><span class="counter-number" data-target="963">0</span><p>حالة تم علاجها</p></div>
+            <div class="counter-item"><i class="bi bi-star-fill"></i><span class="counter-number" data-target="98">0</span><p>% نسبة الرضا الإجمالية</p></div>
+            <div class="counter-item"><i class="bi bi-people-fill"></i><span class="counter-number" data-target="498">0</span><p>حالة استشفاء روحي</p></div>
+            <div class="counter-item"><i class="bi bi-clock-history"></i><span class="counter-number" data-target="9">0</span><p>سنوات من الخبرة والعطاء</p></div>
         </div>
 
-        <!-- ===== قسم المقالات الروحية ===== -->
         <section class="section">
-            <div class="section-header">
-                <h2><i class="bi bi-feather"></i> مقالات روحية</h2>
-                <span>كنوز من النور والمعرفة</span>
-            </div>
+            <div class="section-header"><h2><i class="bi bi-feather"></i> مقالات روحية</h2><span>كنوز من النور والمعرفة</span></div>
             <div id="articlesContainer" class="articles-grid"></div>
         </section>
 
-        <!-- ===== قسم الخدمات ===== -->
         <section class="section">
-            <div class="section-header">
-                <h2><i class="bi bi-gem"></i> خدماتنا الروحية</h2>
-                <span>اختر ما يناسبك</span>
-            </div>
+            <div class="section-header"><h2><i class="bi bi-gem"></i> خدماتنا الروحية</h2><span>اختر ما يناسبك</span></div>
             <div class="services-grid">
-                <div class="service-card gold-card">
-                    <i class="bi bi-heart-fill"></i>
-                    <h4>الاستشارة الروحانية والنفسية</h4>
-                    <p>توجيه وعلاج بالطاقة الربانية، وكشف الوهم النفساني</p>
-                    <a href="/login" class="btn-service-request"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a>
-                </div>
-                <div class="service-card gold-card">
-                    <i class="bi bi-capsule"></i>
-                    <h4>علاج العين والحسد والأسحار والرصد</h4>
-                    <p>علاج جميع الحالات المستعصية، تحصين ورقية شرعية</p>
-                    <a href="/login" class="btn-service-request"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a>
-                </div>
-                <div class="service-card gold-card">
-                    <i class="bi bi-telephone-inbound-fill"></i>
-                    <h4>الاتصال الصوتي للشيخ مباشرة</h4>
-                    <p>جلسة صوتية مباشرة مع الشيخ بسام الشميري</p>
-                    <a href="/login" class="btn-service-request"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a>
-                </div>
+                <div class="service-card gold-card"><i class="bi bi-heart-fill"></i><h4>الاستشارة الروحانية والنفسية</h4><p>توجيه وعلاج بالطاقة الربانية، وكشف الوهم النفساني</p><a href="/login" class="btn-service-request"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a></div>
+                <div class="service-card gold-card"><i class="bi bi-capsule"></i><h4>علاج العين والحسد والأسحار والرصد</h4><p>علاج جميع الحالات المستعصية، تحصين ورقية شرعية</p><a href="/login" class="btn-service-request"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a></div>
+                <div class="service-card gold-card"><i class="bi bi-telephone-inbound-fill"></i><h4>الاتصال الصوتي للشيخ مباشرة</h4><p>جلسة صوتية مباشرة مع الشيخ بسام الشميري</p><a href="/login" class="btn-service-request"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a></div>
             </div>
         </section>
 
-        <!-- ===== قسم آراء المستفيدين ===== -->
         <section class="section">
-            <div class="section-header">
-                <h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2>
-                <span>ما قالوه عن رحلة الشفاء</span>
-            </div>
+            <div class="section-header"><h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2><span>ما قالوه عن رحلة الشفاء</span></div>
             <div id="testimonialsContainer" class="testimonials-grid"></div>
         </section>
     </div>
 
-    <!-- ===== نافذة عرض المقال ===== -->
     <div id="articleModal" class="modal-overlay" style="display: none;" onclick="closeArticleModalOnOverlay(event)">
         <div class="modal-box">
             <div class="modal-top-bar"></div>
-            <span class="modal-close-floating" onclick="HomePage.closeArticleModal()">&times;</span>
-            <div class="modal-body" id="modalArticleContent">
-                <p style="text-align:center; padding:20px;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري التحميل...</p>
-            </div>
-            <div class="modal-footer">
-                <button onclick="HomePage.closeArticleModal()" class="btn-modal-close">إغلاق المقال</button>
-            </div>
+            <span class="modal-close-floating" onclick="closeArticleModal()">&times;</span>
+            <div class="modal-body" id="modalArticleContent"><p style="text-align:center; padding:20px;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري التحميل...</p></div>
+            <div class="modal-footer"><button onclick="closeArticleModal()" class="btn-modal-close">إغلاق المقال</button></div>
         </div>
     </div>
 
-    <!-- ===== نافذة المستشار الذكي ===== -->
     <div id="chatWindow" class="chat-window" style="display: none;">
         <div class="chat-header">
-            <div class="chat-header-info">
-                <i class="bi bi-robot" style="color:#F5B041;"></i>
-                <span>المستشار الروحاني الذكي</span>
-            </div>
-            <button onclick="HomePage.toggleChat()" class="chat-close">&times;</button>
+            <div class="chat-header-info"><i class="bi bi-robot" style="color:#F5B041;"></i><span>المستشار الروحاني الذكي</span></div>
+            <button onclick="toggleChat()" class="chat-close">&times;</button>
         </div>
         <div class="chat-body" id="chatBody">
-            <div class="chat-message bot">
-                <div class="message-content">
-                    السلام عليكم ورحمة الله وبركاته 🌙<br>
-                    أنا المستشار الروحاني الذكي، هنا لمساعدتك.<br>
-                    <strong>هل يمكنك إخباري بما تمر به؟</strong>
-                </div>
-            </div>
+            <div class="chat-message bot"><div class="message-content">السلام عليكم ورحمة الله وبركاته 🌙<br>أنا المستشار الروحاني الذكي، هنا لمساعدتك.<br><strong>هل يمكنك إخباري بما تمر به؟</strong></div></div>
         </div>
         <div class="chat-footer">
             <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
@@ -314,45 +172,19 @@
         </div>
     </div>
 
-    <<div id="chatIcon" class="chat-icon" onclick="toggleChat()">
-        <i class="bi bi-robot"></i>
-        <span class="chat-badge">💬</span>
-        <div class="chat-pulse"></div>
+    <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
+        <i class="bi bi-robot"></i><span class="chat-badge">💬</span><div class="chat-pulse"></div>
     </div>
 
-    <!-- ===== التذييل ===== -->
     <footer class="footer-new">
         <div class="footer-content">
-            <div class="footer-section">
-                <h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4>
-                <p class="footer-desc">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
-                <p class="footer-small">بإدارة الشيخ بسام الشميري (آل الكدهي)</p>
-            </div>
-            <div class="footer-section">
-                <h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4>
-                <ul>
-                    <li><a href="/"><i class="bi bi-arrow-left-short"></i> الرئيسية</a></li>
-                    <li><a href="/about-sheikh.html"><i class="bi bi-tree-fill"></i> النسب الشريف</a></li>
-                    <li><a href="/register"><i class="bi bi-person-plus-fill"></i> تسجيل جديد</a></li>
-                    <li><a href="/login"><i class="bi bi-box-arrow-in-left"></i> دخول</a></li>
-                    <li><a href="/dashboard"><i class="bi bi-person-circle"></i> حسابي</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4>
-                <ul class="contact-list">
-                    <li><i class="bi bi-telephone-fill"></i> +967777941366</li>
-                    <li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li>
-                    <li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li>
-                </ul>
-            </div>
+            <div class="footer-section"><h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4><p class="footer-desc">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p><p class="footer-small">بإدارة الشيخ بسام الشميري (آل الكدهي)</p></div>
+            <div class="footer-section"><h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4><ul><li><a href="/"><i class="bi bi-arrow-left-short"></i> الرئيسية</a></li><li><a href="/about-sheikh.html"><i class="bi bi-tree-fill"></i> النسب الشريف</a></li><li><a href="/register"><i class="bi bi-person-plus-fill"></i> تسجيل جديد</a></li><li><a href="/login"><i class="bi bi-box-arrow-in-left"></i> دخول</a></li><li><a href="/dashboard"><i class="bi bi-person-circle"></i> حسابي</a></li></ul></div>
+            <div class="footer-section"><h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4><ul class="contact-list"><li><i class="bi bi-telephone-fill"></i> +967777941366</li><li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li><li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li></ul></div>
         </div>
-        <div class="footer-bottom">
-            <p>© 2026 مركز النور الرباني والنَفَس الرحماني. جميع الحقوق محفوظة.</p>
-        </div>
+        <div class="footer-bottom"><p>© 2026 مركز النور الرباني والنَفَس الرحماني. جميع الحقوق محفوظة.</p></div>
     </footer>
 
-    <!-- ===== الملف البرمجي الوحيد ===== -->
     <script src="chat-engine.js"></script>
     <script src="api.js"></script>
 </body>
