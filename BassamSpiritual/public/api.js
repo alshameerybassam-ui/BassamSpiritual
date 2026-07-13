@@ -1,10 +1,8 @@
 // =================================================================
-// api.js - الدماغ الواحد الموحد للمنصة (v3.1 - الإصدار النهائي)
+// api.js - الدماغ الواحد الموحد للمنصة (الإصدار النهائي الكامل)
 // =================================================================
 
-// -------------------------------------------------------------------
-// 0. الأدوات المساعدة العامة
-// -------------------------------------------------------------------
+// --------------- 0. الأدوات الأساسية ---------------
 function showNotification(msg, type = 'success') {
     const n = document.getElementById('notification');
     if (!n) return;
@@ -33,9 +31,7 @@ async function apiRequest(url, method = 'GET', body = null) {
     return data;
 }
 
-// -------------------------------------------------------------------
-// 1. منطق الصفحة الرئيسية (index.html)
-// -------------------------------------------------------------------
+// --------------- 1. الصفحة الرئيسية (index.html) ---------------
 const HomePage = {
     articles: [],
 
@@ -54,6 +50,7 @@ const HomePage = {
         const loginBtn = document.querySelector('.btn-login');
         const dashboardLink = document.getElementById('dashboardLink');
         const requestBtn = document.getElementById('requestBtn');
+        const serviceButtons = document.querySelectorAll('.btn-service-request');
 
         if (token && user) {
             if (registerBtn) registerBtn.style.display = 'none';
@@ -62,37 +59,32 @@ const HomePage = {
                 dashboardLink.style.display = 'inline-flex';
                 dashboardLink.innerHTML = `<i class="bi bi-person-circle"></i> مرحباً، ${(user.fullName || '').split(' ')[0]}`;
             }
-            if (requestBtn) {
-                requestBtn.href = '/dashboard';
-                requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> حسابي ولوحة التحكم';
-            }
+            if (requestBtn) { requestBtn.href = '/dashboard'; requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> حسابي ولوحة التحكم'; }
+            serviceButtons.forEach(btn => btn.setAttribute('href', '/dashboard'));
         } else {
             if (registerBtn) registerBtn.style.display = 'inline-flex';
             if (loginBtn) loginBtn.style.display = 'inline-flex';
             if (dashboardLink) dashboardLink.style.display = 'none';
-            if (requestBtn) {
-                requestBtn.href = '/login';
-                requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> قدم طلبك الآن';
-            }
+            if (requestBtn) { requestBtn.href = '/login'; requestBtn.innerHTML = '<i class="bi bi-pencil-square"></i> قدم طلبك الآن'; }
+            serviceButtons.forEach(btn => btn.setAttribute('href', '/login'));
         }
     },
 
+    // --- المقالات ---
     async loadArticles() {
         const container = document.getElementById('articlesContainer');
         if (!container) return;
-
         try {
             const articles = await apiRequest('/api/articles');
             this.articles = Array.isArray(articles) ? articles : [];
         } catch (e) {
+            console.warn('تعذر جلب المقالات من الخادم.');
             this.articles = [];
         }
-
         if (this.articles.length === 0) {
             container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">📚 سيتم إضافة مقالات قريباً...</p>';
             return;
         }
-
         container.innerHTML = this.articles.map(art => `
             <div class="article-card" data-id="${art.id}" style="cursor:pointer;">
                 <i class="${art.icon || 'bi bi-book'} icon"></i>
@@ -104,7 +96,6 @@ const HomePage = {
                 </span>
             </div>
         `).join('');
-
         container.querySelectorAll('.article-card').forEach(card => {
             card.addEventListener('click', () => {
                 const id = card.getAttribute('data-id');
@@ -117,11 +108,9 @@ const HomePage = {
         const modal = document.getElementById('articleModal');
         const content = document.getElementById('modalArticleContent');
         if (!modal || !content) return;
-
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('show'), 10);
         content.innerHTML = '<p style="text-align:center; padding:20px;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري التحميل...</p>';
-
         const article = this.articles.find(a => String(a.id) === String(id));
         if (article) {
             content.innerHTML = `
@@ -147,10 +136,10 @@ const HomePage = {
         }
     },
 
+    // --- الشهادات ---
     async loadTestimonials() {
         const container = document.getElementById('testimonialsContainer');
         if (!container) return;
-
         try {
             const data = await apiRequest('/api/admin/reviews');
             const testimonials = (data.success && data.reviews) ? data.reviews.filter(r => r.is_approved) : [];
@@ -177,6 +166,7 @@ const HomePage = {
         `).join('');
     },
 
+    // --- العدادات ---
     animateCounters() {
         const counters = document.querySelectorAll('.counter-number');
         counters.forEach(c => {
@@ -195,6 +185,7 @@ const HomePage = {
         });
     },
 
+    // --- الدردشة ---
     toggleChat() {
         const win = document.getElementById('chatWindow');
         if (!win) return;
@@ -209,13 +200,11 @@ const HomePage = {
 };
 
 // دوال عامة للصفحة الرئيسية
+function toggleChat() { HomePage.toggleChat(); }
 function closeArticleModal() { HomePage.closeArticleModal(); }
 function closeArticleModalOnOverlay(e) { if (e.target.id === 'articleModal') closeArticleModal(); }
-function toggleChat() { HomePage.toggleChat(); }
 
-// -------------------------------------------------------------------
-// 2. منطق لوحة تحكم المستفيد (dashboard.html)
-// -------------------------------------------------------------------
+// --------------- 2. لوحة تحكم المستفيد (dashboard.html) ---------------
 const DashboardPage = {
     async init() {
         await this.loadProfile();
@@ -254,7 +243,6 @@ const DashboardPage = {
             container.innerHTML = '<p style="text-align:center; padding:30px;">📭 لا توجد طلبات بعد.</p>';
             return;
         }
-
         const map = {
             'pending': 'قيد المراجعة',
             'accepted_waiting_payment': 'بانتظار الدفع',
@@ -265,7 +253,6 @@ const DashboardPage = {
             'rejected_by_admin': 'تم الاعتذار',
             'closed': 'مغلق'
         };
-
         container.innerHTML = `
             <table class="table">
                 <thead><tr><th>#</th><th>الخدمة</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
@@ -343,17 +330,11 @@ const DashboardPage = {
         }
     },
 
-    openNewRequestModal() {
-        document.getElementById('newRequestModal')?.classList.add('show');
-    },
-    closeNewRequestModal() {
-        document.getElementById('newRequestModal')?.classList.remove('show');
-    }
+    openNewRequestModal() { document.getElementById('newRequestModal')?.classList.add('show'); },
+    closeNewRequestModal() { document.getElementById('newRequestModal')?.classList.remove('show'); }
 };
 
-// -------------------------------------------------------------------
-// 3. منطق لوحة تحكم الشيخ (admin.html)
-// -------------------------------------------------------------------
+// --------------- 3. لوحة تحكم المدير (admin.html) ---------------
 const AdminPage = {
     allRequests: [],
     currentFilter: 'all',
@@ -377,7 +358,6 @@ const AdminPage = {
     },
 
     switchTab(tab) {
-        // إغلاق القائمة الجانبية تلقائياً على الجوال
         const sidebar = document.getElementById('sidebarPanel');
         if (sidebar) sidebar.classList.remove('active');
 
@@ -388,7 +368,6 @@ const AdminPage = {
         const section = document.getElementById(`${tab}Section`);
         if (section) section.style.display = 'block';
 
-        // إزالة التحديد عن كل الأزرار ثم تفعيل الزر الحالي
         document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
         const activeNav = document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
         if (activeNav) activeNav.classList.add('active');
@@ -428,8 +407,6 @@ const AdminPage = {
     renderFilteredTable() {
         const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
         let filtered = this.allRequests;
-
-        // تطبيق الفلتر
         if (this.currentFilter !== 'all') {
             if (this.currentFilter === 'processing') {
                 filtered = filtered.filter(r => r.status === 'processing' || r.status === 'completed');
@@ -437,15 +414,12 @@ const AdminPage = {
                 filtered = filtered.filter(r => r.status === this.currentFilter);
             }
         }
-
-        // تطبيق البحث
         if (searchTerm) {
             filtered = filtered.filter(r =>
                 (r.fullName || '').toLowerCase().includes(searchTerm) ||
                 (r.serviceType || '').toLowerCase().includes(searchTerm)
             );
         }
-
         this.renderTable(filtered);
     },
 
@@ -456,7 +430,6 @@ const AdminPage = {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد طلبات.</td></tr>';
             return;
         }
-
         const map = {
             'pending': 'قيد الانتظار',
             'accepted_waiting_payment': 'بانتظار الدفع',
@@ -466,7 +439,6 @@ const AdminPage = {
             'rejected_by_admin': 'مرفوض',
             'closed': 'مغلق'
         };
-
         tbody.innerHTML = list.map((r, i) => `
             <tr>
                 <td>${i + 1}</td>
@@ -488,15 +460,11 @@ const AdminPage = {
         const modal = document.getElementById('detailsModal');
         const body = document.getElementById('modalBody');
         if (!modal || !body) return;
-
-        // إظهار المودال مع رسالة تحميل
         modal.classList.add('show');
         modal.style.display = 'flex';
         body.innerHTML = '<p>جاري تحميل التفاصيل...</p>';
 
         const req = this.allRequests.find(r => String(r.id) === String(id)) || {};
-
-        // بناء محتوى النافذة
         let html = `
             <div style="text-align: right; direction: rtl; line-height: 1.8;">
                 <p><strong>👤 المستفيد:</strong> ${req.fullName || '—'}</p>
@@ -506,8 +474,6 @@ const AdminPage = {
                 <p><strong>📝 الوصف:</strong></p>
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">${req.description || '—'}</div>
         `;
-
-        // جلب سجل المراسلات
         try {
             const messagesRes = await apiRequest(`/api/requests/${id}/messages`);
             const messages = messagesRes.messages || [];
@@ -524,11 +490,7 @@ const AdminPage = {
                 });
                 html += `</div>`;
             }
-        } catch (e) {
-            console.error('خطأ في جلب المراسلات:', e);
-        }
-
-        // أزرار الإجراءات
+        } catch (e) {}
         html += `<div style="margin-top:15px; display:flex; gap:8px; flex-wrap:wrap;">`;
         if (req.status === 'pending') {
             html += `
@@ -542,16 +504,12 @@ const AdminPage = {
             `;
         }
         html += `</div></div>`;
-
         body.innerHTML = html;
     },
 
     closeModal() {
         const modal = document.getElementById('detailsModal');
-        if (modal) {
-            modal.classList.remove('show');
-            modal.style.display = 'none';
-        }
+        if (modal) { modal.classList.remove('show'); modal.style.display = 'none'; }
     },
 
     async acceptRequest(id) {
@@ -604,19 +562,12 @@ const AdminPage = {
     }
 };
 
-// -------------------------------------------------------------------
-// 4. التهيئة التلقائية حسب الصفحة
-// -------------------------------------------------------------------
+// --------------- 4. التشغيل التلقائي ---------------
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    
-    if (path === '/' || path.endsWith('index.html')) {
-        HomePage.init();
-    } else if (path.includes('dashboard')) {
-        DashboardPage.init();
-    } else if (path.includes('admin')) {
-        AdminPage.init();
-    }
+    if (path === '/' || path.endsWith('index.html')) HomePage.init();
+    else if (path.includes('dashboard')) DashboardPage.init();
+    else if (path.includes('admin')) AdminPage.init();
 });
 
 console.log('✅ الدماغ الواحد (api.js) جاهز لإدارة المنصة بالكامل.');
