@@ -13,28 +13,12 @@
     <link rel="stylesheet" href="admin.css">
     
     <style>
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
+        .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
         .filter-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid #E2E8F0;
-            background: #fff;
-            cursor: pointer;
-            font-family: 'Cairo';
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: 0.3s;
+            padding: 8px 16px; border-radius: 20px; border: 1px solid #E2E8F0;
+            background: #fff; cursor: pointer; font-family: 'Cairo'; font-size: 0.85rem; font-weight: 600; transition: 0.3s;
         }
-        .filter-btn.active, .filter-btn:hover {
-            background: #0A1628;
-            color: #F5B041;
-            border-color: #0A1628;
-        }
+        .filter-btn.active, .filter-btn:hover { background: #0A1628; color: #F5B041; border-color: #0A1628; }
     </style>
 </head>
 <body>
@@ -42,69 +26,35 @@
 
     <div class="admin-wrapper">
         <aside class="sidebar" id="sidebarPanel">
-            <div class="logo">
-                <i class="bi bi-shield-fill"></i>
-                <span>النور الرباني</span>
-            </div>
+            <div class="logo"><i class="bi bi-shield-fill"></i><span>النور الرباني</span></div>
             <nav>
                 <ul class="sidebar-menu">
-                    <li id="navRequests" class="active" onclick="AdminPage.switchTab('requests')">
-                        <i class="bi bi-list-ul"></i> جميع الطلبات والمعالجة
-                    </li>
-                    <li id="navArticles" onclick="AdminPage.switchTab('articles')">
-                        <i class="bi bi-book-open"></i> إدارة المقالات الروحية
-                    </li>
-                    <li id="navReviews" onclick="AdminPage.switchTab('reviews')">
-                        <i class="bi bi-chat-quote"></i> إدارة آراء المستفيدين
-                    </li>
-                    <li id="navAi" onclick="AdminPage.switchTab('ai')">
-                        <i class="bi bi-cpu"></i> توجيه الذكاء الاصطناعي
-                    </li>
-                    <li onclick="localStorage.removeItem('token'); window.location.href='/login.html';" style="color:#e74c3c; cursor:pointer; margin-top:40px;">
-                        <i class="bi bi-box-arrow-right"></i> تسجيل الخروج
-                    </li>
+                    <li id="navRequests" class="active" onclick="AdminPage.switchTab('requests')"><i class="bi bi-list-ul"></i> جميع الطلبات والمعالجة</li>
+                    <li id="navArticles" onclick="AdminPage.switchTab('articles')"><i class="bi bi-book-open"></i> إدارة المقالات الروحية</li>
+                    <li id="navReviews" onclick="AdminPage.switchTab('reviews')"><i class="bi bi-chat-quote"></i> إدارة آراء المستفيدين</li>
+                    <li id="navAi" onclick="AdminPage.switchTab('ai')"><i class="bi bi-cpu"></i> توجيه الذكاء الاصطناعي</li>
+                    <li onclick="localStorage.removeItem('token'); window.location.href='/login.html';" style="color:#e74c3c; cursor:pointer; margin-top:40px;"><i class="bi bi-box-arrow-right"></i> تسجيل الخروج</li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <i class="bi bi-lock-fill"></i> إشراف: الشيخ بسام الشميري
-            </div>
+            <div class="sidebar-footer"><i class="bi bi-lock-fill"></i> إشراف: الشيخ بسام الشميري</div>
         </aside>
 
         <main class="main-content">
             <header>
                 <div class="header-title" style="display:flex; align-items:center; gap:12px;">
-                    <button id="mobileMenuBtn" onclick="document.getElementById('sidebarPanel').classList.toggle('active')">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div>
-                        <h1 id="adminWelcome">لوحة التحكم العليا</h1>
-                        <span id="currentTime" style="color: #718096; font-size: 0.9rem; font-weight: 600;"></span>
-                    </div>
+                    <button id="mobileMenuBtn" onclick="document.getElementById('sidebarPanel').classList.toggle('active')"><i class="bi bi-list"></i></button>
+                    <div><h1 id="adminWelcome">لوحة التحكم العليا</h1><span id="currentTime" style="color: #718096; font-size: 0.9rem; font-weight: 600;"></span></div>
                 </div>
                 <div class="header-actions">
-                    <a href="/" target="_blank" style="background: #2c3e50; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                        <i class="bi bi-box-arrow-up-right"></i> زيارة الواجهة الرئيسية
-                    </a>
+                    <a href="/" target="_blank" style="background: #2c3e50; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-box-arrow-up-right"></i> زيارة الواجهة الرئيسية</a>
                 </div>
             </header>
 
             <section class="stats-grid">
-                <div class="stat-card gold">
-                    <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
-                    <div class="stat-info"><h3 id="totalCount">0</h3><p>إجمالي الحالات المقيدة</p></div>
-                </div>
-                <div class="stat-card blue">
-                    <div class="stat-icon"><i class="bi bi-clock"></i></div>
-                    <div class="stat-info"><h3 id="pendingCount">0</h3><p>طلبات بانتظار تشخيصك</p></div>
-                </div>
-                <div class="stat-card green">
-                    <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-                    <div class="stat-info"><h3 id="completedCount">0</h3><p>حالات قيد العلاج والمكتملة</p></div>
-                </div>
-                <div class="stat-card red">
-                    <div class="stat-icon"><i class="bi bi-x-circle"></i></div>
-                    <div class="stat-info"><h3 id="rejectedCount">0</h3><p>طلبات مستبعدة</p></div>
-                </div>
+                <div class="stat-card gold"><div class="stat-icon"><i class="bi bi-calendar-check"></i></div><div class="stat-info"><h3 id="totalCount">0</h3><p>إجمالي الحالات المقيدة</p></div></div>
+                <div class="stat-card blue"><div class="stat-icon"><i class="bi bi-clock"></i></div><div class="stat-info"><h3 id="pendingCount">0</h3><p>طلبات بانتظار تشخيصك</p></div></div>
+                <div class="stat-card green"><div class="stat-icon"><i class="bi bi-check-circle"></i></div><div class="stat-info"><h3 id="completedCount">0</h3><p>حالات قيد العلاج والمكتملة</p></div></div>
+                <div class="stat-card red"><div class="stat-icon"><i class="bi bi-x-circle"></i></div><div class="stat-info"><h3 id="rejectedCount">0</h3><p>طلبات مستبعدة</p></div></div>
             </section>
 
             <section class="table-section" id="requestsSection">
@@ -124,45 +74,24 @@
                 </div>
                 <div class="table-responsive">
                     <table id="requestsTable">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>الاسم الكامل</th>
-                                <th>البريد الإلكتروني</th>
-                                <th>نوع الخدمة الروحية</th>
-                                <th>حالة التشخيص والعلاج</th>
-                                <th>حالة التحقق المالي</th>
-                                <th>تاريخ التقديم</th>
-                                <th>الإجراء والتحكم</th>
-                            </tr>
-                        </thead>
-                        <tbody id="requestsBody">
-                            <tr><td colspan="8" style="text-align:center; padding:30px; color:#888;">جاري فحص ملفات المستفيدين...</td></tr>
-                        </tbody>
+                        <thead><tr><th>#</th><th>الاسم الكامل</th><th>البريد الإلكتروني</th><th>نوع الخدمة الروحية</th><th>حالة التشخيص والعلاج</th><th>حالة التحقق المالي</th><th>تاريخ التقديم</th><th>الإجراء والتحكم</th></tr></thead>
+                        <tbody id="requestsBody"><tr><td colspan="8" style="text-align:center; padding:30px; color:#888;">جاري فحص ملفات المستفيدين...</td></tr></tbody>
                     </table>
                 </div>
             </section>
 
             <section class="table-section" id="articlesSection" style="display:none;">
-                <div class="table-header">
-                    <h2><i class="bi bi-book-open"></i> إدارة المقالات الروحية</h2>
-                </div>
-                <div id="adminArticlesContainer">
-                    <p>جاري تحميل المقالات...</p>
-                </div>
+                <div class="table-header"><h2><i class="bi bi-book-open"></i> إدارة المقالات الروحية</h2></div>
+                <div id="adminArticlesContainer"><p>جاري تحميل المقالات...</p></div>
             </section>
 
             <section class="table-section" id="reviewsSection" style="display:none;">
-                <div class="table-header">
-                    <h2><i class="bi bi-chat-quote"></i> إدارة آراء المستفيدين</h2>
-                </div>
+                <div class="table-header"><h2><i class="bi bi-chat-quote"></i> إدارة آراء المستفيدين</h2></div>
                 <p style="text-align:center; padding:20px;">قسم إدارة الآراء قيد التطوير.</p>
             </section>
 
             <section class="table-section" id="aiSection" style="display:none;">
-                <div class="table-header">
-                    <h2><i class="bi bi-cpu"></i> توجيه الذكاء الاصطناعي</h2>
-                </div>
+                <div class="table-header"><h2><i class="bi bi-cpu"></i> توجيه الذكاء الاصطناعي</h2></div>
                 <p style="text-align:center; padding:20px;">قسم توجيه الذكاء الاصطناعي قيد التطوير.</p>
             </section>
         </main>
@@ -170,10 +99,7 @@
 
     <div id="detailsModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="bi bi-file-text"></i> مراجعة ملف المستفيد وإصدار الخطة العلاجية</h3>
-                <span class="close-modal" onclick="AdminPage.closeModal()">&times;</span>
-            </div>
+            <div class="modal-header"><h3><i class="bi bi-file-text"></i> مراجعة ملف المستفيد وإصدار الخطة العلاجية</h3><span class="close-modal" onclick="AdminPage.closeModal()">&times;</span></div>
             <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
