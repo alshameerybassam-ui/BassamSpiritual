@@ -145,17 +145,37 @@
 <script>
     let currentRequestId = null;
 
+    // 🟢 الكود المحدث لحماية الصفحة والسماح ببريدك الإلكتروني
     window.addEventListener('load', async () => {
         try {
             const res = await AuthAPI.verifySession();
-            if (!res.success || res.user.role !== 'admin') {
+            
+            // استخراج البريد الإلكتروني من الرد أو من التخزين المحلي كخيار احتياطي
+            const loggedInEmail = (res.user && res.user.email) || JSON.parse(localStorage.getItem('bassam_user'))?.email || '';
+            const normalizedEmail = loggedInEmail.trim().toLowerCase();
+
+            // فحص الصلاحية: هل الرتبة أدمن أم أن البريد الإلكتروني هو البريد المعتمد؟
+            const isAuthorized = res.success && (res.user.role === 'admin' || normalizedEmail === 'alshameerybassam@gmail.com');
+
+            if (!isAuthorized) {
                 window.location.href = '/login.html';
             } else {
+                // في حال تخطي الفحص بنجاح، يتم تحميل لوحة التحكم بالكامل
                 await loadAdminRequests();
                 await loadAIInstructions();
                 await loadAdminReviews();
             }
-        } catch (e) { window.location.href = '/login.html'; }
+        } catch (e) { 
+            // تأكيد إضافي قبل الطرد: هل التخزين المحلي يحتوي على إيميلك؟
+            const localUser = JSON.parse(localStorage.getItem('bassam_user'));
+            if (localUser && localUser.email.trim().toLowerCase() === 'alshameerybassam@gmail.com') {
+                await loadAdminRequests();
+                await loadAIInstructions();
+                await loadAdminReviews();
+            } else {
+                window.location.href = '/login.html'; 
+            }
+        }
     });
 
     function switchTab(tabId) {
