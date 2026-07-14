@@ -40,9 +40,9 @@ function writeDB(data) {
 // إنشاء حساب المدير (الشيخ بسام) تلقائياً إذا لم يكن موجوداً لتبسيط الدخول
 (function initAdmin() {
     const db = readDB();
-    const adminExists = db.users.find(u => u.email === 'admin@noor.com');
+    const adminExists = db.users.find(u => u.email === 'alshameerybassam@gmail.com');
     if (!adminExists) {
-        const hashedPassword = bcrypt.hashSync('bassam123', 8);
+        const hashedPassword = bcrypt.hashSync('bassam112358112358', 8);
         db.users.push({
             id: Date.now(),
             full_name: "الشيخ بسام",
