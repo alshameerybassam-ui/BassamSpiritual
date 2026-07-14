@@ -4,20 +4,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم الشاملة - الشيخ بسام</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    
     <style>
-        :root { --primary-color: #4A154B; --accent-color: #D4AF37; --sidebar-width: 280px; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin:0; padding:0; }
-        .admin-sidebar { width: var(--sidebar-width); background: linear-gradient(180deg, #4A154B 0%, #200421 100%); color: #fff; min-height: 100vh; position: fixed; border-left: 4px solid var(--accent-color); }
-        .admin-content { margin-right: var(--sidebar-width); padding: 30px; }
-        .nav-link-custom { color: rgba(255,255,255,0.75); padding: 12px 20px; display: flex; align-items: center; gap: 12px; text-decoration: none; border-radius: 8px; margin: 5px 15px; font-weight: 500; }
-        .nav-link-custom:hover, .nav-link-custom.active { color: #fff; background-color: rgba(255,255,255,0.15); }
-        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); background: #ffffff; }
-        .chat-area { height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; background-color: #fafafa; }
-        .msg-bubble { max-width: 75%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; }
-        .msg-sender { background-color: #ffffff; margin-right: auto; border-top-left-radius: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .msg-admin { background-color: #e2f0d9; margin-left: auto; border-top-right-radius: 0; }
+        :root { 
+            --primary-color: #4A154B; 
+            --accent-color: #D4AF37; 
+            --sidebar-width: 280px; 
+            --dark-card: #1E0A1F;
+        }
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: #f4f6f9; 
+            margin:0; 
+            padding:0; 
+        }
+        /* القائمة الجانبية المحدثة */
+        .admin-sidebar { 
+            width: var(--sidebar-width); 
+            background: linear-gradient(180deg, #320E33 0%, #150216 100%); 
+            color: #fff; 
+            min-height: 100vh; 
+            position: fixed; 
+            border-left: 4px solid var(--accent-color); 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+        .admin-content { 
+            margin-right: var(--sidebar-width); 
+            padding: 35px; 
+        }
+        .nav-link-custom { 
+            color: rgba(255,255,255,0.75); 
+            padding: 12px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            text-decoration: none; 
+            border-radius: 10px; 
+            margin: 5px 15px; 
+            font-weight: 600; 
+            transition: all 0.3s;
+        }
+        .nav-link-custom:hover, .nav-link-custom.active { 
+            color: #fff; 
+            background-color: var(--accent-color); 
+            color: #150216;
+            transform: translateX(-5px);
+        }
+        .card-custom { 
+            border: none; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05); 
+            background: #ffffff; 
+        }
+        /* منطقة المحادثات الآمنة مع المستفيد */
+        .chat-area { 
+            height: 300px; 
+            overflow-y: auto; 
+            border: 1px solid #eef2f5; 
+            border-radius: 12px; 
+            padding: 20px; 
+            background-color: #fdfbfc; 
+        }
+        .msg-bubble { 
+            max-width: 75%; 
+            padding: 10px 15px; 
+            border-radius: 15px; 
+            margin-bottom: 12px; 
+            line-height: 1.6;
+        }
+        .msg-sender { 
+            background-color: #ffffff; 
+            margin-right: auto; 
+            border-top-left-radius: 0; 
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05); 
+            border: 1px solid #eee;
+        }
+        .msg-admin { 
+            background-color: #f3ebf3; 
+            color: #4a154b;
+            margin-left: auto; 
+            border-top-right-radius: 0; 
+        }
+        /* تحسين مظهر الجداول */
+        .table-custom th {
+            background-color: #fcf9fc;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -29,77 +109,80 @@
         <span class="badge bg-warning text-dark mt-1">المدير العام والشرعي للمركز</span>
     </div>
     <nav class="flex-grow-1">
-        <a href="#" class="nav-link-custom active" onclick="switchTab('requests-tab')"><i class="bi bi-chat-left-heart-fill"></i>إدارة طلبات الاستشفاء</a>
-        <a href="#" class="nav-link-custom" onclick="switchTab('ai-tab')"><i class="bi bi-cpu-fill"></i>توجيه المساعد الذكي</a>
-        <a href="#" class="nav-link-custom" onclick="switchTab('articles-tab')"><i class="bi bi-journal-text"></i>نشر المقالات والآراء</a>
-        <a href="#" class="nav-link-custom" onclick="switchTab('reviews-tab')"><i class="bi bi-star-fill"></i>رقابة التقييمات والآراء</a>
+        <a href="#" class="nav-link-custom active" id="btn-requests" onclick="switchTab('requests-tab')"><i class="bi bi-chat-left-heart-fill"></i>طلبات الاستشفاء</a>
+        <a href="#" class="nav-link-custom" id="btn-ai" onclick="switchTab('ai-tab')"><i class="bi bi-cpu-fill"></i>توجيه المساعد الذكي</a>
+        <a href="#" class="nav-link-custom" id="btn-articles" onclick="switchTab('articles-tab')"><i class="bi bi-journal-text"></i>إدارة المقالات والرقية</a>
+        <a href="#" class="nav-link-custom" id="btn-reviews" onclick="switchTab('reviews-tab')"><i class="bi bi-star-fill"></i>رقابة التقييمات والآراء</a>
     </nav>
     <div class="px-3">
-        <button class="btn btn-danger w-100 btn-sm" onclick="AuthAPI.logout()">تسجيل خروج</button>
+        <button class="btn btn-danger w-100 btn-sm fw-bold" onclick="AuthAPI.logout()">تسجيل خروج إداري</button>
     </div>
 </div>
 
 <div class="admin-content">
+    
     <div id="requests-tab" class="tab-content">
         <div class="row">
             <div class="col-lg-5 mb-4">
                 <div class="card card-custom p-4">
-                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-hourglass-split me-2"></i>طلبات الاستشفاء الواردة</h5>
-                    <div id="adminRequestsList" class="list-group list-group-flush"></div>
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-hourglass-split me-2 text-warning"></i>طلبات الاستشفاء الواردة</h5>
+                    <div id="adminRequestsList" class="list-group list-group-flush">
+                        </div>
                 </div>
             </div>
             <div class="col-lg-7">
                 <div id="adminEmptyState" class="card card-custom p-5 text-center">
                     <i class="bi bi-card-checklist text-muted mb-3" style="font-size: 4rem;"></i>
-                    <h5 class="text-muted">اختر طلباً لدراسته، مراجعة دفعته المالية، أو تقديم الرقية والعلاج والمراسلة الفورية</h5>
+                    <h5 class="text-muted">اختر طلباً من القائمة الجانبية لمراجعته، تتبع الحوالة، ومراسلة المريض فورياً أو إصدار تشخيصه وعلاجه.</h5>
                 </div>
+                
                 <div id="adminDetailsCard" class="card card-custom p-4 d-none">
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
                         <div>
-                            <h4 class="fw-bold mb-1 text-dark" id="admDetServiceType">الاستشارة</h4>
+                            <h4 class="fw-bold mb-1 text-dark" id="admDetServiceType">نوع الخدمة المطلوب</h4>
                             <span class="small text-muted" id="admDetUser">...</span>
                         </div>
-                        <span id="admDetStatus" class="badge"></span>
+                        <span id="admDetStatus" class="badge fs-6"></span>
                     </div>
-                    <p class="text-dark bg-light p-3 rounded" id="admDetDescription"></p>
+                    <p class="text-dark bg-light p-3 rounded" id="admDetDescription" style="line-height: 1.7;"></p>
 
                     <div id="admActionsSection" class="d-flex gap-2 mb-4">
-                        <button class="btn btn-success flex-grow-1" onclick="actionAcceptInitial()">قبول مبدئي (بانتظار الدفع)</button>
-                        <button class="btn btn-danger flex-grow-1" onclick="actionRejectInitial()">رفض مبدئي</button>
+                        <button class="btn btn-success flex-grow-1 fw-bold" onclick="actionAcceptInitial()"><i class="bi bi-check-circle"></i> قبول مبدئي (بانتظار الدفع)</button>
+                        <button class="btn btn-danger flex-grow-1 fw-bold" onclick="actionRejectInitial()"><i class="bi bi-x-circle"></i> رفض الطلب</button>
                     </div>
 
-                    <div id="admPaymentReviewSection" class="card border-warning bg-light-warning p-3 mb-4 d-none">
-                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-bank me-2"></i>تفاصيل الحوالة المستلمة من المستفيد</h6>
+                    <div id="admPaymentReviewSection" class="card border-warning bg-light p-3 mb-4 d-none">
+                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-bank me-2 text-warning"></i>تفاصيل الحوالة المستلمة من المستفيد</h6>
                         <p class="small mb-1"><strong>طريقة التحويل:</strong> <span id="payDetMethod"></span></p>
                         <p class="small mb-1"><strong>اسم المحول:</strong> <span id="payDetName"></span></p>
                         <p class="small mb-3"><strong>رقم إيصال الحوالة:</strong> <span id="payDetNumber"></span></p>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-success btn-sm w-50" onclick="actionApprovePayment()">اعتماد الدفع (البدء بالعلاج)</button>
-                            <button class="btn btn-danger btn-sm w-50" onclick="actionRejectPayment()">رفض الدفع لتصحيحه</button>
+                            <button class="btn btn-success btn-sm w-50 fw-bold" onclick="actionApprovePayment()">اعتماد الدفع (البدء بالعلاج)</button>
+                            <button class="btn btn-danger btn-sm w-50 fw-bold" onclick="actionRejectPayment()">رفض الدفع للتصحيح</button>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-chat-text-fill me-2"></i>دردشة آمنة مع المستفيد</h5>
+                        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-chat-text-fill me-2 text-primary"></i>دردشة آمنة مع المستفيد</h5>
                         <div id="admChatBox" class="chat-area mb-2"></div>
                         <form id="admMessageForm" class="d-flex gap-2">
-                            <input type="text" id="admMessageText" class="form-control" placeholder="اكتب ردك أو نصيحتك للمستفيد..." required>
-                            <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;"><i class="bi bi-send-fill"></i></button>
+                            <input type="text" id="admMessageText" class="form-control" placeholder="اكتب ردك أو نصيحتك العلاجية للمستفيد..." required>
+                            <button type="submit" class="btn btn-primary px-4" style="background-color: var(--primary-color); border:none;"><i class="bi bi-send-fill"></i></button>
                         </form>
                     </div>
 
                     <div class="card border-primary p-3">
-                        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-file-earmark-medical me-2"></i>إصدار التشخيص والبرنامج العلاجي</h5>
+                        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-file-earmark-medical me-2 text-primary"></i>إصدار التشخيص والبرنامج العلاجي</h5>
                         <form id="diagnoseForm">
                             <div class="mb-2">
                                 <label class="form-label small fw-bold">التشخيص الروحي للحالة</label>
-                                <textarea class="form-control form-control-sm" id="admDiagnosis" rows="2" placeholder="اكتب التشخيص هنا..." required></textarea>
+                                <textarea class="form-control" id="admDiagnosis" rows="3" placeholder="اكتب تشخيصك الروحي (مثل: حسد شديد، مس عارض، إلخ)..." required></textarea>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label small fw-bold">الخطة العلاجية والرقية الشرعية المقررة</label>
-                                <textarea class="form-control form-control-sm" id="admPlan" rows="2" placeholder="اكتب برنامج الرقية اليومي والمقررات..." required></textarea>
+                                <textarea class="form-control" id="admPlan" rows="3" placeholder="اكتب السور، الأذكار، وجدول القراءة والتحصينات اليومية المقررة للمريض..." required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" style="background-color: var(--primary-color); border:none;">حفظ التشخيص وإطلاق البرنامج العلاجي</button>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold" style="background-color: var(--primary-color); border:none;">حفظ التشخيص وإرسال البرنامج العلاجي للمريض</button>
                         </form>
                     </div>
                 </div>
@@ -109,33 +192,82 @@
 
     <div id="ai-tab" class="tab-content d-none">
         <div class="card card-custom p-4">
-            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-cpu-fill me-2 text-primary"></i>تعديل توجيه وعقل المساعد الروحاني الذكي</h4>
-            <p class="text-muted small">كل كلمة تكتبها هنا ستصبح الإطار والسياسة التي يعتمد عليها المساعد الذكي في الواجهة للإجابة على الزوار:</p>
+            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-cpu-fill me-2 text-primary"></i>توجيه وعقل المساعد الروحاني الذكي</h4>
+            <p class="text-muted small">كل كلمة تكتبها هنا ستصبح بمثابة قانون وسياسة صارمة يعتمد عليها المساعد الذكي لإرشاد زوار مركزك الفاضل والرد وفق فتاواك وتوجيهاتك:</p>
             <form id="aiPromptForm">
-                <textarea class="form-control mb-3" id="aiPromptTextarea" rows="8" required></textarea>
-                <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;">حفظ وتطبيق التوجيهات على المساعد فوراً</button>
+                <textarea class="form-control mb-3" id="aiPromptTextarea" rows="10" required placeholder="أدخل التوجيهات العامة للذكاء الاصطناعي..."></textarea>
+                <button type="submit" class="btn btn-primary fw-bold" style="background-color: var(--primary-color); border:none;"><i class="bi bi-save-fill"></i> حفظ وتثبيت توجيهات المساعد الذكي فوراً</button>
             </form>
         </div>
     </div>
 
     <div id="articles-tab" class="tab-content d-none">
-        <div class="card card-custom p-4">
-            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-journal-plus me-2"></i>نشر مقال أو فتوى أو رأي روحاني جديد</h4>
-            <form id="articleForm">
-                <div class="mb-3"><label class="form-label">العنوان</label><input type="text" id="artTitle" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">ملخص المقال</label><input type="text" id="artSummary" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">محتوى المقال كاملاً</label><textarea id="artContent" class="form-control" rows="5" required></textarea></div>
-                <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;">نشر المقال فوراً بالمدونة</button>
-            </form>
+        <div class="row">
+            <div class="col-lg-5 mb-4">
+                <div class="card card-custom p-4">
+                    <h4 class="fw-bold text-dark mb-3" id="articleFormHeader"><i class="bi bi-journal-plus me-2 text-primary"></i>نشر مقال أو رقية جديدة</h4>
+                    <form id="articleForm">
+                        <input type="hidden" id="editArticleId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">العنوان</label>
+                            <input type="text" id="artTitle" class="form-control" placeholder="مثال: رقية إبطال السحر القديم" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">ملخص المقال</label>
+                            <input type="text" id="artSummary" class="form-control" placeholder="اكتب خلاصة تظهر في بطاقة المدونة الرئيسية..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">محتوى المقال كاملاً</label>
+                            <textarea id="artContent" class="form-control" rows="8" placeholder="اكتب مقالتك أو رقيتك والخطوات الروحية بالتفصيل هنا..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold" style="background-color: var(--primary-color); border:none;" id="btnSubmitArticle">نشر المقال فوراً بالمدونة</button>
+                        <button type="button" class="btn btn-secondary w-100 mt-2 d-none" id="btnCancelEdit" onclick="cancelArticleEdit()">إلغاء التعديل</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-lg-7">
+                <div class="card card-custom p-4">
+                    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-journals me-2 text-primary"></i>المقالات المنشورة</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-custom">
+                            <thead>
+                                <tr>
+                                    <th>العنوان</th>
+                                    <th>الملخص</th>
+                                    <th>التحكم والمراجعة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="articlesTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">جاري جلب المقالات والرقية المنشورة...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="reviews-tab" class="tab-content d-none">
         <div class="card card-custom p-4">
             <h4 class="fw-bold text-dark mb-3"><i class="bi bi-star-fill text-warning me-2"></i>رقابة التقييمات والآراء المرفوعة</h4>
-            <table class="table table-hover align-middle">
-                <thead><tr><th>المستفيد</th><th>التعليق والتقييم</th><th>حالة النشر</th><th>الإجراءات</th></tr></thead>
-                <tbody id="reviewsTableBody"></tbody>
+            <p class="text-muted small">هنا تظهر آراء وتجارب المستفيدين؛ لن يتم نشرها في الواجهة الرئيسية للمركز حتى توافق عليها بنفسك لضمان الخصوصية والسرية والأدب العام.</p>
+            <table class="table table-hover align-middle table-custom">
+                <thead>
+                    <tr>
+                        <th>المستفيد</th>
+                        <th>التعليق والتقييم</th>
+                        <th>حالة النشر</th>
+                        <th>الإجراءات والتحكم</th>
+                    </tr>
+                </thead>
+                <tbody id="reviewsTableBody">
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">جاري تحميل الآراء...</td>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -145,53 +277,62 @@
 <script>
     let currentRequestId = null;
 
-    // 🟢 الكود المحدث لحماية الصفحة والسماح ببريدك الإلكتروني
+    // 🟢 حماية الصفحة والتحقق الصارم من بريدك المعتمد وأدمن الموقع
     window.addEventListener('load', async () => {
         try {
             const res = await AuthAPI.verifySession();
-            
-            // استخراج البريد الإلكتروني من الرد أو من التخزين المحلي كخيار احتياطي
             const loggedInEmail = (res.user && res.user.email) || JSON.parse(localStorage.getItem('bassam_user'))?.email || '';
             const normalizedEmail = loggedInEmail.trim().toLowerCase();
 
-            // فحص الصلاحية: هل الرتبة أدمن أم أن البريد الإلكتروني هو البريد المعتمد؟
+            // التحقق المزدوج للأدمن
             const isAuthorized = res.success && (res.user.role === 'admin' || normalizedEmail === 'alshameerybassam@gmail.com');
 
             if (!isAuthorized) {
                 window.location.href = '/login.html';
             } else {
-                // في حال تخطي الفحص بنجاح، يتم تحميل لوحة التحكم بالكامل
-                await loadAdminRequests();
-                await loadAIInstructions();
-                await loadAdminReviews();
+                await initDashboard();
             }
         } catch (e) { 
-            // تأكيد إضافي قبل الطرد: هل التخزين المحلي يحتوي على إيميلك؟
             const localUser = JSON.parse(localStorage.getItem('bassam_user'));
             if (localUser && localUser.email.trim().toLowerCase() === 'alshameerybassam@gmail.com') {
-                await loadAdminRequests();
-                await loadAIInstructions();
-                await loadAdminReviews();
+                await initDashboard();
             } else {
                 window.location.href = '/login.html'; 
             }
         }
     });
 
+    async function initDashboard() {
+        await loadAdminRequests();
+        await loadAIInstructions();
+        await loadAdminReviews();
+        await loadArticlesList(); // دالة جلب قائمة المقالات
+    }
+
+    // التبديل السلس والتفاعلي بين علامات التبويب (Tabs)
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('d-none'));
         document.querySelectorAll('.nav-link-custom').forEach(link => link.classList.remove('active'));
         document.getElementById(tabId).classList.remove('d-none');
-        event.currentTarget.classList.add('active');
+        
+        // تحديد الرابط الفعلي للتفعيل
+        const targetBtn = {
+            'requests-tab': 'btn-requests',
+            'ai-tab': 'btn-ai',
+            'articles-tab': 'btn-articles',
+            'reviews-tab': 'btn-reviews'
+        }[tabId];
+        document.getElementById(targetBtn).classList.add('active');
     }
 
+    // جلب طلبات المستفيدين
     async function loadAdminRequests() {
         try {
             const requests = await AdminAPI.getAllRequests();
             const list = document.getElementById('adminRequestsList');
             list.innerHTML = '';
             if (requests.length === 0) {
-                list.innerHTML = `<div class="text-center p-3 text-muted">لا توجد أي طلبات واردة.</div>`;
+                list.innerHTML = `<div class="text-center p-3 text-muted">لا توجد طلبات علاجية واردة حالياً.</div>`;
                 return;
             }
             requests.forEach(req => {
@@ -201,7 +342,7 @@
                 item.innerHTML = `
                     <div>
                         <h6 class="fw-bold mb-1">${req.fullName}</h6>
-                        <small class="text-muted">${req.serviceType}</small>
+                        <small class="${currentRequestId === req.id ? 'text-white' : 'text-muted'}">${req.serviceType}</small>
                     </div>
                     <span class="badge ${getStatusBadgeClass(req.status)}">${getStatusText(req.status)}</span>
                 `;
@@ -223,10 +364,10 @@
 
     function getStatusText(status) {
         switch(status) {
-            case 'pending': return 'انتظار مراجعتك';
-            case 'accepted_waiting_payment': return 'مقبول / بانتظار الدفع';
-            case 'payment_submitted': return 'أرسل إثبات الحوالة';
-            case 'processing': return 'قيد إعداد العلاج والرقية';
+            case 'pending': return 'بانتظار المراجعة';
+            case 'accepted_waiting_payment': return 'مقبول / بانتظار الحوالة';
+            case 'payment_submitted': return 'تم إرسال إثبات الدفع';
+            case 'processing': return 'تحت العلاج والاتصال';
             case 'diagnosed': return 'تم إصدار التشخيص والعلاج';
             default: return 'مرفوض';
         }
@@ -239,7 +380,7 @@
         await loadAdminRequests();
 
         document.getElementById('admDetServiceType').innerText = req.serviceType;
-        document.getElementById('admDetUser').innerText = `المستفيد: ${req.fullName} | هاتف: ${req.userPhone}`;
+        document.getElementById('admDetUser').innerText = `المستفيد: ${req.fullName} | الهاتف: ${req.userPhone}`;
         document.getElementById('admDetDescription').innerText = req.description;
         
         const badge = document.getElementById('admDetStatus');
@@ -260,6 +401,7 @@
         await loadAdminMessages();
     }
 
+    // جلب رسائل الدردشة
     async function loadAdminMessages() {
         if (!currentRequestId) return;
         try {
@@ -270,7 +412,7 @@
                 data.messages.forEach(msg => {
                     const bubble = document.createElement('div');
                     bubble.className = `msg-bubble d-flex flex-column ${msg.senderRole === 'admin' ? 'msg-admin' : 'msg-sender'}`;
-                    bubble.innerHTML = `<span class="small fw-bold text-dark mb-1">${msg.senderName}</span><span>${msg.messageText}</span>`;
+                    bubble.innerHTML = `<span class="small fw-bold mb-1" style="font-size:0.75rem;">${msg.senderName}</span><span>${msg.messageText}</span>`;
                     chatBox.appendChild(bubble);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -288,12 +430,13 @@
         } catch (e) { alert(e.message); }
     });
 
+    // إجراءات معالجة الطلبات والحوالات المباشرة
     async function actionAcceptInitial() {
         try { const res = await AdminAPI.acceptInitial(currentRequestId); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
     }
 
     async function actionRejectInitial() {
-        const reason = prompt('سبب الرفض المبدئي لإبلاغ العميل:');
+        const reason = prompt('يرجى كتابة سبب الرفض المبدئي لإشعار المستفيد به:');
         if (!reason) return;
         try { const res = await AdminAPI.rejectInitial(currentRequestId, reason); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
     }
@@ -303,7 +446,7 @@
     }
 
     async function actionRejectPayment() {
-        const reason = prompt('سبب رفض الحوالة لوجود خطأ:');
+        const reason = prompt('الرجاء إدخال سبب الرفض لوجود خطأ في الحوالة:');
         if (!reason) return;
         try { const res = await AdminAPI.rejectPayment(currentRequestId, reason); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
     }
@@ -319,6 +462,7 @@
         } catch(e) { alert(e.message); }
     });
 
+    // جلب وتوجيه عقل الذكاء الاصطناعي
     async function loadAIInstructions() {
         try {
             const res = await AdminAPI.getAIInstructions();
@@ -334,28 +478,111 @@
         } catch (e) { alert(e.message); }
     });
 
+    // ------------------ 📝 إدارة كاملة للمقالات (إضافة، تعديل، حذف) ------------------
+    async function loadArticlesList() {
+        try {
+            // جلب المقالات من واجهة الـ API
+            const res = await AdminAPI.getArticles(); // ملاحظة: استخدم الـ Endpoint المتاحة في ملف api.js لديك مثل AdminAPI.getArticles
+            const tbody = document.getElementById('articlesTableBody');
+            tbody.innerHTML = '';
+            
+            if (!res || res.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">لا يوجد مقالات منشورة بالمدونة حالياً.</td></tr>`;
+                return;
+            }
+
+            res.forEach(art => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${art.title}</strong></td>
+                    <td>${art.summary}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-warning py-1" onclick="editArticle('${art.id}', '${escapeHtml(art.title)}', '${escapeHtml(art.summary)}', '${escapeHtml(art.content)}')"><i class="bi bi-pencil-square"></i> تعديل</button>
+                        <button class="btn btn-sm btn-outline-danger py-1" onclick="deleteArticle('${art.id}')"><i class="bi bi-trash"></i> حذف</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // إرسال المقال (نشر جديد أو تعديل مقال قائم)
     document.getElementById('articleForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const id = document.getElementById('editArticleId').value;
+        const title = document.getElementById('artTitle').value;
+        const summary = document.getElementById('artSummary').value;
+        const content = document.getElementById('artContent').value;
+
         try {
-            const res = await AdminAPI.createArticle(document.getElementById('artTitle').value, document.getElementById('artSummary').value, document.getElementById('artContent').value);
-            if (res.success) { alert(res.message); document.getElementById('articleForm').reset(); }
+            let res;
+            if (id) {
+                // استدعاء دالة التعديل
+                res = await AdminAPI.updateArticle(id, title, summary, content);
+            } else {
+                // استدعاء دالة النشر الجديد
+                res = await AdminAPI.createArticle(title, summary, content);
+            }
+            
+            if (res.success) {
+                alert(res.message);
+                document.getElementById('articleForm').reset();
+                cancelArticleEdit();
+                await loadArticlesList();
+            }
         } catch(e) { alert(e.message); }
     });
 
+    // تهيئة نموذج المقال للتعديل
+    function editArticle(id, title, summary, content) {
+        document.getElementById('editArticleId').value = id;
+        document.getElementById('artTitle').value = title;
+        document.getElementById('artSummary').value = summary;
+        document.getElementById('artContent').value = content;
+        
+        document.getElementById('articleFormHeader').innerHTML = `<i class="bi bi-pencil-square text-warning me-2"></i>تعديل المقال الحالي`;
+        document.getElementById('btnSubmitArticle').innerText = "تحديث وحفظ المقال";
+        document.getElementById('btnCancelEdit').classList.remove('d-none');
+    }
+
+    function cancelArticleEdit() {
+        document.getElementById('editArticleId').value = '';
+        document.getElementById('articleForm').reset();
+        document.getElementById('articleFormHeader').innerHTML = `<i class="bi bi-journal-plus text-primary me-2"></i>نشر مقال أو رقية جديدة`;
+        document.getElementById('btnSubmitArticle').innerText = "نشر المقال فوراً بالمدونة";
+        document.getElementById('btnCancelEdit').classList.add('d-none');
+    }
+
+    async function deleteArticle(id) {
+        if(!confirm('هل تود حذف هذا المقال نهائياً من مدونتك؟')) return;
+        try {
+            const res = await AdminAPI.deleteArticle(id);
+            alert(res.message);
+            await loadArticlesList();
+        } catch (e) { alert(e.message); }
+    }
+
+    // ------------------ 💬 رقابة التقييمات والآراء ------------------
     async function loadAdminReviews() {
         try {
             const res = await AdminAPI.getAllReviewsForAdmin();
             if (res.success) {
                 const tbody = document.getElementById('reviewsTableBody');
                 tbody.innerHTML = '';
+                
+                if (res.reviews.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">لا توجد تقييمات أو مراجعات في انتظار المراجعة.</td></tr>`;
+                    return;
+                }
+                
                 res.reviews.forEach(rev => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${rev.fullName}</strong></td>
                         <td>${rev.comment}</td>
-                        <td><span class="badge ${rev.isApproved ? 'bg-success' : 'bg-warning text-dark'}">${rev.isApproved ? 'معتمد' : 'معلق'}</span></td>
+                        <td><span class="badge ${rev.isApproved ? 'bg-success' : 'bg-warning text-dark'}">${rev.isApproved ? 'معتمد ومنشور' : 'معلق للمراجعة'}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-success py-1" onclick="approveReview(${rev.id}, true)">قبول</button>
+                            <button class="btn btn-sm btn-success py-1" onclick="approveReview(${rev.id}, true)">قبول ونشر</button>
                             <button class="btn btn-sm btn-danger py-1" onclick="deleteReview(${rev.id})">حذف</button>
                         </td>
                     `;
@@ -374,6 +601,17 @@
         try { const res = await AdminAPI.deleteReview(id); alert(res.message); await loadAdminReviews(); } catch(e) { alert(e.message); }
     }
 
+    // دالة مساعدة لتأمين نصوص HTML من التلف
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // تحديث المحادثة دورياً كل 5 ثوانٍ
     setInterval(loadAdminMessages, 5000);
 </script>
 </body>
