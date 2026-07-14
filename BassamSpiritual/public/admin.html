@@ -1,110 +1,111 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لوحة تحكم المركز | النور الرباني</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta charset="UTF-8">
+    <title>لوحة تحكم المدير - مركز النور الرباني</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Cairo',sans-serif; }
-        body { background:#F0F2F5; overflow-x:hidden; }
-        .admin-wrapper { display:flex; min-height:100vh; position:relative; }
-        .sidebar { width:250px; background:#0A1628; color:#fff; padding:30px 0; display:flex; flex-direction:column; position:fixed; right:0; top:0; height:100vh; overflow-y:auto; z-index:9999; transition:right 0.3s; }
-        .sidebar .logo { text-align:center; padding:0 20px 30px; border-bottom:1px solid rgba(212,175,55,0.2); }
-        .sidebar .logo i { font-size:2.5rem; color:#D4AF37; }
-        .sidebar .logo span { font-size:1.3rem; font-weight:700; color:#D4AF37; }
-        .sidebar-menu { list-style:none; padding:20px 0; }
-        .sidebar-menu li { padding:14px 30px; cursor:pointer; transition:0.3s; border-right:4px solid transparent; font-weight:600; color:#9AABBB; display:flex; align-items:center; gap:12px; }
-        .sidebar-menu li:hover,.sidebar-menu li.active { background:rgba(212,175,55,0.08); color:#D4AF37; border-right-color:#D4AF37; }
-        .sidebar-footer { margin-top:auto; text-align:center; padding:20px; font-size:0.8rem; color:#6A7A8A; border-top:1px solid rgba(255,255,255,0.05); }
-        .main-content { margin-right:250px; padding:30px; width:100%; transition:margin 0.3s; }
-        header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; gap:15px; flex-wrap:wrap; }
-        header h1 { font-size:1.8rem; color:#0A1628; }
-        .btn-view-site { background:#D4AF37; color:#0A1628; padding:8px 18px; border-radius:30px; text-decoration:none; font-weight:700; display:inline-flex; align-items:center; gap:8px; }
-        .btn-view-site:hover { background:#E8C872; }
-        #mobileMenuBtn { display:none; background:#0A1628; color:#D4AF37; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-size:1.3rem; }
-        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; margin-bottom:30px; }
-        .stat-card { background:#fff; padding:25px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.08); display:flex; align-items:center; gap:15px; border-right:6px solid #ccc; }
-        .stat-card.gold { border-color:#D4AF37; } .stat-card.blue { border-color:#3B82F6; } .stat-card.green { border-color:#22C55E; } .stat-card.red { border-color:#EF4444; }
-        .stat-card .stat-icon { font-size:2.2rem; color:#0A1628; }
-        .stat-card .stat-info h3 { font-size:1.8rem; font-weight:700; }
-        .stat-card .stat-info p { color:#666; font-weight:600; font-size:0.9rem; }
-        .table-section { background:#fff; border-radius:16px; padding:25px; box-shadow:0 8px 30px rgba(0,0,0,0.08); margin-bottom:25px; }
-        .table-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px; }
-        .table-header h2 { font-size:1.3rem; color:#0A1628; }
-        .table-header h2 i { color:#D4AF37; margin-left:10px; }
-        .table-controls { display:flex; gap:10px; align-items:center; }
-        .table-controls input { padding:10px 18px; border:2px solid #E2E8F0; border-radius:30px; font-family:'Cairo'; width:250px; font-size:0.9rem; }
-        .table-controls input:focus { outline:none; border-color:#D4AF37; }
-        .btn-refresh { background:#0A1628; color:#fff; border:none; padding:11px 14px; border-radius:50%; cursor:pointer; transition:0.3s; }
-        .btn-refresh:hover { background:#D4AF37; color:#0A1628; }
-        .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
-        .filter-btn { padding:8px 16px; border-radius:20px; border:1px solid #E2E8F0; background:#fff; cursor:pointer; font-family:'Cairo'; font-size:0.85rem; font-weight:600; transition:0.3s; }
-        .filter-btn.active,.filter-btn:hover { background:#0A1628; color:#D4AF37; border-color:#0A1628; }
-        .table-responsive { overflow-x:auto; }
-        table { width:100%; border-collapse:collapse; min-width:900px; }
-        th { background:#F8FAFC; color:#333; padding:14px 12px; text-align:right; font-weight:700; border-bottom:3px solid #D4AF37; }
-        td { padding:14px 12px; border-bottom:1px solid #eee; }
-        .action-btn { border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; margin:2px; transition:0.3s; color:#fff; font-weight:600; }
-        .action-btn.edit { background:#D4AF37; color:#0A1628; } .action-btn.edit:hover { background:#E8C872; }
-        .action-btn.delete { background:#EF4444; } .action-btn.delete:hover { background:#DC2626; }
-        .modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(10,22,40,0.7); justify-content:center; align-items:center; backdrop-filter:blur(4px); padding:15px; }
-        .modal.show { display:flex; }
-        .modal-content { background:#fff; border-radius:20px; max-width:700px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 30px 80px rgba(0,0,0,0.3); }
-        .modal-header { padding:20px 25px; border-bottom:2px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#0A1628; border-radius:20px 20px 0 0; }
-        .modal-header h3 { color:#D4AF37; margin:0; }
-        .close-modal { font-size:2rem; cursor:pointer; color:#fff; transition:0.3s; }
-        .close-modal:hover { color:#D4AF37; transform:rotate(90deg); }
-        .modal-body { padding:25px; }
-        .modal-body p { margin:10px 0; line-height:1.8; }
-        .modal-body label { font-weight:700; display:block; margin-top:15px; }
-        .modal-body select, .modal-body textarea { width:100%; padding:12px; border:2px solid #E2E8F0; border-radius:12px; font-family:'Cairo'; margin-top:5px; }
-        @media (max-width: 992px) {
-            .sidebar { right:-250px; }
-            .sidebar.active { right:0; }
-            .main-content { margin-right:0; }
-            #mobileMenuBtn { display:inline-flex; align-items:center; justify-content:center; }
-        }
-        @media (max-width: 768px) {
-            .main-content { padding:15px; }
-            .stats-grid { grid-template-columns: repeat(2,1fr); gap:12px; }
-            .table-section { padding:15px; }
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #faf8f5; color: #2b2b2b; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #4A154B 0%, #200421 100%); color: white; padding: 20px; border-radius: 8px; border-bottom: 4px solid #D4AF37; margin-bottom: 25px; }
+        .card { background: white; border: 1px solid #ebdcb2; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card h2 { color: #4A154B; border-bottom: 2px solid #D4AF37; padding-bottom: 10px; margin-top: 0; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input[type="text"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        button { background: #4A154B; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #200421; border-color: #D4AF37; }
+        .status-msg { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
+        .success { background-color: #d4edda; color: #155724; }
     </style>
 </head>
 <body>
-    <div id="notification" class="notification"></div>
-    <div class="admin-wrapper">
-        <aside class="sidebar" id="sidebarPanel">
-            <div class="logo"><i class="bi bi-shield-fill"></i><span>النور الرباني</span></div>
-            <nav><ul class="sidebar-menu">
-                <li id="navRequests" class="active" onclick="AdminPage.switchTab('requests')"><i class="bi bi-list-ul"></i> جميع الطلبات والمعالجة</li>
-                <li id="navArticles" onclick="AdminPage.switchTab('articles')"><i class="bi bi-book-open"></i> إدارة المقالات الروحية</li>
-                <li id="navReviews" onclick="AdminPage.switchTab('reviews')"><i class="bi bi-chat-quote"></i> إدارة آراء المستفيدين</li>
-                <li id="navAi" onclick="AdminPage.switchTab('ai')"><i class="bi bi-cpu"></i> توجيه الذكاء الاصطناعي</li>
-                <li onclick="localStorage.removeItem('token'); window.location.href='/login.html';" style="color:#e74c3c; cursor:pointer; margin-top:40px;"><i class="bi bi-box-arrow-right"></i> تسجيل الخروج</li>
-            </ul></nav>
-            <div class="sidebar-footer"><i class="bi bi-lock-fill"></i> إشراف: الشيخ بسام الشميري</div>
-        </aside>
-        <main class="main-content">
-            <header>
-                <div class="header-title" style="display:flex; align-items:center; gap:12px;"><button id="mobileMenuBtn" onclick="document.getElementById('sidebarPanel').classList.toggle('active')"><i class="bi bi-list"></i></button><div><h1 id="adminWelcome">لوحة التحكم العليا</h1><span id="currentTime" style="color: #718096; font-size: 0.9rem; font-weight: 600;"></span></div></div>
-                <div class="header-actions"><a href="/" target="_blank" style="background: #2c3e50; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-box-arrow-up-right"></i> زيارة الواجهة الرئيسية</a></div>
-            </header>
-            <section class="stats-grid">
-                <div class="stat-card gold"><div class="stat-icon"><i class="bi bi-calendar-check"></i></div><div class="stat-info"><h3 id="totalCount">0</h3><p>إجمالي الحالات المقيدة</p></div></div>
-                <div class="stat-card blue"><div class="stat-icon"><i class="bi bi-clock"></i></div><div class="stat-info"><h3 id="pendingCount">0</h3><p>طلبات بانتظار تشخيصك</p></div></div>
-                <div class="stat-card green"><div class="stat-icon"><i class="bi bi-check-circle"></i></div><div class="stat-info"><h3 id="completedCount">0</h3><p>حالات قيد العلاج والمكتملة</p></div></div>
-                <div class="stat-card red"><div class="stat-icon"><i class="bi bi-x-circle"></i></div><div class="stat-info"><h3 id="rejectedCount">0</h3><p>طلبات مستبعدة</p></div></div>
-            </section>
-            <section class="table-section" id="requestsSection"><div class="table-header"><h2><i class="bi bi-people"></i> ملفات طلبات المستفيدين الحية</h2><div class="table-controls"><input type="text" id="searchInput" placeholder="ابحث باسم المستفيد أو الخدمة..." onkeyup="AdminPage.searchTable()"><button onclick="AdminPage.loadRequests()" class="btn-refresh" title="تحديث البيانات فوراً"><i class="bi bi-arrow-clockwise"></i></button></div></div><div class="filter-bar"><button class="filter-btn active" onclick="AdminPage.filterRequests('all', this)">الكل</button><button class="filter-btn" onclick="AdminPage.filterRequests('pending', this)">قيد الانتظار</button><button class="filter-btn" onclick="AdminPage.filterRequests('payment_submitted', this)">مراجعة الدفع</button><button class="filter-btn" onclick="AdminPage.filterRequests('processing', this)">قيد العلاج</button><button class="filter-btn" onclick="AdminPage.filterRequests('completed', this)">مكتملة</button></div><div class="table-responsive"><table id="requestsTable"><thead><tr><th>#</th><th>الاسم الكامل</th><th>البريد الإلكتروني</th><th>نوع الخدمة الروحية</th><th>حالة التشخيص والعلاج</th><th>حالة التحقق المالي</th><th>تاريخ التقديم</th><th>الإجراء والتحكم</th></tr></thead><tbody id="requestsBody"><tr><td colspan="8" style="text-align:center; padding:30px; color:#888;">جاري فحص ملفات المستفيدين...</td></tr></tbody></table></div></section>
-            <section class="table-section" id="articlesSection" style="display:none;"><div id="adminArticlesContainer"><p>جاري تحميل المقالات...</p></div></section>
-            <section class="table-section" id="reviewsSection" style="display:none;"><div id="adminReviewsContainer"><p>جاري تحميل الآراء...</p></div></section>
-            <section class="table-section" id="aiSection" style="display:none;"><div id="adminAiContainer"><p>جاري تحميل محرر التوجيه...</p></div></section>
-        </main>
+
+<div class="container">
+    <div class="header">
+        <h1>لوحة الإدارة العامة والمراقبة</h1>
+        <p>مرحباً بك فضيلة الشيخ بسام. يمكنك التحكم بالمحتوى وتوجيه المساعد الذكي من هنا.</p>
     </div>
-    <div id="detailsModal" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="bi bi-file-text"></i> مراجعة ملف المستفيد وإصدار الخطة العلاجية</h3><span class="close-modal" onclick="AdminPage.closeModal()">&times;</span></div><div class="modal-body" id="modalBody"></div></div></div>
-    <script src="api.js"></script>
+
+    <!-- 1. قسم إدارة ونشر المقالات والآراء -->
+    <div class="card">
+        <h2>✍️ نشر مقال جديد أو رأي فقهي</h2>
+        <form id="publish-form" onsubmit="publishPost(event)">
+            <label for="post-title">عنوان المقال / الفتوى / الرأي:</label>
+            <input type="text" id="post-title" placeholder="أدخل العنوان هنا..." required>
+
+            <label for="post-type">نوع المنشور:</label>
+            <select id="post-type">
+                <option value="article">مقال علمي / روحاني</option>
+                <option value="opinion">رأي فقهي / فتوى</option>
+                <option value="guidance">توجيه وإرشاد للزوار</option>
+            </select>
+
+            <label for="post-content">المحتوى بالتفصيل:</label>
+            <textarea id="post-content" rows="6" placeholder="اكتب المحتوى أو نص الفتوى هنا..." required></textarea>
+
+            <button type="submit">نشر فوري في الموقع 🚀</button>
+        </form>
+        <div id="publish-status" class="status-msg success">تم نشر المقال بنجاح وتحديث واجهة المستفيدين!</div>
+    </div>
+
+    <!-- 2. قسم التحكم بالمساعد الذكي المطور -->
+    <div class="card">
+        <h2>🔮 إدارة توجيهات المساعد الذكي (AI Prompt)</h2>
+        <p style="font-size: 13px; color: #666;">التوجيهات المكتوبة هنا هي بمثابة "العقل المدبر" للمساعد العائم في الواجهة، سيتحدث المساعد بناءً عليها حصراً.</p>
+        <form id="ai-prompt-form" onsubmit="saveAiPrompt(event)">
+            <label for="ai-instruction">التوجيه الشرعي والروحي للمساعد الذكي:</label>
+            <textarea id="ai-instruction" rows="5" required>أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني. أجب على استفسارات الزوار بأدب ولطف جم، وقدم لهم النصائح الروحانية والرقية الشرعية المعتمدة بالاستناد إلى القرآن الكريم والسنة النبوية الشريفة.</textarea>
+
+            <button type="submit" style="background: #200421; border: 2px solid #D4AF37;">حفظ وتطبيق التوجيه فوراً ⚙️</button>
+        </form>
+        <div id="prompt-status" class="status-msg success">تم حفظ التوجيهات الذكية وتطبيقها على المساعد العائم!</div>
+    </div>
+</div>
+
+<script>
+    // ربط نشر المقالات والآراء بالسيرفر
+    async function publishPost(event) {
+        event.preventDefault();
+        const title = document.getElementById('post-title').value;
+        const type = document.getElementById('post-type').value;
+        const content = document.getElementById('post-content').value;
+
+        try {
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, type, content })
+            });
+            if (response.ok) {
+                const status = document.getElementById('publish-status');
+                status.style.display = 'block';
+                document.getElementById('publish-form').reset();
+                setTimeout(() => status.style.display = 'none', 4000);
+            }
+        } catch (error) {
+            alert('حدث خطأ أثناء الاتصال بالسيرفر لنشر المقال.');
+        }
+    }
+
+    // ربط إرشادات المساعد الذكي بالسيرفر لتحديث الـ Prompt
+    async function saveAiPrompt(event) {
+        event.preventDefault();
+        const promptText = document.getElementById('ai-instruction').value;
+
+        try {
+            const response = await fetch('/api/admin/update-ai-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ systemPrompt: promptText })
+            });
+            if (response.ok) {
+                const status = document.getElementById('prompt-status');
+                status.style.display = 'block';
+                setTimeout(() => status.style.display = 'none', 4000);
+            }
+        } catch (error) {
+            alert('حدث خطأ أثناء تحديث توجيهات المساعد الذكي.');
+        }
+    }
+</script>
 </body>
 </html>
