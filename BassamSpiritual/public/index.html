@@ -288,7 +288,9 @@
 
         <section class="section">
             <div class="section-header"><h2><i class="bi bi-feather"></i> مقالات روحية</h2><span>كنوز من النور والمعرفة</span></div>
-            <div id="articlesContainer" class="articles-grid"></div>
+            <div id="articlesContainer" class="articles-grid">
+                <p style="text-align:center; width:100%; padding:20px; color:#E0C88A;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب المقالات والدروس...</p>
+            </div>
         </section>
 
         <section class="section">
@@ -302,7 +304,9 @@
 
         <section class="section">
             <div class="section-header"><h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2><span>ما قالوه عن رحلة الشفاء</span></div>
-            <div id="testimonialsContainer" class="testimonials-grid"></div>
+            <div id="testimonialsContainer" class="testimonials-grid">
+                <p style="text-align:center; width:100%; padding:20px; color:#E0C88A;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب آراء وتجارب المستفيدين...</p>
+            </div>
         </section>
     </div>
 
@@ -379,6 +383,144 @@
     </footer>
 
     <script>
+        // 1. جلب وعرض المقالات من السيرفر
+        async function fetchAndShowArticles() {
+            const articlesContainer = document.getElementById('articlesContainer');
+            if (!articlesContainer) return;
+
+            try {
+                const response = await fetch('/api/articles');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const articles = await response.json();
+
+                if (articles.length === 0) {
+                    articlesContainer.innerHTML = `
+                        <div class="col-12 text-center text-muted py-4">
+                            <i class="bi bi-journal-x fs-2"></i>
+                            <p class="mt-2">لا توجد مقالات منشورة حالياً في المدونة.</p>
+                        </div>`;
+                    return;
+                }
+
+                articlesContainer.innerHTML = '';
+
+                articles.forEach(article => {
+                    const card = document.createElement('div');
+                    card.className = 'article-card';
+                    card.onclick = () => showArticleInModal(article);
+                    
+                    card.innerHTML = `
+                        <div class="article-icon-box">
+                            <i class="${article.icon || 'bi bi-book'}"></i>
+                        </div>
+                        <h3>${article.title}</h3>
+                        <p class="article-meta"><i class="bi bi-calendar3"></i> ${new Date(article.createdAt).toLocaleDateString('ar-YE')}</p>
+                        <p class="article-summary">${article.summary}</p>
+                        <span class="read-more-btn"><i class="bi bi-arrow-left"></i> اقرأ المقال بالكامل</span>
+                    `;
+                    articlesContainer.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error fetching articles:', error);
+                articlesContainer.innerHTML = `
+                    <p style="text-align:center; width:100%; padding:20px; color:#e74c3c;">
+                        <i class="bi bi-exclamation-triangle-fill"></i> تعذر تحميل المقالات حالياً. يرجى التحديث لاحقاً.
+                    </p>`;
+            }
+        }
+
+        // دالة مدمجة لعرض تفاصيل المقال المختار داخل الـ Modal
+        function showArticleInModal(article) {
+            const modal = document.getElementById('articleModal');
+            const content = document.getElementById('modalArticleContent');
+            
+            if (modal && content) {
+                content.innerHTML = `
+                    <div style="text-align: right; direction: rtl;">
+                        <h2 style="color: #0A1628; border-bottom: 2px solid #F5B041; padding-bottom: 10px; font-family: 'Cairo', sans-serif;">
+                            <i class="${article.icon || 'bi bi-book'}"></i> ${article.title}
+                        </h2>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px;">
+                            <i class="bi bi-calendar3"></i> تاريخ النشر: ${new Date(article.createdAt).toLocaleDateString('ar-YE')}
+                        </p>
+                        <div style="font-size: 1.1rem; line-height: 1.8; color: #2c3e50; white-space: pre-line; font-family: 'Cairo', sans-serif;">
+                            ${article.content}
+                        </div>
+                    </div>
+                `;
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeArticleModal() {
+            const modal = document.getElementById('articleModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function closeArticleModalOnOverlay(event) {
+            if (event.target.id === 'articleModal') {
+                closeArticleModal();
+            }
+        }
+
+        // 2. جلب وعرض آراء المستفيدين (Testimonials) من السيرفر
+        async function fetchAndShowTestimonials() {
+            const testimonialsContainer = document.getElementById('testimonialsContainer');
+            if (!testimonialsContainer) return;
+
+            try {
+                const response = await fetch('/api/testimonials');
+                if (!response.ok) throw new Error('Failed to fetch testimonials');
+                const testimonials = await response.json();
+
+                // عرض الآراء الموافَق عليها فقط (إذا كان السيرفر يعيدها مفلترة، أو نفلترها هنا)
+                const approvedTestimonials = testimonials.filter(t => t.approved !== false);
+
+                if (approvedTestimonials.length === 0) {
+                    testimonialsContainer.innerHTML = `
+                        <div class="col-12 text-center text-muted py-4">
+                            <p>لا توجد آراء منشورة حالياً. كن أول من يشارك تجربته!</p>
+                        </div>`;
+                    return;
+                }
+
+                testimonialsContainer.innerHTML = '';
+
+                approvedTestimonials.forEach(test => {
+                    const stars = '★'.repeat(test.rating || 5) + '☆'.repeat(5 - (test.rating || 5));
+                    const card = document.createElement('div');
+                    card.className = 'testimonial-card'; // يعتمد على تنسيق الاستايل الأصلي لديك
+                    card.innerHTML = `
+                        <div class="testimonial-content-box">
+                            <div class="testimonial-stars" style="color: #F5B041; margin-bottom: 8px;">${stars}</div>
+                            <p class="testimonial-text" style="font-style: italic; color: #2c3e50;">" ${test.feedback || test.content} "</p>
+                            <h5 class="testimonial-author" style="color: #0A1628; font-weight: 700; margin-top: 10px;">
+                                <i class="bi bi-person-fill"></i> ${test.name || 'مستفيد كريم'}
+                            </h5>
+                            <small class="text-muted">${test.service || 'استشفاء روحي ونفسي'}</small>
+                        </div>
+                    `;
+                    testimonialsContainer.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error fetching testimonials:', error);
+                testimonialsContainer.innerHTML = `
+                    <p style="text-align:center; width:100%; padding:20px; color:#e74c3c;">
+                        <i class="bi bi-exclamation-triangle-fill"></i> تعذر تحميل آراء المستفيدين حالياً.
+                    </p>`;
+            }
+        }
+
+        // تشغيل الجلب التلقائي فور تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndShowArticles();
+            fetchAndShowTestimonials();
+        });
+    </script>
+
+    <script>
         // دالة إظهار وإخفاء صندوق المحادثة الجديد
         function toggleChatNew() {
             const chatWin = document.getElementById('chatWindowNew');
@@ -418,7 +560,6 @@
             bodyEl.scrollTop = bodyEl.scrollHeight;
 
             try {
-                // الاتصال بنظام المساعد الذكي المربوط بالسيرفر
                 const response = await fetch('/api/ai-chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -443,39 +584,60 @@
             }
         }
 
-        // تأثير تصاعد الأرقام التفاعلي تلقائياً عند النزول إليها
+        // 🔄 تأثير تصاعد الأرقام التفاعلي المتكرر (عند الدخول والخروج من الشاشة)
         document.addEventListener('DOMContentLoaded', () => {
             const counterSection = document.getElementById('counterSection');
             const counters = document.querySelectorAll('.counter-number');
-            let started = false;
 
-            const startCounting = () => {
+            if (!counterSection) return;
+
+            const runCounterAnimation = () => {
                 counters.forEach(counter => {
                     const target = parseInt(counter.getAttribute('data-target'));
-                    const speed = target / 100;
-                    let count = 0;
+                    const duration = 1500; // مدة الحركة بالملي ثانية
+                    const startTime = performance.now();
 
-                    const updateCount = () => {
-                        count += speed;
-                        if (count < target) {
-                            counter.innerText = Math.ceil(count);
-                            setTimeout(updateCount, 15);
+                    const updateCount = (currentTime) => {
+                        const elapsedTime = currentTime - startTime;
+                        const progress = Math.min(elapsedTime / duration, 1);
+                        
+                        // دالة تسارع انسيابية
+                        const easeOutQuad = progress * (2 - progress);
+                        const currentValue = Math.floor(easeOutQuad * target);
+
+                        counter.innerText = currentValue;
+
+                        if (progress < 1) {
+                            requestAnimationFrame(updateCount);
                         } else {
                             counter.innerText = target;
                         }
                     };
-                    updateCount();
+
+                    requestAnimationFrame(updateCount);
                 });
             };
 
-            window.addEventListener('scroll', () => {
-                if (!counterSection) return;
-                const position = counterSection.getBoundingClientRect();
-                if (position.top < window.innerHeight && !started) {
-                    startCounting();
-                    started = true;
-                }
+            // استخدام Intersection Observer لتتبع حركة ظهور واختفاء العداد أمام الزائر وتكراره
+            let isInside = false;
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (!isInside) {
+                            runCounterAnimation(); // تشغيل الحركة فور دخول الشاشة
+                            isInside = true;
+                        }
+                    } else {
+                        // تصفير العداد عندما يخرج من الشاشة ليتحرك مجدداً عند العودة
+                        counters.forEach(c => c.innerText = "0");
+                        isInside = false;
+                    }
+                });
+            }, {
+                threshold: 0.2 // يبدأ تصفير/تفعيل العداد عندما يظهر منه 20% على الأقل في الشاشة
             });
+
+            observer.observe(counterSection);
         });
     </script>
     <script src="api.js"></script>
