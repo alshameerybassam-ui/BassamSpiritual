@@ -51,6 +51,161 @@
             .hero-section { padding: 30px 15px 25px; border-radius: 20px; }
             .hero-section h1 { font-size: 1.8rem !important; }
         }
+
+        /* 🔮 تنسيقات المساعد الذكي العائم المطور */
+        .chat-icon-container {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-icon-m {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F5B041, #E67E22);
+            color: #0A1628;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(245, 176, 65, 0.4);
+            border: 2px solid #fff;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .chat-icon-m:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 15px 35px rgba(245, 176, 65, 0.6);
+        }
+        .chat-icon-m .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid rgba(245, 176, 65, 0.5);
+            animation: ringPulse 2s infinite ease-out;
+            pointer-events: none;
+        }
+        @keyframes ringPulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .chat-badge-m {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #e74c3c;
+            color: white;
+            font-size: 11px;
+            padding: 3px 7px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        /* تحسين صندوق نافذة الشات العائم */
+        .chat-window-m {
+            position: fixed;
+            bottom: 105px;
+            left: 25px;
+            width: 360px;
+            max-width: calc(100vw - 50px);
+            height: 500px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(10, 22, 40, 0.08);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1001;
+            animation: slideUp 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .chat-header-m {
+            background: linear-gradient(135deg, #0A1628 0%, #1B2A3D 100%);
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #F5B041;
+        }
+        .chat-body-m {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fcfbf9;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-message-m {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .chat-message-m.bot {
+            background-color: #f1f2f6;
+            color: #2c3e50;
+            align-self: flex-start;
+            border-bottom-right-radius: 3px;
+        }
+        .chat-message-m.user {
+            background-color: #F5B041;
+            color: #0A1628;
+            align-self: flex-end;
+            border-bottom-left-radius: 3px;
+            font-weight: 600;
+        }
+        .chat-footer-m {
+            padding: 12px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input-m {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 30px;
+            outline: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .chat-input-m:focus {
+            border-color: #F5B041;
+            box-shadow: 0 0 0 3px rgba(245, 176, 65, 0.15);
+        }
+        .chat-send-btn-m {
+            background: linear-gradient(135deg, #F5B041, #E67E22);
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            color: #0A1628;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(245, 176, 65, 0.3);
+            transition: 0.3s;
+        }
+        .chat-send-btn-m:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -102,10 +257,10 @@
                 </div>
                 
                 <div>
-                    <button onclick="toggleChat()" style="background: linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; border:none; padding:16px 42px; border-radius:60px; font-size:1.25rem; font-weight:800; cursor:pointer; box-shadow:0 12px 35px rgba(245,176,65,0.45); display:inline-flex; align-items:center; gap:12px; transition:0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 18px 45px rgba(245,176,65,0.6)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 12px 35px rgba(245,176,65,0.45)';">
-                        <i class="bi bi-robot" style="font-size:1.8rem;"></i> تحدث مع المستشار الروحاني الذكي
-                    </button>
-                    <p style="font-size:0.85rem; color:#8A9AA8; margin-top:12px;"><i class="bi bi-shield-fill-check" style="color:#F5B041;"></i> محادثة آمنة وسرية تامة</p>
+                    <a href="/login" style="background: linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; border:none; padding:16px 42px; border-radius:60px; font-size:1.25rem; font-weight:800; text-decoration: none; cursor:pointer; box-shadow:0 12px 35px rgba(245,176,65,0.45); display:inline-flex; align-items:center; gap:12px; transition:0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 18px 45px rgba(245,176,65,0.6)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 12px 35px rgba(245,176,65,0.45)';">
+                        <i class="bi bi-send-check-fill" style="font-size:1.6rem;"></i> ابدأ رحلة التشخيص والعلاج والرقية
+                    </a>
+                    <p style="font-size:0.85rem; color:#8A9AA8; margin-top:12px;"><i class="bi bi-shield-fill-check" style="color:#F5B041;"></i> تواصل مغلق وخاص ومحمي بالكامل بخصوصية مطلقة</p>
                 </div>
                 
                 <p style="color:#8A9AA8; margin-top:25px; font-size:1.05rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px;">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
@@ -122,7 +277,7 @@
             </div>
         </div>
 
-        <div class="trust-counter">
+        <div class="trust-counter" id="counterSection">
             <div class="counter-item"><i class="bi bi-heart-fill"></i><span class="counter-number" data-target="963">0</span><p>حالة تم علاجها</p></div>
             <div class="counter-item"><i class="bi bi-star-fill"></i><span class="counter-number" data-target="98">0</span><p>% نسبة الرضا الإجمالية</p></div>
             <div class="counter-item"><i class="bi bi-people-fill"></i><span class="counter-number" data-target="498">0</span><p>حالة استشفاء روحي</p></div>
@@ -158,34 +313,169 @@
         </div>
     </div>
 
-    <div id="chatWindow" class="chat-window" style="display: none;">
-        <div class="chat-header">
-            <div class="chat-header-info"><i class="bi bi-robot" style="color:#F5B041;"></i><span>المستشار الروحاني الذكي</span></div>
-            <button onclick="toggleChat()" class="chat-close">&times;</button>
-        </div>
-        <div class="chat-body" id="chatBody">
-            <div class="chat-message bot"><div class="message-content">السلام عليكم ورحمة الله وبركاته 🌙<br>أنا المستشار الروحاني الذكي، هنا لمساعدتك.<br><strong>هل يمكنك إخباري بما تمر به؟</strong></div></div>
-        </div>
-        <div class="chat-footer">
-            <input type="text" id="chatInput" placeholder="اكتب مشكلتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
+    <div class="chat-icon-container">
+        <div class="chat-icon-m" onclick="toggleChatNew()">
+            <div class="pulse-ring"></div>
+            <i class="bi bi-robot"></i>
+            <span class="chat-badge-m">1</span>
         </div>
     </div>
 
-    <div id="chatIcon" class="chat-icon" onclick="toggleChat()">
-        <i class="bi bi-robot"></i><span class="chat-badge">💬</span><div class="chat-pulse"></div>
+    <div id="chatWindowNew" class="chat-window-m">
+        <div class="chat-header-m">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="bi bi-robot" style="color:#F5B041; font-size:20px;"></i>
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-weight:700; font-size:14px; line-height:1.2;">المستشار الروحاني الذكي</span>
+                    <span style="font-size:11px; color:#F5B041;">مستعد لخدمتك ومساعدتك</span>
+                </div>
+            </div>
+            <button onclick="toggleChatNew()" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <div class="chat-body-m" id="chatBodyNew">
+            <div class="chat-message-m bot">
+                السلام عليكم ورحمة الله وبركاته 🌙<br>
+                أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك وتساؤلاتك الروحية وفق تطلعات وإرشادات الشيخ بسام الشميري.<br>
+                <strong>هل يمكنك إخباري بما تشعر به أو بنوع الخدمة التي تود الاستفسار عنها؟</strong>
+            </div>
+        </div>
+        <div class="chat-footer-m">
+            <input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك أو استفسارك هنا..." onkeypress="if(event.key==='Enter') sendNewMessage()">
+            <button onclick="sendNewMessage()" class="chat-send-btn-m"><i class="bi bi-send-fill"></i></button>
+        </div>
     </div>
 
     <footer class="footer-new">
         <div class="footer-content">
-            <div class="footer-section"><h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4><p class="footer-desc">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p><p class="footer-small">بإدارة الشيخ بسام الشميري (آل الكدهي)</p></div>
-            <div class="footer-section"><h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4><ul><li><a href="/"><i class="bi bi-arrow-left-short"></i> الرئيسية</a></li><li><a href="/about-sheikh.html"><i class="bi bi-tree-fill"></i> النسب الشريف</a></li><li><a href="/register"><i class="bi bi-person-plus-fill"></i> تسجيل جديد</a></li><li><a href="/login"><i class="bi bi-box-arrow-in-left"></i> دخول</a></li><li><a href="/dashboard"><i class="bi bi-person-circle"></i> حسابي</a></li></ul></div>
-            <div class="footer-section"><h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4><ul class="contact-list"><li><i class="bi bi-telephone-fill"></i> +967777941366</li><li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li><li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li></ul></div>
+            <div class="footer-section">
+                <h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4>
+                <p class="footer-desc">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
+                <p class="footer-small">بإدارة الشيخ بسام الشميري (آل الكدهي)</p>
+            </div>
+            <div class="footer-section">
+                <h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4>
+                <ul>
+                    <li><a href="/"><i class="bi bi-arrow-left-short"></i> الرئيسية</a></li>
+                    <li><a href="/about-sheikh.html"><i class="bi bi-tree-fill"></i> النسب الشريف</a></li>
+                    <li><a href="/register"><i class="bi bi-person-plus-fill"></i> تسجيل جديد</a></li>
+                    <li><a href="/login"><i class="bi bi-box-arrow-in-left"></i> دخول</a></li>
+                    <li><a href="/dashboard"><i class="bi bi-person-circle"></i> حسابي</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4>
+                <ul class="contact-list">
+                    <li><i class="bi bi-telephone-fill"></i> +967777941366</li>
+                    <li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li>
+                    <li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li>
+                </ul>
+            </div>
         </div>
-        <div class="footer-bottom"><p>© 2026 مركز النور الرباني والنَفَس الرحماني. جميع الحقوق محفوظة.</p></div>
+        <div class="footer-bottom">
+            <p>© 2026 مركز النور الرباني والنَفَس الرحماني. جميع الحقوق محفوظة.</p>
+        </div>
     </footer>
 
-    <script src="chat-engine.js"></script>
+    <script>
+        // دالة إظهار وإخفاء صندوق المحادثة الجديد
+        function toggleChatNew() {
+            const chatWin = document.getElementById('chatWindowNew');
+            const badge = document.querySelector('.chat-badge-m');
+            
+            if (chatWin.style.display === 'none' || chatWin.style.display === '') {
+                chatWin.style.display = 'flex';
+                if(badge) badge.style.display = 'none'; // إخفاء الإشعار بمجرد الفتح
+            } else {
+                chatWin.style.display = 'none';
+            }
+        }
+
+        // دالة معالجة وإرسال الرسائل الفورية للمساعد الذكي
+        async function sendNewMessage() {
+            const inputEl = document.getElementById('chatInputNew');
+            const bodyEl = document.getElementById('chatBodyNew');
+            const queryText = inputEl.value.trim();
+
+            if (!queryText) return;
+
+            // إدراج فقاعة كلام المستخدم
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-message-m user';
+            userBubble.innerText = queryText;
+            bodyEl.appendChild(userBubble);
+            bodyEl.scrollTop = bodyEl.scrollHeight;
+
+            inputEl.value = '';
+
+            // إدراج مؤشر جاري التحميل
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'chat-message-m bot';
+            typingBubble.id = 'typing-indicator-new';
+            typingBubble.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري استشارة التوجيهات...';
+            bodyEl.appendChild(typingBubble);
+            bodyEl.scrollTop = bodyEl.scrollHeight;
+
+            try {
+                // الاتصال بنظام المساعد الذكي المربوط بالسيرفر
+                const response = await fetch('/api/ai-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: queryText })
+                });
+                const data = await response.json();
+                
+                document.getElementById('typing-indicator-new').remove();
+
+                const aiBubble = document.createElement('div');
+                aiBubble.className = 'chat-message-m bot';
+                aiBubble.innerText = data.reply;
+                bodyEl.appendChild(aiBubble);
+                bodyEl.scrollTop = bodyEl.scrollHeight;
+            } catch (err) {
+                document.getElementById('typing-indicator-new').remove();
+                const errorBubble = document.createElement('div');
+                errorBubble.className = 'chat-message-m bot';
+                errorBubble.innerText = "أعتذر منك يا أخي الكريم، حدث انقطاع مؤقت في الاتصال مع السيرفر الرئيسي. أرجو إعادة المحاولة.";
+                bodyEl.appendChild(errorBubble);
+                bodyEl.scrollTop = bodyEl.scrollHeight;
+            }
+        }
+
+        // تأثير تصاعد الأرقام التفاعلي تلقائياً عند النزول إليها
+        document.addEventListener('DOMContentLoaded', () => {
+            const counterSection = document.getElementById('counterSection');
+            const counters = document.querySelectorAll('.counter-number');
+            let started = false;
+
+            const startCounting = () => {
+                counters.forEach(counter => {
+                    const target = parseInt(counter.getAttribute('data-target'));
+                    const speed = target / 100;
+                    let count = 0;
+
+                    const updateCount = () => {
+                        count += speed;
+                        if (count < target) {
+                            counter.innerText = Math.ceil(count);
+                            setTimeout(updateCount, 15);
+                        } else {
+                            counter.innerText = target;
+                        }
+                    };
+                    updateCount();
+                });
+            };
+
+            window.addEventListener('scroll', () => {
+                if (!counterSection) return;
+                const position = counterSection.getBoundingClientRect();
+                if (position.top < window.innerHeight && !started) {
+                    startCounting();
+                    started = true;
+                }
+            });
+        });
+    </script>
     <script src="api.js"></script>
 </body>
 </html>
