@@ -46,8 +46,8 @@ function writeDB(data) {
         db.users.push({
             id: Date.now(),
             full_name: "الشيخ بسام",
-            email: "admin@noor.com",
-            phone: "966500000000",
+            email: "alshameerybassam@gmail.com",
+            phone: "777941366",
             password: hashedPassword,
             role: "admin"
         });
