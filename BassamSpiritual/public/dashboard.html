@@ -1,1 +1,329 @@
-<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>لوحة التحكم | مركز النور الرباني</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><link rel="stylesheet" href="style.css"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Cairo',sans-serif;background:#F8FAFC;color:#1A2835}.dashboard-wrapper{max-width:1200px;margin:0 auto;padding:20px}.dashboard-header{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:15px 25px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05);margin-bottom:25px;flex-wrap:wrap;gap:10px;border-right:6px solid #F5B041}.dashboard-header .user-info h3{color:#0A1628;font-size:1.2rem}.dashboard-header .user-info p{color:#6A7A8A;font-size:0.9rem}.dashboard-header .actions{display:flex;gap:12px;flex-wrap:wrap}.btn-primary{background:linear-gradient(135deg,#F5B041,#E67E22);color:#0A1628;border:none;padding:10px 20px;border-radius:40px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:0.3s;font-family:'Cairo',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:8px}.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(245,176,65,0.4)}.btn-outline{background:transparent;color:#0A1628;border:2px solid #E2E8F0;padding:10px 20px;border-radius:40px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:0.3s;font-family:'Cairo',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:8px}.btn-outline:hover{border-color:#F5B041;color:#F5B041}.btn-danger-outline{background:transparent;color:#e74c3c;border:2px solid #e74c3c;padding:10px 20px;border-radius:40px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:0.3s;font-family:'Cairo',sans-serif}.btn-danger-outline:hover{background:#e74c3c;color:#fff}.dashboard-grid{display:grid;grid-template-columns:1fr 2fr;gap:25px}.dashboard-sidebar{display:flex;flex-direction:column;gap:20px}.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.05);border-right:4px solid #F5B041}.card h4{color:#0A1628;margin-bottom:12px;display:flex;align-items:center;gap:8px}.card h4 i{color:#F5B041}.card .stat-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0}.card .stat-item:last-child{border-bottom:none}.table{width:100%;border-collapse:collapse;margin-top:10px;text-align:right}.table th,.table td{padding:12px;border-bottom:1px solid #E2E8F0;font-size:0.9rem}.table th{background-color:#F8FAFC;color:#4A5A6A;font-weight:700}.badge{padding:4px 10px;border-radius:30px;font-size:0.8rem;font-weight:600;display:inline-block}.bg-warning{background-color:#FEF3C7}.bg-info{background-color:#E0F2FE}.bg-success{background-color:#D1FAE5;color:#065F46}.bg-danger{background-color:#FEE2E2;color:#991B1B}.bg-secondary{background-color:#F1F5F9;color:#475569}.bg-primary{background-color:#DBEAFE;color:#1E40AF}.bg-dark{background-color:#E2E8F0;color:#1E293B}.btn-sm{padding:6px 12px;border-radius:20px;font-size:0.8rem;cursor:pointer;border:none;font-family:'Cairo'}.btn-primary.btn-sm{background:#F5B041;color:#0A1628;font-weight:600}.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,22,40,0.7);z-index:9999;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(4px)}.modal-overlay.show{display:flex}.modal-box{background:#fff;border-radius:20px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:30px;border-top:8px solid #F5B041;box-shadow:0 30px 80px rgba(0,0,0,0.3)}.modal-box h3{color:#0A1628;margin-bottom:15px}.modal-box .close-modal{float:left;font-size:1.8rem;cursor:pointer;color:#999;transition:0.3s}.modal-box .close-modal:hover{color:#e74c3c;transform:rotate(90deg)}.modal-box label{display:block;font-weight:700;margin-top:15px;margin-bottom:5px;font-size:0.9rem}.modal-box input,.modal-box select,.modal-box textarea{width:100%;padding:10px 12px;border:2px solid #E2E8F0;border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.95rem;margin-bottom:10px}.modal-box textarea{min-height:80px}.modal-box input:focus,.modal-box select:focus,.modal-box textarea:focus{border-color:#F5B041;outline:none}.notification{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:15px 25px;border-radius:12px;color:#fff;font-weight:600;z-index:99999;display:none;min-width:300px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.15);font-family:'Cairo'}.notification.success{background:#27ae60}.notification.error{background:#e74c3c}.notification.show{display:block}.alert{padding:12px;border-radius:10px;font-size:0.9rem;margin-bottom:15px;line-height:1.6}.alert-info{background-color:#E0F2FE;color:#0369A1;border-right:4px solid #0EA5E9}@media (max-width:768px){.dashboard-grid{grid-template-columns:1fr}.dashboard-header{flex-direction:column;align-items:flex-start}.dashboard-header .actions{width:100%;justify-content:flex-start}}</style></head><body><div id="notification" class="notification"></div><div class="dashboard-wrapper"><div class="dashboard-header"><div class="user-info"><h3 id="userName">مرحباً، <span>...</span></h3><p id="userEmail">...</p></div><div class="actions"><a href="/" class="btn-outline"><i class="bi bi-house"></i> الرئيسية</a><button onclick="DashboardPage.openNewRequestModal()" class="btn-primary"><i class="bi bi-plus-circle"></i> طلب جديد</button><a href="/login.html" class="btn-danger-outline" onclick="localStorage.clear()"><i class="bi bi-box-arrow-right"></i> خروج</a></div></div><div class="dashboard-grid"><div class="dashboard-sidebar"><div class="card"><h4><i class="bi bi-person-circle"></i> ملفي الشخصي</h4><div style="display:flex;align-items:center;gap:15px;margin-bottom:10px"><div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#F5B041,#E67E22);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;font-weight:700"><span id="userInitial">ب</span></div><div><div style="font-weight:700;font-size:1.1rem" id="sidebarName">...</div><div style="color:#6A7A8A;font-size:0.85rem" id="sidebarEmail">...</div></div></div><div style="border-top:1px solid #eee;padding-top:10px;margin-top:5px"><div class="stat-item"><span>📱 الهاتف</span> <span id="sidebarPhone">غير مضاف</span></div><div class="stat-item"><span>📅 تاريخ التسجيل</span> <span id="sidebarJoined">...</span></div></div></div><div class="card"><h4><i class="bi bi-chart-pie"></i> إحصائياتي</h4><div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div><div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div><div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div><div class="stat-item"><span>❌ مرفوضة</span> <span id="statRejected">0</span></div></div></div><div><div class="card" style="border-right-color:#1B4D3D"><h4><i class="bi bi-list"></i> طلباتي</h4><div id="requestsList" style="margin-top:15px"><p style="text-align:center;color:#6A7A8A;padding:20px">جاري تحميل الطلبات...</p></div></div></div></div></div><div id="newRequestModal" class="modal-overlay"><div class="modal-box"><span class="close-modal" onclick="DashboardPage.closeNewRequestModal()">&times;</span><h3><i class="bi bi-heart-pulse"></i> تقديم ملف حالة جديد</h3><form id="newRequestForm" onsubmit="DashboardPage.submitNewRequest(event)"><label>نوع الخدمة المطلوبة <span style="color:#e74c3c">*</span></label><select id="reqServiceType" required><option value="استشارة روحانية">استشارة روحانية (100 ر.س)</option><option value="علاج روحي">علاج روحي (100 ر.س)</option><option value="تفسير رؤيا">تفسير رؤيا (100 ر.س)</option><option value="حل مشكلة أسرية">حل مشكلة أسرية (100 ر.س)</option><option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option></select><label>وصف الحالة بالتفصيل <span style="color:#e74c3c">*</span></label><textarea id="reqDescription" rows="5" placeholder="اكتب ما تعاني منه بكل وضوح وتفصيل..." required></textarea><button type="submit" class="btn-primary" style="width:100%;margin-top:20px;justify-content:center"><i class="bi bi-send"></i> إرسال الطلب</button></form></div></div><div id="viewRequestModal" class="modal-overlay"><div class="modal-box"><span class="close-modal" onclick="document.getElementById('viewRequestModal').classList.remove('show')">&times;</span><h3><i class="bi bi-file-text"></i> مراجعة الطلب</h3><div id="requestDetailsContainer" style="margin-top:15px"><p>جاري التحميل...</p></div></div></div><script src="api.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - مستفيد</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4A154B; --accent-color: #D4AF37; --bg-light: #f4f6f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-light); margin:0; padding:0; }
+        .navbar-custom { background-color: var(--primary-color); border-bottom: 4px solid var(--accent-color); }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: white; }
+        .badge-status { font-size: 0.85rem; padding: 6px 12px; border-radius: 20px; }
+        .chat-container { height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; padding: 15px; }
+        .message-bubble { max-width: 75%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; }
+        .message-sent { background-color: #E2F0D9; margin-right: auto; border-top-left-radius: 0; }
+        .message-received { background-color: #ffffff; margin-left: auto; border-top-right-radius: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark navbar-custom py-3 mb-4">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span class="navbar-brand d-flex align-items-center gap-2 fw-bold"><i class="bi bi-moon-stars text-warning fs-3"></i> مركز النور الرباني</span>
+        <div class="d-flex align-items-center gap-3">
+            <span id="userNameText" class="text-white fw-bold">...</span>
+            <button class="btn btn-outline-light btn-sm" onclick="AuthAPI.logout()">خروج <i class="bi bi-box-arrow-left"></i></button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="card card-custom p-4 mb-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-plus-circle-fill text-primary-color me-2"></i>تقديم طلب استشفاء جديد</h5>
+                <form id="requestForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع الخدمة</label>
+                        <select class="form-select" id="serviceType">
+                            <option value="استشارة عامة">استشارة عامة</option>
+                            <option value="برنامج رقيا وعلاج">طلب خطة رقية وعلاج</option>
+                            <option value="تحصين ووقاية">تحصين روحي شامل</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اشرح حالتك النفسية أو الروحية بالتفصيل</label>
+                        <textarea class="form-control" id="description" rows="3" placeholder="اكتب مشكلتك بدقة وأمانة للتشخيص..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2" style="background-color: var(--primary-color); border:none;">إرسال الطلب للشيخ بسام</button>
+                </form>
+            </div>
+
+            <div class="card card-custom p-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-folder2-open me-2"></i>طلباتك السابقة</h5>
+                <div id="requestsList" class="list-group list-group-flush"></div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div id="emptyState" class="card card-custom p-5 text-center">
+                <i class="bi bi-journal-text text-muted mb-3" style="font-size: 4rem;"></i>
+                <h5 class="text-muted">اختر طلباً من القائمة لعرض تفاصيله وبدء المتابعة والتشخيص</h5>
+            </div>
+
+            <div id="detailsCard" class="card card-custom p-4 d-none">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <h4 class="fw-bold mb-0 text-dark" id="detServiceType">تفاصيل الطلب</h4>
+                    <span id="detStatusBadge" class="badge-status"></span>
+                </div>
+                <p class="text-muted mb-3" id="detDescription"></p>
+
+                <div id="paymentSection" class="card border-warning bg-light-warning p-3 mb-3 d-none">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-wallet2 me-2"></i>إجراءات سداد الرسوم العلاجية والمالية</h6>
+                    <form id="paymentForm">
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="text" id="payMethod" class="form-control form-control-sm" placeholder="طريقة الدفع (الراجحي)" required></div>
+                            <div class="col-md-4"><input type="text" id="payName" class="form-control form-control-sm" placeholder="اسم المحول" required></div>
+                            <div class="col-md-4"><input type="text" id="payNum" class="form-control form-control-sm" placeholder="رقم الحوالة" required></div>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm w-100 mt-2 fw-bold text-dark">تأكيد وإرسال إيصال الحوالة</button>
+                    </form>
+                </div>
+
+                <div id="treatmentSection" class="card border-success bg-light-success p-3 mb-3 d-none">
+                    <h5 class="fw-bold text-success mb-2"><i class="bi bi-file-earmark-medical-fill me-2"></i>برنامج التشخيص والخطط العلاجية</h5>
+                    <p class="small text-muted mb-1"><strong>التشخيص الأولي:</strong> <span id="detDiagnosis"></span></p>
+                    <p class="small text-muted mb-0"><strong>الخطة والرقية المقررة:</strong> <span id="detPlan"></span></p>
+                </div>
+
+                <div class="mt-4 border-top pt-3">
+                    <h5 class="fw-bold mb-2 text-dark"><i class="bi bi-chat-text-fill me-2"></i>المراسلة الفورية المغلقة والمحمية</h5>
+                    <div id="chatBox" class="chat-container mb-2"></div>
+                    <form id="messageForm" class="d-flex gap-2">
+                        <input type="text" id="messageText" class="form-control" placeholder="اكتب استفسارك أو ردك للشيخ هنا..." required>
+                        <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;"><i class="bi bi-send-fill"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ai-floating-container" style="position: fixed; bottom: 20px; left: 20px; z-index: 9999; direction: rtl;">
+    <button id="ai-floating-btn" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4A154B 0%, #200421 100%); border: 3px solid #D4AF37; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;" onclick="toggleAiChat()">
+        <span style="color: #D4AF37;">✨</span>
+    </button>
+    <div id="ai-chat-window" style="display: none; width: 320px; height: 420px; background: white; border-radius: 12px; border: 2px solid #4A154B; box-shadow: 0 8px 25px rgba(0,0,0,0.2); overflow: hidden; position: absolute; bottom: 75px; left: 0; transition: all 0.3s ease; flex-direction: column;">
+        <div style="background: linear-gradient(135deg, #4A154B 0%, #200421 100%); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #D4AF37;">
+            <strong style="font-size: 14px;">✨ المستشار الروحي الذكي</strong>
+            <button onclick="toggleAiChat()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="ai-chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; background-color: #fafafa; font-size: 13px;">
+            <div style="background: #f1e4f2; color: #4A154B; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; width: fit-content; max-width: 85%;">
+                مرحباً بك في مركز النور الرباني. أنا مستشارك الذكي لمساعدتك والإجابة على تساؤلاتك الروحية بناءً على توجيهات الشيخ بسام. كيف أساعدك اليوم؟
+            </div>
+        </div>
+        <form id="ai-chat-form" onsubmit="sendAiQuery(event)" style="display: flex; border-top: 1px solid #ddd; margin: 0; padding: 5px; background: #fff;">
+            <input type="text" id="ai-chat-input" placeholder="اكتب سؤالك هنا..." style="flex: 1; border: none; padding: 8px 12px; font-size: 13px; outline: none;" required />
+            <button type="submit" style="background: #4A154B; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px;">إرسال</button>
+        </form>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    let activeRequestId = null;
+
+    window.addEventListener('load', async () => {
+        try {
+            const res = await AuthAPI.verifySession();
+            if(res.success) {
+                document.getElementById('userNameText').innerText = res.user.full_name;
+                await loadDashboardData();
+            }
+        } catch (e) { window.location.href = '/login.html'; }
+    });
+
+    async function loadDashboardData() {
+        try {
+            const data = await BeneficiaryAPI.getMyDashboard();
+            if (data.success) {
+                const list = document.getElementById('requestsList');
+                list.innerHTML = '';
+                if (data.requests.length === 0) {
+                    list.innerHTML = `<div class="text-center text-muted p-3">لا توجد طلبات سابقة.</div>`;
+                    return;
+                }
+                data.requests.forEach(req => {
+                    const item = document.createElement('button');
+                    item.className = `list-group-item list-group-item-action p-3 text-start d-flex justify-content-between align-items-center ${activeRequestId === req.id ? 'active' : ''}`;
+                    item.onclick = () => selectRequest(req.id);
+                    item.innerHTML = `
+                        <div>
+                            <h6 class="fw-bold mb-1">${req.serviceType}</h6>
+                            <small class="text-muted">${new Date(req.createdAt).toLocaleDateString('ar-EG')}</small>
+                        </div>
+                        <span class="badge ${getStatusBadgeClass(req.status)}">${getStatusText(req.status)}</span>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case 'pending': return 'bg-secondary';
+            case 'accepted_waiting_payment': return 'bg-warning text-dark';
+            case 'payment_submitted': return 'bg-info text-dark';
+            case 'processing': return 'bg-primary';
+            case 'diagnosed': return 'bg-success';
+            default: return 'bg-danger';
+        }
+    }
+
+    function getStatusText(status) {
+        switch(status) {
+            case 'pending': return 'انتظار المراجعة';
+            case 'accepted_waiting_payment': return 'مقبول وبانتظار الدفع';
+            case 'payment_submitted': return 'تم إرسال الدفع';
+            case 'processing': return 'قيد دراسة العلاج';
+            case 'diagnosed': return 'تم إصدار العلاج والتشخيص';
+            default: return 'ملغي أو مرفوض';
+        }
+    }
+
+    async function selectRequest(id) {
+        activeRequestId = id;
+        document.getElementById('emptyState').classList.add('d-none');
+        document.getElementById('detailsCard').classList.remove('d-none');
+        await loadDashboardData();
+
+        try {
+            const data = await BeneficiaryAPI.getRequestDetails(id);
+            if (data.success) {
+                const req = data.request;
+                document.getElementById('detServiceType').innerText = req.serviceType;
+                document.getElementById('detDescription').innerText = req.description;
+                
+                const badge = document.getElementById('detStatusBadge');
+                badge.className = `badge-status badge ${getStatusBadgeClass(req.status)}`;
+                badge.innerText = getStatusText(req.status);
+
+                const paySection = document.getElementById('paymentSection');
+                if (req.status === 'accepted_waiting_payment' || req.status === 'payment_rejected') {
+                    paySection.classList.remove('d-none');
+                } else { paySection.classList.add('d-none'); }
+
+                const treatSection = document.getElementById('treatmentSection');
+                if (req.status === 'diagnosed') {
+                    treatSection.classList.remove('d-none');
+                    document.getElementById('detDiagnosis').innerText = req.initial_diagnosis;
+                    document.getElementById('detPlan').innerText = req.treatment_plan;
+                } else { treatSection.classList.add('d-none'); }
+
+                await loadMessages();
+            }
+        } catch (e) { alert(e.message); }
+    }
+
+    async function loadMessages() {
+        if (!activeRequestId) return;
+        try {
+            const data = await MessagesAPI.getMessages(activeRequestId);
+            if (data.success) {
+                const chatBox = document.getElementById('chatBox');
+                chatBox.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `message-bubble d-flex flex-column ${msg.senderRole === 'admin' ? 'message-received' : 'message-sent'}`;
+                    bubble.innerHTML = `
+                        <span class="small fw-bold text-dark mb-1">${msg.senderName}</span>
+                        <span>${msg.messageText}</span>
+                    `;
+                    chatBox.appendChild(bubble);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('requestForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const type = document.getElementById('serviceType').value;
+        const desc = document.getElementById('description').value;
+        try {
+            const res = await BeneficiaryAPI.submitNewRequest(type, desc);
+            if (res.success) {
+                alert(res.message);
+                document.getElementById('description').value = '';
+                await loadDashboardData();
+            }
+        } catch (e) { alert(e.message); }
+    });
+
+    document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await BeneficiaryAPI.submitPaymentDetails(activeRequestId, {
+                paymentMethod: document.getElementById('payMethod').value,
+                paymentSenderName: document.getElementById('payName').value,
+                paymentTransferNumber: document.getElementById('payNum').value
+            });
+            if(res.success) { alert(res.message); await selectRequest(activeRequestId); }
+        } catch (e) { alert(e.message); }
+    });
+
+    document.getElementById('messageForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = document.getElementById('messageText').value;
+        if (!text.trim()) return;
+        try {
+            const res = await MessagesAPI.sendMessage(activeRequestId, text);
+            if (res.success) { document.getElementById('messageText').value = ''; await loadMessages(); }
+        } catch(e) { alert(e.message); }
+    });
+
+    // برمجيات المساعد الذكي العائم
+    function toggleAiChat() {
+        const chatWin = document.getElementById('ai-chat-window');
+        chatWin.style.display = (chatWin.style.display === 'none' || chatWin.style.display === '') ? 'flex' : 'none';
+    }
+
+    async function sendAiQuery(event) {
+        event.preventDefault();
+        const inputEl = document.getElementById('ai-chat-input');
+        const messagesContainer = document.getElementById('ai-chat-messages');
+        const userText = inputEl.value.trim();
+        if (!userText) return;
+
+        const userBubble = document.createElement('div');
+        userBubble.style.cssText = "background: #e2f0d9; color: #333; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; margin-right: auto; width: fit-content; max-width: 85%; text-align: right;";
+        userBubble.innerText = userText;
+        messagesContainer.appendChild(userBubble);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        inputEl.value = '';
+
+        const typingBubble = document.createElement('div');
+        typingBubble.id = "ai-typing";
+        typingBubble.style.cssText = "background: #eaeaea; color: #666; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; width: fit-content; max-width: 85%; font-style: italic;";
+        typingBubble.innerText = "جاري مراجعة التوجيهات وكتابة الرد الروحاني...";
+        messagesContainer.appendChild(typingBubble);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        try {
+            const response = await fetch('/api/ai-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userText })
+            });
+            const data = await response.json();
+            document.getElementById('ai-typing').remove();
+
+            const aiBubble = document.createElement('div');
+            aiBubble.style.cssText = "background: #f1e4f2; color: #4A154B; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; width: fit-content; max-width: 85%;";
+            aiBubble.innerText = data.reply;
+            messagesContainer.appendChild(aiBubble);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } catch (error) {
+            document.getElementById('ai-typing').remove();
+        }
+    }
+
+    setInterval(loadMessages, 5000);
+</script>
+</body>
+</html>
