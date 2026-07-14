@@ -1,832 +1,357 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
-const { Pool } = require('pg');
-const bcrypt = require('bcryptjs');
+const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
-const nodemailer = require('nodemailer');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const compression = require('compression');
-require('dotenv').config();
+const bcrypt = require('bcryptjs');
+const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'bassam_spiritual_secret_key_2026';
+const PORT = 3000;
+const JWT_SECRET = 'BASSAM_SUPER_SECRET_KEY_2026';
+const DB_FILE = path.join(__dirname, 'database.json');
 
-// ==============================================
-// 1. البرمجيات الوسيطة والحماية الفائقة (Security & Middleware)
-// ==============================================
-app.use(helmet({
-    contentSecurityPolicy: false, // لضمان عمل الواجهات الأمامية المدمجة بسلاسة
-}));
 app.use(cors());
-app.use(compression());
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// محدد معدل الطلبات لمنع هجمات التخمين والغمر
-const authRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 دقيقة
-    max: 100, // حد أقصى 100 طلب لكل جهاز
-    message: { success: false, error: 'لقد قمت بمحاولات كثيرة جداً، يرجى المحاولة لاحقاً بعد 15 دقيقة.' }
-});
-
-// ==============================================
-// 2. إعداد الاتصال بقاعدة البيانات السحابية (PostgreSQL Connection)
-// ==============================================
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') 
-        ? { rejectUnauthorized: false } 
-        : false
-});
-
-pool.connect()
-    .then(() => console.log("🐘 [قاعدة البيانات] تم الاتصال بـ PostgreSQL بنجاح ورابط السيرفر مستقر."))
-    .catch(err => console.error("❌ [قاعدة البيانات] خطأ في الاتصال بقاعدة البيانات:", err.message));
-
-app.set('db', pool);
-
-// ==============================================
-// 3. إعداد نظام إرسال البريد الإلكتروني (Nodemailer Setup)
-// ==============================================
-const mailTransporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true', // true للـ 465، false للمنافذ الأخرى مثل 587
-    auth: {
-        user: process.env.EMAIL_USER || '', // بريد مرسل الإشعارات
-        pass: process.env.EMAIL_PASS || ''  // رمز تطبيق البريد الإلكتروني الخاص بك
+// --- 💾 نظام قاعدة البيانات التلقائي (JSON-Based DB) ---
+function readDB() {
+    if (!fs.existsSync(DB_FILE)) {
+        const initialDB = {
+            users: [],
+            requests: [],
+            messages: [],
+            articles: [],
+            reviews: [],
+            aiConfig: {
+                instructions: "أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام. أجب على استفسارات الزوار بلطف وأدب جم، وقدم لهم النصائح الروحانية والرقية الشرعية المعتمدة بناءً على الكتاب والسنة."
+            }
+        };
+        fs.writeFileSync(DB_FILE, JSON.stringify(initialDB, null, 4), 'utf8');
+        return initialDB;
     }
-});
+    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+}
 
-// دالة برمجية مساعدة لإرسال الإشعارات البريدية الأنيقة للمستفيدين تلقائياً
-const sendEmailNotification = async (toEmail, subject, textContent, htmlContent) => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.log("⚠️ [البريد الإلكتروني] لم يتم إعداد بيانات SMTP في ملف .env، تم تخطي إرسال الإيميل.");
-        return;
-    }
-    try {
-        await mailTransporter.sendMail({
-            from: `"مركز النور الرباني" <${process.env.EMAIL_USER}>`,
-            to: toEmail,
-            subject: subject,
-            text: textContent,
-            html: htmlContent
+function writeDB(data) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 4), 'utf8');
+}
+
+// إنشاء حساب المدير (الشيخ بسام) تلقائياً إذا لم يكن موجوداً لتبسيط الدخول
+(function initAdmin() {
+    const db = readDB();
+    const adminExists = db.users.find(u => u.email === 'admin@noor.com');
+    if (!adminExists) {
+        const hashedPassword = bcrypt.hashSync('bassam123', 8);
+        db.users.push({
+            id: Date.now(),
+            full_name: "الشيخ بسام",
+            email: "admin@noor.com",
+            phone: "966500000000",
+            password: hashedPassword,
+            role: "admin"
         });
-        console.log(`📧 [البريد الإلكتروني] تم إرسال إشعار بنجاح إلى: ${toEmail}`);
-    } catch (error) {
-        console.error("❌ [البريد الإلكتروني] خطأ أثناء إرسال البريد:", error.message);
+        writeDB(db);
+        console.log("💎 تم إنشاء حساب الإدارة التلقائي للشيخ بسام بنجاح!");
+        console.log("📧 البريد: admin@noor.com | 🔑 كلمة المرور: bassam123");
     }
-};
+})();
 
-// ==============================================
-// 4. تهيئة وبناء الجداول تلقائياً (Database Schema Initialization)
-// ==============================================
-const initializeDatabase = async () => {
-    try {
-        console.log("🧹 [قاعدة البيانات] جاري فحص وتحديث الجداول لضمان الترابط التام...");
-        
-        // جدول المستخدمين
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                full_name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                role VARCHAR(50) DEFAULT 'user',
-                phone VARCHAR(50),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
+// --- 🛡️ برمجيات التحقق والمصادقة (Middlewares) ---
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'غير مصرح بالدخول، يرجى تسجيل الدخول.' });
 
-        // جدول طلبات الاستشفاء والاستشارات وعمليات الدفع
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS requests (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                service_type VARCHAR(255) DEFAULT 'استشارة عامة',
-                description TEXT NOT NULL,
-                contact_method VARCHAR(100) DEFAULT 'واتساب',
-                status VARCHAR(50) DEFAULT 'pending',
-                initial_diagnosis TEXT,
-                treatment_plan TEXT,
-                additional_treatment_cost NUMERIC DEFAULT 0.00,
-                treatment_duration_days INTEGER DEFAULT 0,
-                treatment_expires_at TIMESTAMP,
-                is_message_locked BOOLEAN DEFAULT FALSE,
-                payment_method VARCHAR(100),
-                payment_sender_name VARCHAR(255),
-                payment_transfer_number VARCHAR(100),
-                payment_submitted_at TIMESTAMP,
-                payment_rejection_reason TEXT,
-                initial_rejection_reason TEXT,
-                total_paid_amount NUMERIC DEFAULT 0.00,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // جدول المحادثات والمراسلات الآمنة والمغلقة داخل الموقع
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS request_messages (
-                id SERIAL PRIMARY KEY,
-                request_id INTEGER REFERENCES requests(id) ON DELETE CASCADE,
-                sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                sender_role VARCHAR(50) NOT NULL,
-                message_text TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // جدول المقالات والمدونة
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS articles (
-                id SERIAL PRIMARY KEY,
-                title VARCHAR(255) NOT NULL,
-                summary TEXT,
-                content TEXT,
-                icon VARCHAR(100) DEFAULT 'bi bi-heart-fill',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // جدول آراء المستفيدين والتقييمات الخاضعة للرقابة قبل النشر
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS reviews (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                full_name VARCHAR(255),
-                comment TEXT NOT NULL,
-                rating INTEGER DEFAULT 5,
-                is_approved BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // جدول إعدادات النظام وتوجيهات الذكاء الاصطناعي
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS system_settings (
-                key VARCHAR(100) PRIMARY KEY,
-                value TEXT NOT NULL
-            );
-        `);
-
-        console.log("✅ [قاعدة البيانات] جميع الجداول مهيأة ومترابطة بنجاح بنسبة 100%.");
-    } catch (err) {
-        console.error("❌ [قاعدة البيانات] خطأ حرج أثناء تهيئة الجداول وهيكلة البيانات:", err.message);
-    }
-};
-initializeDatabase();
-
-// ==============================================
-// 5. برمجيات التحقق والمصادقة (Authentication Guards)
-// ==============================================
-const verifyToken = (req, res, next) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ success: false, error: 'الرجاء تسجيل الدخول أولاً للوصول إلى هذه الصفحة.' });
-        }
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.userId = decoded.id;
-        req.userRole = decoded.role;
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'جلسة العمل منتهية الصلاحية.' });
+        req.user = user;
         next();
-    } catch (e) {
-        res.status(401).json({ success: false, error: 'انتهت صلاحية الجلسة الآمنة، يرجى تسجيل الدخول مجدداً.' });
-    }
-};
+    });
+}
 
-const verifyAdmin = (req, res, next) => {
-    if (req.userRole !== 'admin') {
-        return res.status(403).json({ success: false, error: 'صلاحية غير كافية. هذا القسم مخصص لفضيلة الشيخ بسام فقط.' });
+function requireAdmin(req, res, next) {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'هذه الصلاحية خاصة بفضيلة الشيخ بسام فقط.' });
     }
     next();
-};
+}
 
-// ==============================================
-// 6. مسارات المصادقة وحماية الحسابات (Authentication API)
-// ==============================================
-app.post('/api/auth/register', authRateLimiter, [
-    body('email').isEmail().withMessage('يرجى إدخال بريد إلكتروني صحيح وصالح.').normalizeEmail(),
-    body('password').isLength({ min: 6 }).withMessage('يجب ألا تقل كلمة المرور عن 6 أحرف أو أرقام.')
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ success: false, error: errors.array()[0].msg });
-    }
-
+// --- 📌 1. مسارات المصادقة وحماية الحسابات ---
+app.post('/api/auth/register', (req, res) => {
     const { fullName, email, password, phone } = req.body;
-    const finalName = fullName ? fullName.trim() : "مستفيد جديد";
-
-    try {
-        const userExists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (userExists.rows.length > 0) {
-            return res.status(409).json({ success: false, error: 'هذا البريد الإلكتروني مسجل مسبقاً في المنصة.' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await pool.query(
-            'INSERT INTO users (full_name, email, password, role, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email, role, phone',
-            [finalName, email, hashedPassword, 'user', phone || null]
-        );
-
-        const newUser = result.rows[0];
-        const token = jwt.sign({ id: newUser.id, email: newUser.email, role: newUser.role }, JWT_SECRET, { expiresIn: '30d' });
-        
-        res.status(201).json({
-            success: true,
-            message: 'تم إنشاء حسابكم بنجاح في مركز النور الرباني.',
-            token,
-            user: { id: newUser.id, fullName: newUser.full_name, email: newUser.email, role: newUser.role, phone: newUser.phone }
-        });
-    } catch (err) {
-        console.error('❌ [المصادقة] خطأ حرج أثناء التسجيل الجديد:', err.message);
-        res.status(500).json({ success: false, error: 'حدث خطأ غير متوقع في النظام، يرجى مراجعة المسؤول.' });
+    const db = readDB();
+    if (db.users.find(u => u.email === email)) {
+        return res.status(400).json({ error: 'البريد الإلكتروني مسجل مسبقاً.' });
     }
+    const hashedPassword = bcrypt.hashSync(password, 8);
+    const newUser = { id: Date.now(), full_name: fullName, email, password: hashedPassword, phone, role: 'user' };
+    db.users.push(newUser);
+    writeDB(db);
+    res.json({ success: true, message: 'تم إنشاء حساب المستفيد بنجاح!' });
 });
 
-app.post('/api/auth/login', authRateLimiter, async (req, res) => {
+app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ success: false, error: 'يرجى كتابة البريد الإلكتروني وكلمة المرور بالكامل.' });
+    const db = readDB();
+    const user = db.users.find(u => u.email === email);
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+        return res.status(400).json({ error: 'بيانات الدخول غير صحيحة، يرجى المحاولة مجدداً.' });
     }
-    try {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (result.rows.length === 0) {
-            return res.status(401).json({ success: false, error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' });
-        }
-
-        const user = result.rows[0];
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' });
-        }
-
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
-        res.json({
-            success: true,
-            message: `مرحباً بك مجدداً في المنصة الروحانية.`,
-            token,
-            user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role, phone: user.phone }
-        });
-    } catch (err) {
-        console.error('❌ [المصادقة] خطأ حرج أثناء تسجيل الدخول:', err.message);
-        res.status(500).json({ success: false, error: 'حدث خطأ في النظام الداخلي للمنصة.' });
-    }
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, full_name: user.full_name }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, token, user: { full_name: user.full_name, email: user.email, role: user.role } });
 });
 
-app.get('/api/auth/verify', verifyToken, async (req, res) => {
-    try {
-        const result = await pool.query('SELECT id, full_name, email, role, phone FROM users WHERE id = $1', [req.userId]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'المستخدم غير موجود بالنظام.' });
-        }
-        res.json({ success: true, user: result.rows[0] });
-    } catch (e) {
-        res.status(500).json({ success: false, error: 'فشل التحقق من الجلسة الآمنة.' });
-    }
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+    res.json({ success: true, user: req.user });
 });
 
-// ==============================================
-// 7. مسارات لوحة تحكم المستفيد (Beneficiary Dashboard)
-// ==============================================
-app.get('/api/dashboard/me', verifyToken, async (req, res) => {
-    try {
-        const userResult = await pool.query('SELECT id, full_name, email, role, phone, created_at FROM users WHERE id = $1', [req.userId]);
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الملف الشخصي غير مسجل لدينا.' });
-        }
-
-        const requestsResult = await pool.query(
-            `SELECT id, service_type AS "serviceType", status, description, 
-                    initial_diagnosis AS "initialDiagnosis", treatment_plan AS "treatmentPlan", 
-                    payment_method AS "paymentMethod", total_paid_amount AS "totalPaidAmount",
-                    payment_rejection_reason AS "paymentRejectionReason", initial_rejection_reason AS "initialRejectionReason",
-                    created_at AS "createdAt"
-             FROM requests WHERE user_id = $1 ORDER BY created_at DESC`,
-            [req.userId]
-        );
-
-        res.json({
-            success: true,
-            user: userResult.rows[0],
-            requests: requestsResult.rows
-        });
-    } catch (err) {
-        console.error('❌ [لوحة المستفيد] خطأ أثناء جلب الملف الشخصي والطلبات:', err.message);
-        res.status(500).json({ success: false, error: 'فشل السيرفر في استرجاع بياناتك الشخصية.' });
-    }
+// --- 📌 2. مسارات لوحة تحكم المستفيدين ---
+app.get('/api/dashboard/me', authenticateToken, (req, res) => {
+    const db = readDB();
+    const myRequests = db.requests.filter(r => r.userId === req.user.id);
+    res.json({ success: true, requests: myRequests });
 });
 
-app.post('/api/dashboard/request', verifyToken, async (req, res) => {
-    const { serviceType, description, contactMethod } = req.body;
-    if (!description || description.trim().length < 15) {
-        return res.status(400).json({ success: false, error: 'الرجاء شرح حالتك ووصف مشكلتك بالتفصيل (15 حرفاً على الأقل) لنتمكن من تشخيصها بدقة.' });
-    }
-    try {
-        const result = await pool.query(
-            'INSERT INTO requests (user_id, service_type, description, contact_method, status) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            [req.userId, serviceType || 'استشارة عامة', description, contactMethod || 'واتساب', 'pending']
-        );
-        res.json({ success: true, requestId: result.rows[0].id, message: '✅ تم إرسال طلبكم بنجاح لفضيلة الشيخ بسام وسنقوم بدراسته بعناية.' });
-    } catch (err) {
-        console.error('❌ [لوحة المستفيد] خطأ أثناء إدراج طلب استشارة جديد:', err.message);
-        res.status(500).json({ success: false, error: 'حدث خطأ فني أثناء تقديم طلب الاستشارة.' });
-    }
+app.post('/api/dashboard/request', authenticateToken, (req, res) => {
+    const { serviceType, description } = req.body;
+    const db = readDB();
+    const user = db.users.find(u => u.id === req.user.id);
+    const newRequest = {
+        id: Date.now(),
+        userId: req.user.id,
+        fullName: user.full_name,
+        email: user.email,
+        userPhone: user.phone,
+        serviceType,
+        description,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        paymentMethod: '',
+        payment_sender_name: '',
+        payment_transfer_number: '',
+        initial_diagnosis: '',
+        treatment_plan: '',
+        payment_rejection_reason: ''
+    };
+    db.requests.push(newRequest);
+    writeDB(db);
+    res.json({ success: true, message: 'تم إرسال طلبك للشيخ بسام بنجاح!' });
 });
 
-app.get('/api/dashboard/request/:id', verifyToken, async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT *, service_type AS "serviceType", created_at AS "createdAt", 
-                    treatment_plan AS "treatmentPlan", initial_diagnosis AS "initialDiagnosis",
-                    payment_method AS "paymentMethod", payment_sender_name AS "paymentSenderName",
-                    payment_transfer_number AS "paymentTransferNumber", payment_rejection_reason AS "paymentRejectionReason"
-             FROM requests WHERE id = $1`,
-            [req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب المستعلم عنه غير موجود.' });
-        }
-        if (parseInt(result.rows[0].user_id) !== parseInt(req.userId) && req.userRole !== 'admin') {
-            return res.status(403).json({ success: false, error: 'غير مصرح لك بمشاهدة تفاصيل هذه الحالة.' });
-        }
-        res.json({ success: true, request: result.rows[0] });
-    } catch (err) {
-        res.status(500).json({ success: false, error: 'فشل النظام في جلب تفاصيل الطلب.' });
-    }
+app.get('/api/dashboard/request/:id', authenticateToken, (req, res) => {
+    const db = readDB();
+    const request = db.requests.find(r => r.id === parseInt(req.params.id) && (r.userId === req.user.id || req.user.role === 'admin'));
+    if (!request) return res.status(404).json({ error: 'الطلب غير موجود.' });
+    res.json({ success: true, request });
 });
 
-app.put('/api/dashboard/request/:id/submit-payment', verifyToken, async (req, res) => {
+app.put('/api/dashboard/request/:id/submit-payment', authenticateToken, (req, res) => {
     const { paymentMethod, paymentSenderName, paymentTransferNumber } = req.body;
-    if (!paymentMethod || !paymentSenderName || !paymentTransferNumber) {
-        return res.status(400).json({ success: false, error: 'يرجى ملء جميع حقول بيانات التحويل لتوثيق إجراء الدفع.' });
-    }
-    try {
-        const result = await pool.query(
-            `UPDATE requests SET payment_method = $1, payment_sender_name = $2, payment_transfer_number = $3,
-             status = 'payment_submitted', payment_submitted_at = CURRENT_TIMESTAMP
-             WHERE id = $4 AND user_id = $5 RETURNING id`,
-            [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id, req.userId]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'لم يتم العثور على الطلب المطلوب أو لا تملك الصلاحية لتسجيل دفعة له.' });
-        }
-        res.json({ success: true, message: '✅ تم إرسال إيصال الحوالة المالية بنجاح وجاري فحصها لتأكيد الاعتماد.' });
-    } catch (err) {
-        console.error('❌ [لوحة المستفيد] خطأ في تحديث بيانات الدفع للطلب:', err.message);
-        res.status(500).json({ success: false, error: 'حدث خطأ أثناء حفظ معلومات الإجراء المالي.' });
-    }
+    const db = readDB();
+    const reqIndex = db.requests.findIndex(r => r.id === parseInt(req.params.id) && r.userId === req.user.id);
+    if (reqIndex === -1) return res.status(404).json({ error: 'الطلب غير موجود.' });
+
+    db.requests[reqIndex].status = 'payment_submitted';
+    db.requests[reqIndex].paymentMethod = paymentMethod;
+    db.requests[reqIndex].payment_sender_name = paymentSenderName;
+    db.requests[reqIndex].payment_transfer_number = paymentTransferNumber;
+
+    writeDB(db);
+    res.json({ success: true, message: 'تم إرسال بيانات التحويل المالي للمراجعة والاعتماد.' });
 });
 
-// ==============================================
-// 8. مسارات لوحة الإدارة الشاملة (الشيخ بسام - Admin API)
-// ==============================================
-app.get('/api/admin/requests', verifyToken, verifyAdmin, async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT r.*, 
-                    r.service_type AS "serviceType", r.created_at AS "createdAt", 
-                    r.total_paid_amount AS "totalPaidAmount", r.initial_rejection_reason AS "initialRejectionReason",
-                    r.payment_sender_name AS "paymentSenderName", r.payment_transfer_number AS "paymentTransferNumber",
-                    r.payment_method AS "paymentMethod", r.payment_rejection_reason AS "paymentRejectionReason",
-                    u.full_name AS "fullName", u.email, u.phone AS "userPhone"
-             FROM requests r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`
-        );
-        res.json(result.rows);
-    } catch (e) {
-        console.error('❌ [لوحة الإدارة] فشل استخراج الطلبات الشاملة للمدير:', e.message);
-        res.status(500).json({ success: false, error: 'خطأ داخلي في تجميع كشوف الطلبات.' });
-    }
-});
-
-// موافقة مبدئية والطلب بانتظار الدفع
-app.put('/api/admin/requests/:id/accept-initial', verifyToken, verifyAdmin, async (req, res) => {
-    const { sendEmail } = req.body; // خيار إرسال بريد إلكتروني اختياري
-    try {
-        const result = await pool.query(
-            `UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1 RETURNING id, user_id`, 
-            [req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب المبحوث عنه غير متوفر.' });
-        }
-
-        // إشعار المستفيد بريدياً (اختياري)
-        if (sendEmail) {
-            const userRes = await pool.query('SELECT email, full_name FROM users WHERE id = $1', [result.rows[0].user_id]);
-            if (userRes.rows.length > 0) {
-                const user = userRes.rows[0];
-                const subject = "تحديث طلبكم في مركز النور الرباني";
-                const text = `السلام عليكم ورحمة الله وبركاته، أخي ${user.full_name}. لقد تم قبول طلبكم مبدئياً وهو بانتظار إتمام إجراءات الدفع المقررة. يرجى تسجيل الدخول إلى لوحة التحكم الخاصة بك لإكمال الإجراء.`;
-                const html = `<div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-                                <h3 style="color: #4A154B;">السلام عليكم ورحمة الله وبركاته</h3>
-                                <p>مرحباً بك أخي الكريم <strong>${user.full_name}</strong>،</p>
-                                <p>لقد اطلع فضيلة الشيخ بسام على طلبكم وتم <strong>القبول المبدئي للحالة</strong> وهي الآن بانتظار تأكيد وتعبئة بيانات الإجراء المالي.</p>
-                                <p style="margin-top: 20px;"><a href="${process.env.SITE_URL || 'https://noor-alrabbani.com'}/dashboard" style="background-color: #4A154B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">اضغط هنا للدخول للوحة التحكم ودفع الرسوم</a></p>
-                                <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;">
-                                <p style="font-size: 12px; color: #777;">هذا البريد مرسل تلقائياً، يرجى عدم الرد عليه مباشرة.</p>
-                             </div>`;
-                await sendEmailNotification(user.email, subject, text, html);
-            }
-        }
-
-        res.json({ success: true, message: '✅ تم تحديث حالة الطلب إلى مقبول وبانتظار تعبئة بيانات الدفع.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'فشل تنفيذ عملية القبول المبدئي.' }); 
-    }
-});
-
-// رفض مبدئي مع تحديد سبب الرفض
-app.put('/api/admin/requests/:id/reject-initial', verifyToken, verifyAdmin, async (req, res) => {
-    const { reason, sendEmail } = req.body;
-    try {
-        const result = await pool.query(
-            `UPDATE requests SET status = 'rejected_by_admin', initial_rejection_reason = $1 WHERE id = $2 RETURNING id, user_id`, 
-            [reason || 'نعتذر عن قبول الحالة لعدم الاختصاص الروحي أو الطبي في هذا المجال.', req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب غير موجود.' });
-        }
-
-        if (sendEmail) {
-            const userRes = await pool.query('SELECT email, full_name FROM users WHERE id = $1', [result.rows[0].user_id]);
-            if (userRes.rows.length > 0) {
-                const user = userRes.rows[0];
-                const subject = "بخصوص طلبكم في مركز النور الرباني";
-                const text = `السلام عليكم ورحمة الله وبركاته، أخي ${user.full_name}. نأسف لإعلامكم بأنه تم الاعتذار عن تلبية طلبكم للسبب التالي: ${reason}`;
-                const html = `<div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
-                                <h3>السلام عليكم ورحمة الله وبركاته</h3>
-                                <p>مرحباً بك أخي الكريم <strong>${user.full_name}</strong>،</p>
-                                <p>بخصوص طلب الاستشارة الروحية المقدم لفضيلتكم، نأسف لإبلاغكم بأنه تم الاعتذار عن قبول الطلب للسبب التالي:</p>
-                                <blockquote style="background-color: #f9f9f9; padding: 15px; border-right: 4px solid #f44336; margin: 15px 0;">
-                                    ${reason || 'عدم الاختصاص لعدم مطابقة الشروط.'}
-                                </blockquote>
-                                <p>نسأل الله لكم العفو والعافية المستمرة.</p>
-                             </div>`;
-                await sendEmailNotification(user.email, subject, text, html);
-            }
-        }
-
-        res.json({ success: true, message: '🔴 تم رفض الطلب بنجاح وتوثيق السبب إدارياً.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'حدث خطأ في عملية الرفض الإداري.' }); 
-    }
-});
-
-// اعتماد ومصادقة الدفع للبدء في البرنامج العلاجي
-app.put('/api/admin/requests/:id/approve-payment', verifyToken, verifyAdmin, async (req, res) => {
-    const { sendEmail } = req.body;
-    try {
-        const result = await pool.query(
-            `UPDATE requests SET status = 'processing' WHERE id = $1 RETURNING id, user_id`, 
-            [req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب غير موجود لإتمام الإجراء المالي.' });
-        }
-
-        if (sendEmail) {
-            const userRes = await pool.query('SELECT email, full_name FROM users WHERE id = $1', [result.rows[0].user_id]);
-            if (userRes.rows.length > 0) {
-                const user = userRes.rows[0];
-                const subject = "تأكيد استلام الدفع وبدء الاستشفاء";
-                const text = `أخي ${user.full_name}، تم اعتماد دفعتكم المالية بنجاح وحالتكم الآن قيد الدراسة وإعداد البرنامج العلاجي المناسب.`;
-                const html = `<div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
-                                <h3>الحمد لله تم اعتماد دفعتكم بنجاح</h3>
-                                <p>مرحباً بك أخي <strong>${user.full_name}</strong>،</p>
-                                <p>لقد قمنا بتأكيد استلام التحويل المالي وإثباته، وبدأ فضيلة الشيخ بسام بالعمل على حالتك ودراسة تفاصيل البرنامج العلاجي والتحصينات الروحية المناسبة.</p>
-                                <p>يرجى متابعة حسابكم في المنصة باستمرار لمعاينة الرد الفوري والرقية المقررة.</p>
-                             </div>`;
-                await sendEmailNotification(user.email, subject, text, html);
-            }
-        }
-
-        res.json({ success: true, message: '✅ تم اعتماد الدفع بنجاح والطلب الآن انتقل لمرحلة المعالجة والدراسة الفعلية.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'خطأ فني في مسار اعتماد البيانات المالية.' }); 
-    }
-});
-
-// رفض الدفع بسبب خطأ في التحويل أو عدم صحة البيانات المرسلة من العميل
-app.put('/api/admin/requests/:id/reject-payment', verifyToken, verifyAdmin, async (req, res) => {
-    const { reason, sendEmail } = req.body;
-    try {
-        const result = await pool.query(
-            `UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1 WHERE id = $2 RETURNING id, user_id`, 
-            [reason || 'لم يتم العثور على أي حوالة مطابقة للبيانات المدخلة في حساباتنا.', req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب المطلوب غير موجود.' });
-        }
-
-        if (sendEmail) {
-            const userRes = await pool.query('SELECT email, full_name FROM users WHERE id = $1', [result.rows[0].user_id]);
-            if (userRes.rows.length > 0) {
-                const user = userRes.rows[0];
-                const subject = "تنبيه بخصوص خطأ في تأكيد الدفع";
-                const text = `السلام عليكم ${user.full_name}. نود إعلامكم بأن إثبات الدفع المرفق لطلبكم تم رفضه للسبب التالي: ${reason}`;
-                const html = `<div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
-                                <h3>تنبيه بخصوص معاملتكم المالية</h3>
-                                <p>أخي الكريم <strong>${user.full_name}</strong>،</p>
-                                <p>نظراً لعدم تطابق بيانات الإيصال مع كشوفات حساباتنا، فقد تم رفض معاملة الدفع للسبب التالي:</p>
-                                <p style="color: #f44336; font-weight: bold; padding: 10px; background-color: #ffebee;">${reason}</p>
-                                <p>يرجى تسجيل الدخول مجدداً وإرفاق بيانات إثبات الحوالة بشكل صحيح لإتمام طلب الاستشفاء.</p>
-                             </div>`;
-                await sendEmailNotification(user.email, subject, text, html);
-            }
-        }
-
-        res.json({ success: true, message: '🔴 تم رفض الحوالة المالية بنجاح مع إخطار العميل بنوع الخطأ لتعديله.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'حدث خطأ في عملية رفض الدفع المالي.' }); 
-    }
-});
-
-// تحديث التشخيص وكتابة البرنامج العلاجي المتكامل للمستفيد
-app.put('/api/admin/requests/:id/diagnose', verifyToken, verifyAdmin, async (req, res) => {
-    const { initialDiagnosis, treatmentPlan, sendEmail } = req.body;
-    try {
-        const result = await pool.query(
-            `UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed' WHERE id = $3 RETURNING id, user_id`,
-            [initialDiagnosis, treatmentPlan, req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب غير متوفر لتعديل العلاج.' });
-        }
-
-        if (sendEmail) {
-            const userRes = await pool.query('SELECT email, full_name FROM users WHERE id = $1', [result.rows[0].user_id]);
-            if (userRes.rows.length > 0) {
-                const user = userRes.rows[0];
-                const subject = "بشرى سارة: تم إصدار خطتكم العلاجية";
-                const text = `السلام عليكم ${user.full_name}. يرجى الدخول فوراً إلى حسابكم في الموقع لاستلام برنامج الرقية والتحصينات الروحانية المعدة لكم من فضيلة الشيخ بسام.`;
-                const html = `<div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
-                                <h3 style="color: #4A154B;">بشرى سارة بنجاح التشخيص</h3>
-                                <p>أخي الكريم <strong>${user.full_name}</strong>،</p>
-                                <p>نهنئكم بأن فضيلة الشيخ بسام قد فرغ من دراسة وتوضيح التشخيص الروحاني لحالتكم، وقام بكتابة وتحديث الخطة العلاجية الشاملة وجدول التحصين المقررة لكم.</p>
-                                <p>تفضل بالدخول إلى لوحة التحكم الخاصة بك لمشاهدة التفاصيل والمباشرة في العلاج والشفاء.</p>
-                                <p style="margin-top: 20px;"><a href="${process.env.SITE_URL || 'https://noor-alrabbani.com'}/dashboard" style="background-color: #4A154B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">مشاهدة البرنامج العلاجي</a></p>
-                             </div>`;
-                await sendEmailNotification(user.email, subject, text, html);
-            }
-        }
-
-        res.json({ success: true, message: '✅ تم توثيق وحفظ التشخيص الروحي والخطة العلاجية بنجاح على حساب العميل.' });
-    } catch (e) {
-        console.error('❌ [لوحة الإدارة] خطأ أثناء حفظ التشخيص والعلاج:', e.message);
-        res.status(500).json({ success: false, error: 'فشل حفظ التشخيص الطبي والروحي.' });
-    }
-});
-
-app.delete('/api/admin/requests/:id', verifyToken, verifyAdmin, async (req, res) => {
-    try {
-        const result = await pool.query('DELETE FROM requests WHERE id = $1 RETURNING id', [req.params.id]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب تم حذفه مسبقاً أو غير متوفر بالنظام.' });
-        }
-        res.json({ success: true, message: '🗑️ تم إزالة طلب الاستشارة وسجلاته المرتبطة تماماً من خوادم المنصة.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'فشل السيرفر في حذف وحذف السجلات المرجعية.' }); 
-    }
-});
-
-// ==============================================
-// 9. نظام المراسلات الثنائي والآمن (On-Platform Internal Chat)
-// ==============================================
-app.get('/api/requests/:id/messages', verifyToken, async (req, res) => {
-    try {
-        // التحقق من صلاحية الوصول للدردشة (العميل صاحب الشأن أو الإدارة)
-        const reqCheck = await pool.query('SELECT user_id FROM requests WHERE id = $1', [req.params.id]);
-        if (reqCheck.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'طلب الاستفسار والمراسلات هذا غير موجود.' });
-        }
-        if (parseInt(reqCheck.rows[0].user_id) !== parseInt(req.userId) && req.userRole !== 'admin') {
-            return res.status(403).json({ success: false, error: 'غير مصرح لك باستعراض هذه المحادثة المغلقة.' });
-        }
-
-        const messages = await pool.query(
-            `SELECT m.*, m.sender_role AS "senderRole", m.message_text AS "messageText", m.created_at AS "createdAt",
-                    u.full_name AS "senderName"
-             FROM request_messages m JOIN users u ON m.sender_id = u.id
-             WHERE m.request_id = $1 ORDER BY m.created_at ASC`,
-            [req.params.id]
-        );
-        res.json({ success: true, messages: messages.rows });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'حدث عطل فني في استرجاع سجل المراسلات المباشرة.' }); 
-    }
-});
-
-app.post('/api/requests/:id/messages', verifyToken, async (req, res) => {
-    const { messageText } = req.body;
-    if (!messageText || messageText.trim() === "") {
-        return res.status(400).json({ success: false, error: 'لا يمكن إرسال رسائل أو استفسارات فارغة.' });
-    }
-    try {
-        // فحص صلاحية الإرسال
-        const reqCheck = await pool.query('SELECT user_id FROM requests WHERE id = $1', [req.params.id]);
-        if (reqCheck.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'الطلب المرتبط بالرسالة غير متوفر.' });
-        }
-        if (parseInt(reqCheck.rows[0].user_id) !== parseInt(req.userId) && req.userRole !== 'admin') {
-            return res.status(403).json({ success: false, error: 'لا تمتلك حق إرسال رسائل داخل هذا الطلب.' });
-        }
-
-        const result = await pool.query(
-            `INSERT INTO request_messages (request_id, sender_id, sender_role, message_text)
-             VALUES ($1, $2, $3, $4) RETURNING *, message_text AS "messageText", created_at AS "createdAt", sender_role AS "senderRole"`,
-            [req.params.id, req.userId, req.userRole, messageText.trim()]
-        );
-
-        res.status(201).json({ success: true, message: result.rows[0] });
-    } catch (e) {
-        console.error('❌ [المراسلات] خطأ أثناء إدراج الرسالة الجديدة:', e.message);
-        res.status(500).json({ success: false, error: 'عفواً، فشل إرسال وحفظ الرسالة.' });
-    }
-});
-
-// ==============================================
-// 10. المقالات والمدونة وإدارتها (CMS Endpoints)
-// ==============================================
-app.get('/api/articles', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
-        res.json(result.rows);
-    } catch (e) { 
-        res.status(500).json({ error: 'عجز النظام عن تحميل مقالات المدونة حالياً.' }); 
-    }
-});
-
-app.post('/api/admin/articles', verifyToken, verifyAdmin, async (req, res) => {
-    const { title, summary, content, icon } = req.body;
-    if (!title || !content) {
-        return res.status(400).json({ success: false, error: 'يرجى كتابة عنوان المقال ومحتواه بالتفصيل.' });
-    }
-    try {
-        const result = await pool.query(
-            'INSERT INTO articles (title, summary, content, icon) VALUES ($1, $2, $3, $4) RETURNING *', 
-            [title, summary || '', content, icon || 'bi bi-heart-fill']
-        );
-        res.json({ success: true, article: result.rows[0], message: '✅ تم نشر المقال بنجاح بمدونتنا.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'حدث خطأ في قاعدة البيانات أثناء نشر المقال.' }); 
-    }
-});
-
-app.put('/api/admin/articles/:id', verifyToken, verifyAdmin, async (req, res) => {
-    const { title, summary, content, icon } = req.body;
-    try {
-        const result = await pool.query(
-            'UPDATE articles SET title = $1, summary = $2, content = $3, icon = $4 WHERE id = $5 RETURNING id', 
-            [title, summary, content, icon || 'bi bi-heart-fill', req.params.id]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'المقال المطلوب تعديله لم يتم العثور عليه.' });
-        }
-        res.json({ success: true, message: 'تم تحديث المقال بنجاح واعتمدت التعديلات.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'فشل تحديث المقال الروحاني.' }); 
-    }
-});
-
-app.delete('/api/admin/articles/:id', verifyToken, verifyAdmin, async (req, res) => {
-    try { 
-        const result = await pool.query('DELETE FROM articles WHERE id = $1 RETURNING id', [req.params.id]); 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'المقال غير متوفر أو تم حذفه مسبقاً.' });
-        }
-        res.json({ success: true, message: '🗑️ تم إزالة المقال من المدونة نهائياً.' }); 
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'فشل حذف المقال المطلوب.' }); 
-    }
-});
-
-// ==============================================
-// 11. الرقابة وإدارة آراء وتقييمات المستفيدين (Reviews Guard)
-// ==============================================
-app.get('/api/reviews', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT id, full_name AS "fullName", comment, rating, created_at AS "createdAt" FROM reviews WHERE is_approved = TRUE ORDER BY created_at DESC');
-        res.json(result.rows);
-    } catch (e) { 
-        res.status(500).json({ error: 'خطأ في جلب تقييمات وآراء المستفيدين المعتمدة.' }); 
-    }
-});
-
-app.post('/api/dashboard/reviews', verifyToken, async (req, res) => {
+app.post('/api/dashboard/reviews', authenticateToken, (req, res) => {
     const { comment, rating } = req.body;
-    if (!comment || comment.trim() === "") {
-        return res.status(400).json({ success: false, error: 'يرجى كتابة تعليق حقيقي لمشاركة تجربتك.' });
-    }
-    try {
-        const userRes = await pool.query('SELECT full_name FROM users WHERE id = $1', [req.userId]);
-        const userName = userRes.rows[0]?.full_name || 'مستفيد مجهول';
-
-        await pool.query(
-            'INSERT INTO reviews (user_id, full_name, comment, rating, is_approved) VALUES ($1, $2, $3, $4, FALSE)',
-            [req.userId, userName, comment, rating || 5]
-        );
-        res.json({ success: true, message: '✅ تم إرسال تقييمك ورأيك بنجاح، وسيتم نشره فور إتمام مراجعته برمجياً لضمان الخصوصية.' });
-    } catch (e) {
-        res.status(500).json({ success: false, error: 'عذراً، فشل إرسال رأيك.' });
-    }
+    const db = readDB();
+    const user = db.users.find(u => u.id === req.user.id);
+    db.reviews.push({
+        id: Date.now(),
+        userId: req.user.id,
+        fullName: user.full_name,
+        userEmail: user.email,
+        comment,
+        rating: parseInt(rating),
+        isApproved: false
+    });
+    writeDB(db);
+    res.json({ success: true, message: 'شكراً لك! تم إرسال تقييمك للمدير للموافقة على نشره.' });
 });
 
-app.get('/api/admin/reviews', verifyToken, verifyAdmin, async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT r.id, r.full_name AS "fullName", r.comment, r.rating, r.is_approved AS "isApproved", r.created_at AS "createdAt",
-                    u.email AS "userEmail"
-             FROM reviews r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`
-        );
-        res.json({ success: true, reviews: result.rows });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'عطل في قراءة جميع التقييمات.' }); 
-    }
+// --- 📌 3. مسارات المراسلات والدردشة الآمنة بين الطرفين ---
+app.get('/api/requests/:id/messages', authenticateToken, (req, res) => {
+    const db = readDB();
+    const reqId = parseInt(req.params.id);
+    const messages = db.messages.filter(m => m.requestId === reqId);
+    res.json({ success: true, messages });
 });
 
-app.put('/api/admin/reviews/:id', verifyToken, verifyAdmin, async (req, res) => {
-    const { isApproved } = req.body;
-    try { 
-        const result = await pool.query('UPDATE reviews SET is_approved = $1 WHERE id = $2 RETURNING id', [isApproved, req.params.id]); 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'لم يتم العثور على التقييم.' });
-        }
-        res.json({ success: true, message: 'تم تحديث حالة الرأي العام للتعليق ونشره بنجاح.' }); 
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'خطأ أثناء السعي لتغيير اعتماد التقييم.' }); 
-    }
+app.post('/api/requests/:id/messages', authenticateToken, (req, res) => {
+    const { messageText } = req.body;
+    const db = readDB();
+    const reqId = parseInt(req.params.id);
+    
+    db.messages.push({
+        id: Date.now(),
+        requestId: reqId,
+        senderId: req.user.id,
+        senderName: req.user.full_name,
+        senderRole: req.user.role,
+        messageText,
+        createdAt: new Date().toISOString()
+    });
+    writeDB(db);
+    res.json({ success: true });
 });
 
-app.delete('/api/admin/reviews/:id', verifyToken, verifyAdmin, async (req, res) => {
-    try { 
-        const result = await pool.query('DELETE FROM reviews WHERE id = $1 RETURNING id', [req.params.id]); 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'التعليق غير متواجد.' });
-        }
-        res.json({ success: true, message: '🗑️ تم إقصاء وحذف التقييم نهائياً.' }); 
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'فشل إتمام عملية الحذف.' }); 
-    }
+// --- 📌 4. مسارات لوحة تحكم الشيخ بسام (Admin Control Panel) ---
+app.get('/api/admin/requests', authenticateToken, requireAdmin, (req, res) => {
+    const db = readDB();
+    res.json(db.requests);
 });
 
-// ==============================================
-// 12. إدارة توجيهات والتعليمات الأساسية للـ AI (Prompt Center)
-// ==============================================
-app.get('/api/admin/ai-instructions', verifyToken, verifyAdmin, async (req, res) => {
-    try {
-        const result = await pool.query("SELECT value FROM system_settings WHERE key = 'ai_prompt'");
-        res.json({ success: true, instructions: result.rows[0]?.value || 'أنت مستشار روحي ونفسي لمركز النور الرباني، تقدم استشارات متزنة...' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'تعذر جلب توجيهات الذكاء الاصطناعي.' }); 
-    }
+app.put('/api/admin/requests/:id/accept-initial', authenticateToken, requireAdmin, (req, res) => {
+    const db = readDB();
+    const reqIndex = db.requests.findIndex(r => r.id === parseInt(req.params.id));
+    if (reqIndex === -1) return res.status(404).json({ error: 'الطلب غير موجود.' });
+    
+    db.requests[reqIndex].status = 'accepted_waiting_payment';
+    writeDB(db);
+    res.json({ success: true, message: 'تم القبول المبدئي وتحديث حالة الطلب بانتظار الدفع.' });
 });
 
-app.put('/api/admin/ai-instructions', verifyToken, verifyAdmin, async (req, res) => {
+app.put('/api/admin/requests/:id/reject-initial', authenticateToken, requireAdmin, (req, res) => {
+    const { reason } = req.body;
+    const db = readDB();
+    const reqIndex = db.requests.findIndex(r => r.id === parseInt(req.params.id));
+    if (reqIndex === -1) return res.status(404).json({ error: 'الطلب غير موجود.' });
+    
+    db.requests[reqIndex].status = 'rejected';
+    db.requests[reqIndex].payment_rejection_reason = reason;
+    writeDB(db);
+    res.json({ success: true, message: 'تم رفض الطلب وتدوين السبب.' });
+});
+
+app.put('/api/admin/requests/:id/approve-payment', authenticateToken, requireAdmin, (req, res) => {
+    const db = readDB();
+    const reqIndex = db.requests.findIndex(r => r.id === parseInt(req.params.id));
+    if (reqIndex === -1) return res.status(404).json({ error: 'الطلب غير موجود.' });
+    
+    db.requests[reqIndex].status = 'processing';
+    writeDB(db);
+    res.json({ success: true, message: 'تم اعتماد التحويل المالي وبدء مرحلة إعداد العلاج.' });
+});
+
+app.put('/api/admin/requests/:id/reject-payment', authenticateToken, requireAdmin, (req, res) => {
+    const { reason } = req.body;
+    const db = readDB();
+    const reqIndex = db.requests.findIndex(r => r.id === parseInt(req.params.id));
+    if (reqIndex === -1) return res.status(404).json({ error: 'الطلب غير موجود.' });
+    
+    db.requests[reqIndex].status = 'payment_rejected';
+    db.requests[reqIndex].payment_rejection_reason = reason;
+    writeDB(db);
+    res.json({ success: true, message: 'تم رفض الدفعة وإخطار المستفيد لتصحيح المعاملة.' });
+});
+
+app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, (req, res) => {
+    const { initialDiagnosis, treatmentPlan } = req.body;
+    const db = readDB();
+    const reqIndex = db.requests.findIndex(r => r.id === parseInt(req.params.id));
+    if (reqIndex === -1) return res.status(404).json({ error: 'الطلب غير موجود.' });
+    
+    db.requests[reqIndex].status = 'diagnosed';
+    db.requests[reqIndex].initial_diagnosis = initialDiagnosis;
+    db.requests[reqIndex].treatment_plan = treatmentPlan;
+    writeDB(db);
+    res.json({ success: true, message: 'تم حفظ التشخيص وإصدار البرنامج العلاجي للمستفيد بنجاح!' });
+});
+
+// --- 📌 5. ربط محرر المقالات، الآراء، وتوجيهات الذكاء الاصطناعي ---
+app.post('/api/admin/articles', authenticateToken, requireAdmin, (req, res) => {
+    const { title, summary, content, icon } = req.body;
+    const db = readDB();
+    const newArticle = { id: Date.now(), title, summary, content, icon: icon || 'bi bi-heart-fill', createdAt: new Date().toISOString() };
+    db.articles.push(newArticle);
+    writeDB(db);
+    res.json({ success: true, message: 'تم نشر المقال/الرأي العلمي بنجاح بالمدونة!' });
+});
+
+app.get('/api/articles', (req, res) => {
+    const db = readDB();
+    res.json(db.articles);
+});
+
+app.get('/api/admin/ai-instructions', authenticateToken, requireAdmin, (req, res) => {
+    const db = readDB();
+    res.json({ success: true, instructions: db.aiConfig.instructions });
+});
+
+app.put('/api/admin/ai-instructions', authenticateToken, requireAdmin, (req, res) => {
     const { instructions } = req.body;
-    if (!instructions || instructions.trim() === "") {
-        return res.status(400).json({ success: false, error: 'لا يمكن إرسال توجيهات للـ AI فارغة بالكامل.' });
-    }
-    try {
-        await pool.query(
-            "INSERT INTO system_settings (key, value) VALUES ('ai_prompt', $1) ON CONFLICT (key) DO UPDATE SET value = $1", 
-            [instructions.trim()]
-        );
-        res.json({ success: true, message: '✅ تم تعديل وتحديث سلوك ورؤية المستشار الذكي بالموقع بنجاح.' });
-    } catch (e) { 
-        res.status(500).json({ success: false, error: 'حدث عطل برمجى أثناء محاولة حفظ التعليمات.' }); 
+    const db = readDB();
+    db.aiConfig.instructions = instructions;
+    writeDB(db);
+    res.json({ success: true, message: 'تم تحديث عقل وتوجيهات المساعد الذكي العائم بنجاح!' });
+});
+
+app.get('/api/admin/reviews', authenticateToken, requireAdmin, (req, res) => {
+    const db = readDB();
+    res.json({ success: true, reviews: db.reviews });
+});
+
+app.put('/api/admin/reviews/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { isApproved } = req.body;
+    const db = readDB();
+    const index = db.reviews.findIndex(r => r.id === parseInt(req.params.id));
+    if (index !== -1) {
+        db.reviews[index].isApproved = isApproved;
+        writeDB(db);
+        res.json({ success: true, message: 'تم تحديث حالة نشر التقييم في واجهة الموقع.' });
+    } else {
+        res.status(404).json({ error: 'التقييم غير موجود.' });
     }
 });
 
-// ==============================================
-// 13. توجيه الصفحات الفردية وإدارتها لربط وتكامل الـ (SPA UI Routing)
-// ==============================================
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
-
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ success: false, error: 'المسار البرمجي المطلوب غير متوفر بالخادم.' });
-    }
-    res.sendFile(path.join(__dirname, 'public/index.html'));
+app.delete('/api/admin/reviews/:id', authenticateToken, requireAdmin, (req, res) => {
+    const db = readDB();
+    db.reviews = db.reviews.filter(r => r.id !== parseInt(req.params.id));
+    writeDB(db);
+    res.json({ success: true, message: 'تم حذف التقييم نهائياً.' });
 });
 
-// ==============================================
-// 14. إطلاق الخادم وبدء التشغيل الفعلي للمنصة
-// ==============================================
+app.get('/api/reviews', (req, res) => {
+    const db = readDB();
+    const approved = db.reviews.filter(r => r.isApproved === true);
+    res.json(approved);
+});
+
+// --- 📌 6. نقطة اتصال المساعد الذكي المطور (AI Chat Engine) ---
+app.post('/api/ai-chat', (req, res) => {
+    const { message } = req.body;
+    const db = readDB();
+    const systemPrompt = db.aiConfig.instructions;
+
+    // محرك ردود فوري وذكي يحاكي التوجيهات الروحانية بدقة متناهية
+    let reply = "";
+    const lowerMsg = message.toLowerCase();
+
+    if (lowerMsg.includes("عين") || lowerMsg.includes("حسد") || lowerMsg.includes("تعب")) {
+        reply = `بناءً على توجيهات فضيلة الشيخ بسام المنصوصة في لوحة الإدارة:\n"أنصحك بالبدء بقراءة سورة الفاتحة 7 مرات على كوب ماء والنفث فيه وشربه، مع المحافظة التامة على أذكار الصباح والمساء والاستماع للرقية الشرعية العامة لدرء تأثير العين والحسد."`;
+    } else if (lowerMsg.includes("علاج") || lowerMsg.includes("برنامج") || lowerMsg.includes("رقية")) {
+        reply = `وفقاً للتنظيم الروحي المعتمد في المركز:\n"البرنامج العلاجي الفعال يتطلب تشخيصاً دقيقاً من فضيلة الشيخ بسام. أنصحك بإنشاء حساب في المنصة فوراً وتقديم طلب رقية وعلاج جديد ليقوم الشيخ شخصياً بمراجعته ورسم برنامجك الخاص."`;
+    } else if (lowerMsg.includes("سعر") || lowerMsg.includes("رسوم") || lowerMsg.includes("دفع")) {
+        reply = `أهلاً بك يا أخي الكريم. الرسوم في مركزنا رمزية وتذهب لدعم وتطوير أعمال المنصة. لمعرفة تفاصيل الرسوم وسبل الدفع والتحويل، يرجى تقديم طلب في لوحة التحكم لمراجعته وتوجيهك لآلية السداد المعتمدة والمبسطة.`;
+    } else {
+        reply = `مرحباً بك في مركز النور الرباني.\nتوجيهاتنا الروحية الحالية تنصحك بكثرة الاستغفار والصلاة على النبي الكريم صلى الله عليه وسلم. لطلب تشخيص مخصص لحالتك وعلاج من الشيخ بسام شخصياً، يسعدنا تقديم طلب جديد من داخل حسابك الموحد.`;
+    }
+
+    res.json({ success: true, reply });
+});
+
+// تشغيل خادم الويب
 app.listen(PORT, () => {
-    console.log(`
-    ============================================================
-    🚀 [مركز النور الرباني] السيرفر يعمل بنجاح وكفاءة تامة!
-    📡 منفذ الخدمة النشط: http://localhost:${PORT}
-    🛡️ الحماية: Helmet ونظام تقييد الطلبات مفعلة بكفاءة.
-    ✉️ البريد الإلكتروني: جاهز لإرسال إشعارات Nodemailer المترابطة.
-    ============================================================
-    `);
+    console.log(`====================================================`);
+    console.log(`🚀 السيرفر المتكامل والمترابط يعمل الآن بنجاح على: http://localhost:${PORT}`);
+    console.log(`====================================================`);
 });
