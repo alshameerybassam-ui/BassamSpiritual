@@ -5,184 +5,305 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
 
+// ==============================================
+// استيراد مكتبة SQLite3 (قاعدة بيانات احترافية في ملف واحد)
+// ==============================================
+const sqlite3 = require('sqlite3').verbose();
+const dbFile = path.join(__dirname, 'database.sqlite');
+
+// فتح قاعدة البيانات (سيتم إنشاؤها تلقائياً إن لم تكن موجودة)
+const db = new sqlite3.Database(dbFile);
+
 const app = express();
 const PORT = 3000;
 const JWT_SECRET = 'BASSAM_SUPER_SECRET_KEY_2026';
-const DB_FILE = path.join(__dirname, 'database.json');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-function readDB() {
-    if (!fs.existsSync(DB_FILE)) {
-        const initialDB = { users: [], requests: [], messages: [], articles: [], reviews: [], aiConfig: { instructions: "أنت مستشار فقهي وروحاني معتمد..." } };
-        fs.writeFileSync(DB_FILE, JSON.stringify(initialDB, null, 4), 'utf8');
-        return initialDB;
-    }
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-}
+// ==============================================
+// بناء الجداول تلقائياً عند التشغيل
+// ==============================================
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        full_name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        phone TEXT,
+        role TEXT DEFAULT 'user'
+    )`);
 
-function writeDB(data) { fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 4), 'utf8'); }
+    db.run(`CREATE TABLE IF NOT EXISTS requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        fullName TEXT,
+        email TEXT,
+        userPhone TEXT,
+        serviceType TEXT,
+        description TEXT,
+        status TEXT DEFAULT 'pending',
+        createdAt TEXT,
+        paymentMethod TEXT,
+        payment_sender_name TEXT,
+        payment_transfer_number TEXT,
+        initial_diagnosis TEXT,
+        treatment_plan TEXT,
+        payment_rejection_reason TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )`);
 
-// إنشاء حساب المدير تلقائياً
+    db.run(`CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        requestId INTEGER,
+        senderId INTEGER,
+        senderName TEXT,
+        senderRole TEXT,
+        messageText TEXT,
+        createdAt TEXT,
+        FOREIGN KEY (requestId) REFERENCES requests(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS articles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        summary TEXT,
+        content TEXT,
+        icon TEXT DEFAULT 'bi bi-heart-fill',
+        createdAt TEXT
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        fullName TEXT,
+        comment TEXT,
+        rating INTEGER,
+        isApproved INTEGER DEFAULT 0,
+        FOREIGN KEY (userId) REFERENCES users(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS ai_config (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        instructions TEXT
+    )`);
+
+    // إدراج إعدادات الذكاء الاصطناعي الافتراضية إن لم تكن موجودة
+    db.get(`SELECT COUNT(*) as count FROM ai_config`, (err, row) => {
+        if (row.count === 0) {
+            db.run(`INSERT INTO ai_config (instructions) VALUES (?)`, [
+                "أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام. أجب على استفسارات الزوار بلطف وأدب جم."
+            ]);
+        }
+    });
+});
+
+// ==============================================
+// إنشاء حساب المدير (الشيخ بسام) تلقائياً
+// ==============================================
 (function initAdmin() {
-    const db = readDB();
-    if (!db.users.find(u => u.email === 'alshameerybassam@gmail.com')) {
-        db.users.push({ id: Date.now(), full_name: "الشيخ بسام", email: "alshameerybassam@gmail.com", phone: "777941366", password: bcrypt.hashSync('bassam112358112358', 8), role: "admin" });
-        writeDB(db);
-    }
+    db.get(`SELECT id FROM users WHERE email = ?`, ['alshameerybassam@gmail.com'], (err, row) => {
+        if (!row) {
+            const hashedPassword = bcrypt.hashSync('bassam112358112358', 8);
+            db.run(`INSERT INTO users (full_name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)`, [
+                "الشيخ بسام", "alshameerybassam@gmail.com", hashedPassword, "777941366", "admin"
+            ]);
+            console.log("💎 تم إنشاء حساب الإدارة التلقائي للشيخ بسام بنجاح!");
+        }
+    });
 })();
 
+// ==============================================
+// 🛡️ برمجيات التحقق والمصادقة (Middlewares)
+// ==============================================
 function authenticateToken(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'الرجاء تسجيل الدخول.' });
-    jwt.verify(token, JWT_SECRET, (err, user) => { if (err) return res.status(403).json({ error: 'جلسة منتهية.' }); req.user = user; next(); });
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'جلسة منتهية.' });
+        req.user = user;
+        next();
+    });
 }
 
-function requireAdmin(req, res, next) { if (req.user.role !== 'admin') return res.status(403).json({ error: 'للإدارة فقط.' }); next(); }
+function requireAdmin(req, res, next) {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'للإدارة فقط.' });
+    next();
+}
 
-// ========== المصادقة ==========
+// ==============================================
+// 📌 1. مسارات المصادقة
+// ==============================================
 app.post('/api/auth/register', (req, res) => {
     const { fullName, email, password, phone } = req.body;
-    const db = readDB();
-    if (db.users.find(u => u.email === email)) return res.status(400).json({ error: 'البريد مسجل مسبقاً.' });
-    const hashed = bcrypt.hashSync(password, 8);
-    const newUser = { id: Date.now(), full_name: fullName, email, password: hashed, phone, role: 'user' };
-    db.users.push(newUser); writeDB(db);
-    res.json({ success: true });
+    db.get(`SELECT id FROM users WHERE email = ?`, [email], (err, row) => {
+        if (row) return res.status(400).json({ error: 'البريد مسجل مسبقاً.' });
+        const hashed = bcrypt.hashSync(password, 8);
+        db.run(`INSERT INTO users (full_name, email, password, phone) VALUES (?, ?, ?, ?)`, [fullName, email, hashed, phone], function() {
+            res.json({ success: true });
+        });
+    });
 });
 
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
-    const db = readDB();
-    const user = db.users.find(u => u.email === email);
-    if (!user || !bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'بيانات خاطئة.' });
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, full_name: user.full_name }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ success: true, token, user: { full_name: user.full_name, email: user.email, role: user.role } });
+    db.get(`SELECT * FROM users WHERE email = ?`, [email], (err, user) => {
+        if (!user || !bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'بيانات خاطئة.' });
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role, full_name: user.full_name }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ success: true, token, user: { full_name: user.full_name, email: user.email, role: user.role } });
+    });
 });
 
 app.get('/api/auth/verify', authenticateToken, (req, res) => res.json({ success: true, user: req.user }));
 
-// ========== لوحة المستفيد ==========
+// ==============================================
+// 📌 2. مسارات لوحة المستفيد
+// ==============================================
 app.get('/api/dashboard/me', authenticateToken, (req, res) => {
-    const db = readDB();
-    const myRequests = db.requests.filter(r => r.userId === req.user.id);
-    const user = db.users.find(u => u.id === req.user.id);
-    res.json({ success: true, user, requests: myRequests });
+    db.all(`SELECT * FROM requests WHERE user_id = ? ORDER BY id DESC`, [req.user.id], (err, requests) => {
+        db.get(`SELECT * FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+            res.json({ success: true, user, requests: requests || [] });
+        });
+    });
 });
 
 app.post('/api/dashboard/request', authenticateToken, (req, res) => {
     const { serviceType, description } = req.body;
-    const db = readDB();
-    const user = db.users.find(u => u.id === req.user.id);
-    const newReq = { id: Date.now(), userId: req.user.id, fullName: user.full_name, email: user.email, serviceType, description, status: 'pending', createdAt: new Date().toISOString() };
-    db.requests.push(newReq); writeDB(db);
-    res.json({ success: true });
+    db.get(`SELECT * FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+        db.run(`INSERT INTO requests (user_id, fullName, email, userPhone, serviceType, description, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
+            [req.user.id, user.full_name, user.email, user.phone, serviceType, description, new Date().toISOString()],
+            function() { res.json({ success: true }); });
+    });
 });
 
 app.get('/api/dashboard/request/:id', authenticateToken, (req, res) => {
-    const db = readDB();
-    const r = db.requests.find(r => r.id === parseInt(req.params.id) && (r.userId === req.user.id || req.user.role === 'admin'));
-    if(!r) return res.status(404).json({ error: 'غير موجود.' });
-    res.json(r);
+    db.get(`SELECT * FROM requests WHERE id = ? AND (user_id = ? OR ?)`, [req.params.id, req.user.id, req.user.role === 'admin'], (err, row) => {
+        if (!row) return res.status(404).json({ error: 'غير موجود.' });
+        res.json(row);
+    });
 });
 
 app.put('/api/dashboard/request/:id/submit-payment', authenticateToken, (req, res) => {
-    const db = readDB();
-    const idx = db.requests.findIndex(r => r.id === parseInt(req.params.id));
-    if(idx===-1) return res.status(404).json({ error: 'غير موجود.' });
-    db.requests[idx].status = 'payment_submitted';
-    db.requests[idx].paymentMethod = req.body.paymentMethod;
-    db.requests[idx].payment_sender_name = req.body.paymentSenderName;
-    db.requests[idx].payment_transfer_number = req.body.paymentTransferNumber;
-    writeDB(db); res.json({ success: true });
+    const { paymentMethod, paymentSenderName, paymentTransferNumber } = req.body;
+    db.run(`UPDATE requests SET paymentMethod = ?, payment_sender_name = ?, payment_transfer_number = ?, status = 'payment_submitted' WHERE id = ? AND user_id = ?`,
+        [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id, req.user.id],
+        function() { res.json({ success: true }); });
 });
 
 app.post('/api/dashboard/reviews', authenticateToken, (req, res) => {
-    const db = readDB();
-    db.reviews.push({ id: Date.now(), userId: req.user.id, fullName: req.user.full_name, comment: req.body.comment, rating: req.body.rating, isApproved: false });
-    writeDB(db); res.json({ success: true });
+    const { comment, rating } = req.body;
+    db.run(`INSERT INTO reviews (userId, fullName, comment, rating) VALUES (?, ?, ?, ?)`, [req.user.id, req.user.full_name, comment, rating]);
+    res.json({ success: true });
 });
 
-// ========== لوحة المدير ==========
-app.get('/api/admin/requests', authenticateToken, requireAdmin, (req, res) => { res.json(readDB().requests); });
+// ==============================================
+// 📌 3. مسارات لوحة المدير
+// ==============================================
+app.get('/api/admin/requests', authenticateToken, requireAdmin, (req, res) => {
+    db.all(`SELECT * FROM requests ORDER BY id DESC`, (err, rows) => res.json(rows));
+});
+
 app.put('/api/admin/requests/:id/accept-initial', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.requests.findIndex(r => r.id === parseInt(req.params.id));
-    db.requests[idx].status = 'accepted_waiting_payment'; writeDB(db); res.json({ success: true });
+    db.run(`UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/reject-initial', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.requests.findIndex(r => r.id === parseInt(req.params.id));
-    db.requests[idx].status = 'rejected'; writeDB(db); res.json({ success: true });
+    db.run(`UPDATE requests SET status = 'rejected', payment_rejection_reason = ? WHERE id = ?`, [req.body.reason, req.params.id]);
+    res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/approve-payment', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.requests.findIndex(r => r.id === parseInt(req.params.id));
-    db.requests[idx].status = 'processing'; writeDB(db); res.json({ success: true });
+    db.run(`UPDATE requests SET status = 'processing' WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/reject-payment', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.requests.findIndex(r => r.id === parseInt(req.params.id));
-    db.requests[idx].status = 'payment_rejected'; writeDB(db); res.json({ success: true });
+    db.run(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = ? WHERE id = ?`, [req.body.reason, req.params.id]);
+    res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.requests.findIndex(r => r.id === parseInt(req.params.id));
-    db.requests[idx].initial_diagnosis = req.body.initialDiagnosis;
-    db.requests[idx].treatment_plan = req.body.treatmentPlan;
-    db.requests[idx].status = 'diagnosed'; writeDB(db); res.json({ success: true });
+    const { initialDiagnosis, treatmentPlan } = req.body;
+    db.run(`UPDATE requests SET initial_diagnosis = ?, treatment_plan = ?, status = 'diagnosed' WHERE id = ?`, [initialDiagnosis, treatmentPlan, req.params.id]);
+    res.json({ success: true });
 });
 
-// ========== المراسلات ==========
+// ==============================================
+// 📌 4. المراسلات
+// ==============================================
 app.get('/api/requests/:id/messages', authenticateToken, (req, res) => {
-    const db = readDB();
-    const msgs = db.messages.filter(m => m.requestId === parseInt(req.params.id));
-    res.json({ success: true, messages: msgs });
+    db.all(`SELECT * FROM messages WHERE requestId = ? ORDER BY id ASC`, [req.params.id], (err, rows) => res.json({ success: true, messages: rows }));
 });
+
 app.post('/api/requests/:id/messages', authenticateToken, (req, res) => {
-    const db = readDB();
-    db.messages.push({ id: Date.now(), requestId: parseInt(req.params.id), senderId: req.user.id, senderName: req.user.full_name, senderRole: req.user.role, messageText: req.body.messageText, createdAt: new Date().toISOString() });
-    writeDB(db); res.json({ success: true });
+    const { messageText } = req.body;
+    db.run(`INSERT INTO messages (requestId, senderId, senderName, senderRole, messageText, createdAt) VALUES (?, ?, ?, ?, ?, ?)`,
+        [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText, new Date().toISOString()],
+        function() { res.json({ success: true }); });
 });
 
-// ========== المقالات ==========
-app.get('/api/articles', (req, res) => res.json(readDB().articles));
+// ==============================================
+// 📌 5. المقالات والتقييمات والذكاء الاصطناعي
+// ==============================================
+app.get('/api/articles', (req, res) => {
+    db.all(`SELECT * FROM articles ORDER BY id DESC`, (err, rows) => res.json(rows));
+});
+
 app.post('/api/admin/articles', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB();
-    db.articles.push({ id: Date.now(), title: req.body.title, summary: req.body.summary, content: req.body.content, createdAt: new Date().toISOString() });
-    writeDB(db); res.json({ success: true });
+    const { title, summary, content } = req.body;
+    db.run(`INSERT INTO articles (title, summary, content, createdAt) VALUES (?, ?, ?, ?)`, [title, summary, content, new Date().toISOString()]);
+    res.json({ success: true });
 });
+
 app.put('/api/admin/articles/:id', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.articles.findIndex(a => a.id === parseInt(req.params.id));
-    db.articles[idx].title = req.body.title; db.articles[idx].summary = req.body.summary; db.articles[idx].content = req.body.content;
-    writeDB(db); res.json({ success: true });
+    const { title, summary, content } = req.body;
+    db.run(`UPDATE articles SET title = ?, summary = ?, content = ? WHERE id = ?`, [title, summary, content, req.params.id]);
+    res.json({ success: true });
 });
+
 app.delete('/api/admin/articles/:id', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); db.articles = db.articles.filter(a => a.id !== parseInt(req.params.id));
-    writeDB(db); res.json({ success: true });
+    db.run(`DELETE FROM articles WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
 });
 
-// ========== التقييمات ==========
-app.get('/api/reviews', (req, res) => { res.json(readDB().reviews.filter(r => r.isApproved)); });
-app.get('/api/admin/reviews', authenticateToken, requireAdmin, (req, res) => { res.json({ success: true, reviews: readDB().reviews }); });
+app.get('/api/reviews', (req, res) => {
+    db.all(`SELECT * FROM reviews WHERE isApproved = 1 ORDER BY id DESC`, (err, rows) => res.json(rows));
+});
+
+app.get('/api/admin/reviews', authenticateToken, requireAdmin, (req, res) => {
+    db.all(`SELECT * FROM reviews ORDER BY id DESC`, (err, rows) => res.json({ success: true, reviews: rows }));
+});
+
 app.put('/api/admin/reviews/:id', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); const idx = db.reviews.findIndex(r => r.id === parseInt(req.params.id));
-    db.reviews[idx].isApproved = req.body.isApproved; writeDB(db); res.json({ success: true });
-});
-app.delete('/api/admin/reviews/:id', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); db.reviews = db.reviews.filter(r => r.id !== parseInt(req.params.id));
-    writeDB(db); res.json({ success: true });
+    db.run(`UPDATE reviews SET isApproved = ? WHERE id = ?`, [req.body.isApproved ? 1 : 0, req.params.id]);
+    res.json({ success: true });
 });
 
-// ========== الذكاء الاصطناعي ==========
-app.get('/api/admin/ai-instructions', authenticateToken, requireAdmin, (req, res) => { res.json({ success: true, instructions: readDB().aiConfig.instructions }); });
-app.put('/api/admin/ai-instructions', authenticateToken, requireAdmin, (req, res) => {
-    const db = readDB(); db.aiConfig.instructions = req.body.instructions; writeDB(db); res.json({ success: true });
+app.delete('/api/admin/reviews/:id', authenticateToken, requireAdmin, (req, res) => {
+    db.run(`DELETE FROM reviews WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
 });
+
+app.get('/api/admin/ai-instructions', authenticateToken, requireAdmin, (req, res) => {
+    db.get(`SELECT * FROM ai_config ORDER BY id DESC LIMIT 1`, (err, row) => res.json({ success: true, instructions: row?.instructions || '' }));
+});
+
+app.put('/api/admin/ai-instructions', authenticateToken, requireAdmin, (req, res) => {
+    db.run(`UPDATE ai_config SET instructions = ?`, [req.body.instructions]);
+    res.json({ success: true });
+});
+
 app.post('/api/ai-chat', (req, res) => {
-    const msg = req.body.message.toLowerCase();
-    let reply = '';
-    if(msg.includes('عين')||msg.includes('حسد')) reply = 'أنصحك بقراءة الفاتحة 7 مرات على ماء وشربه.';
-    else if(msg.includes('سحر')) reply = 'عليك بالرقية الشرعية.';
-    else reply = 'يرجى تقديم طلب للتشخيص الدقيق.';
-    res.json({ success: true, reply });
+    db.get(`SELECT * FROM ai_config ORDER BY id DESC LIMIT 1`, (err, row) => {
+        const msg = req.body.message.toLowerCase();
+        let reply = '';
+        if (msg.includes('عين') || msg.includes('حسد')) reply = 'أنصحك بقراءة الفاتحة 7 مرات على ماء وشربه.';
+        else if (msg.includes('سحر')) reply = 'عليك بالرقية الشرعية.';
+        else reply = 'يرجى تقديم طلب للتشخيص الدقيق.';
+        res.json({ success: true, reply });
+    });
 });
 
 app.listen(PORT, () => console.log(`🚀 السيرفر يعمل على ${PORT}`));
