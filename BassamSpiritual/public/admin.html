@@ -2,110 +2,359 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم المدير - مركز النور الرباني</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم الشاملة - الشيخ بسام</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #faf8f5; color: #2b2b2b; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #4A154B 0%, #200421 100%); color: white; padding: 20px; border-radius: 8px; border-bottom: 4px solid #D4AF37; margin-bottom: 25px; }
-        .card { background: white; border: 1px solid #ebdcb2; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .card h2 { color: #4A154B; border-bottom: 2px solid #D4AF37; padding-bottom: 10px; margin-top: 0; }
-        label { display: block; margin: 10px 0 5px; font-weight: bold; }
-        input[type="text"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        button { background: #4A154B; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        button:hover { background: #200421; border-color: #D4AF37; }
-        .status-msg { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
+        :root { --primary-color: #4A154B; --accent-color: #D4AF37; --sidebar-width: 280px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin:0; padding:0; }
+        .admin-sidebar { width: var(--sidebar-width); background: linear-gradient(180deg, #4A154B 0%, #200421 100%); color: #fff; min-height: 100vh; position: fixed; border-left: 4px solid var(--accent-color); }
+        .admin-content { margin-right: var(--sidebar-width); padding: 30px; }
+        .nav-link-custom { color: rgba(255,255,255,0.75); padding: 12px 20px; display: flex; align-items: center; gap: 12px; text-decoration: none; border-radius: 8px; margin: 5px 15px; font-weight: 500; }
+        .nav-link-custom:hover, .nav-link-custom.active { color: #fff; background-color: rgba(255,255,255,0.15); }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); background: #ffffff; }
+        .chat-area { height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; background-color: #fafafa; }
+        .msg-bubble { max-width: 75%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; }
+        .msg-sender { background-color: #ffffff; margin-right: auto; border-top-left-radius: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .msg-admin { background-color: #e2f0d9; margin-left: auto; border-top-right-radius: 0; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>لوحة الإدارة العامة والمراقبة</h1>
-        <p>مرحباً بك فضيلة الشيخ بسام. يمكنك التحكم بالمحتوى وتوجيه المساعد الذكي من هنا.</p>
+<div class="admin-sidebar d-flex flex-column py-4">
+    <div class="text-center mb-4 pb-3 border-bottom border-secondary">
+        <i class="bi bi-moon-stars text-warning fs-1 d-block mb-2"></i>
+        <h5 class="fw-bold text-white mb-0">لوحة الشيخ بسام</h5>
+        <span class="badge bg-warning text-dark mt-1">المدير العام والشرعي للمركز</span>
     </div>
-
-    <!-- 1. قسم إدارة ونشر المقالات والآراء -->
-    <div class="card">
-        <h2>✍️ نشر مقال جديد أو رأي فقهي</h2>
-        <form id="publish-form" onsubmit="publishPost(event)">
-            <label for="post-title">عنوان المقال / الفتوى / الرأي:</label>
-            <input type="text" id="post-title" placeholder="أدخل العنوان هنا..." required>
-
-            <label for="post-type">نوع المنشور:</label>
-            <select id="post-type">
-                <option value="article">مقال علمي / روحاني</option>
-                <option value="opinion">رأي فقهي / فتوى</option>
-                <option value="guidance">توجيه وإرشاد للزوار</option>
-            </select>
-
-            <label for="post-content">المحتوى بالتفصيل:</label>
-            <textarea id="post-content" rows="6" placeholder="اكتب المحتوى أو نص الفتوى هنا..." required></textarea>
-
-            <button type="submit">نشر فوري في الموقع 🚀</button>
-        </form>
-        <div id="publish-status" class="status-msg success">تم نشر المقال بنجاح وتحديث واجهة المستفيدين!</div>
-    </div>
-
-    <!-- 2. قسم التحكم بالمساعد الذكي المطور -->
-    <div class="card">
-        <h2>🔮 إدارة توجيهات المساعد الذكي (AI Prompt)</h2>
-        <p style="font-size: 13px; color: #666;">التوجيهات المكتوبة هنا هي بمثابة "العقل المدبر" للمساعد العائم في الواجهة، سيتحدث المساعد بناءً عليها حصراً.</p>
-        <form id="ai-prompt-form" onsubmit="saveAiPrompt(event)">
-            <label for="ai-instruction">التوجيه الشرعي والروحي للمساعد الذكي:</label>
-            <textarea id="ai-instruction" rows="5" required>أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني. أجب على استفسارات الزوار بأدب ولطف جم، وقدم لهم النصائح الروحانية والرقية الشرعية المعتمدة بالاستناد إلى القرآن الكريم والسنة النبوية الشريفة.</textarea>
-
-            <button type="submit" style="background: #200421; border: 2px solid #D4AF37;">حفظ وتطبيق التوجيه فوراً ⚙️</button>
-        </form>
-        <div id="prompt-status" class="status-msg success">تم حفظ التوجيهات الذكية وتطبيقها على المساعد العائم!</div>
+    <nav class="flex-grow-1">
+        <a href="#" class="nav-link-custom active" onclick="switchTab('requests-tab')"><i class="bi bi-chat-left-heart-fill"></i>إدارة طلبات الاستشفاء</a>
+        <a href="#" class="nav-link-custom" onclick="switchTab('ai-tab')"><i class="bi bi-cpu-fill"></i>توجيه المساعد الذكي</a>
+        <a href="#" class="nav-link-custom" onclick="switchTab('articles-tab')"><i class="bi bi-journal-text"></i>نشر المقالات والآراء</a>
+        <a href="#" class="nav-link-custom" onclick="switchTab('reviews-tab')"><i class="bi bi-star-fill"></i>رقابة التقييمات والآراء</a>
+    </nav>
+    <div class="px-3">
+        <button class="btn btn-danger w-100 btn-sm" onclick="AuthAPI.logout()">تسجيل خروج</button>
     </div>
 </div>
 
+<div class="admin-content">
+    <div id="requests-tab" class="tab-content">
+        <div class="row">
+            <div class="col-lg-5 mb-4">
+                <div class="card card-custom p-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-hourglass-split me-2"></i>طلبات الاستشفاء الواردة</h5>
+                    <div id="adminRequestsList" class="list-group list-group-flush"></div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div id="adminEmptyState" class="card card-custom p-5 text-center">
+                    <i class="bi bi-card-checklist text-muted mb-3" style="font-size: 4rem;"></i>
+                    <h5 class="text-muted">اختر طلباً لدراسته، مراجعة دفعته المالية، أو تقديم الرقية والعلاج والمراسلة الفورية</h5>
+                </div>
+                <div id="adminDetailsCard" class="card card-custom p-4 d-none">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <div>
+                            <h4 class="fw-bold mb-1 text-dark" id="admDetServiceType">الاستشارة</h4>
+                            <span class="small text-muted" id="admDetUser">...</span>
+                        </div>
+                        <span id="admDetStatus" class="badge"></span>
+                    </div>
+                    <p class="text-dark bg-light p-3 rounded" id="admDetDescription"></p>
+
+                    <div id="admActionsSection" class="d-flex gap-2 mb-4">
+                        <button class="btn btn-success flex-grow-1" onclick="actionAcceptInitial()">قبول مبدئي (بانتظار الدفع)</button>
+                        <button class="btn btn-danger flex-grow-1" onclick="actionRejectInitial()">رفض مبدئي</button>
+                    </div>
+
+                    <div id="admPaymentReviewSection" class="card border-warning bg-light-warning p-3 mb-4 d-none">
+                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-bank me-2"></i>تفاصيل الحوالة المستلمة من المستفيد</h6>
+                        <p class="small mb-1"><strong>طريقة التحويل:</strong> <span id="payDetMethod"></span></p>
+                        <p class="small mb-1"><strong>اسم المحول:</strong> <span id="payDetName"></span></p>
+                        <p class="small mb-3"><strong>رقم إيصال الحوالة:</strong> <span id="payDetNumber"></span></p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm w-50" onclick="actionApprovePayment()">اعتماد الدفع (البدء بالعلاج)</button>
+                            <button class="btn btn-danger btn-sm w-50" onclick="actionRejectPayment()">رفض الدفع لتصحيحه</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-chat-text-fill me-2"></i>دردشة آمنة مع المستفيد</h5>
+                        <div id="admChatBox" class="chat-area mb-2"></div>
+                        <form id="admMessageForm" class="d-flex gap-2">
+                            <input type="text" id="admMessageText" class="form-control" placeholder="اكتب ردك أو نصيحتك للمستفيد..." required>
+                            <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;"><i class="bi bi-send-fill"></i></button>
+                        </form>
+                    </div>
+
+                    <div class="card border-primary p-3">
+                        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-file-earmark-medical me-2"></i>إصدار التشخيص والبرنامج العلاجي</h5>
+                        <form id="diagnoseForm">
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">التشخيص الروحي للحالة</label>
+                                <textarea class="form-control form-control-sm" id="admDiagnosis" rows="2" placeholder="اكتب التشخيص هنا..." required></textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">الخطة العلاجية والرقية الشرعية المقررة</label>
+                                <textarea class="form-control form-control-sm" id="admPlan" rows="2" placeholder="اكتب برنامج الرقية اليومي والمقررات..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" style="background-color: var(--primary-color); border:none;">حفظ التشخيص وإطلاق البرنامج العلاجي</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-tab" class="tab-content d-none">
+        <div class="card card-custom p-4">
+            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-cpu-fill me-2 text-primary"></i>تعديل توجيه وعقل المساعد الروحاني الذكي</h4>
+            <p class="text-muted small">كل كلمة تكتبها هنا ستصبح الإطار والسياسة التي يعتمد عليها المساعد الذكي في الواجهة للإجابة على الزوار:</p>
+            <form id="aiPromptForm">
+                <textarea class="form-control mb-3" id="aiPromptTextarea" rows="8" required></textarea>
+                <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;">حفظ وتطبيق التوجيهات على المساعد فوراً</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="articles-tab" class="tab-content d-none">
+        <div class="card card-custom p-4">
+            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-journal-plus me-2"></i>نشر مقال أو فتوى أو رأي روحاني جديد</h4>
+            <form id="articleForm">
+                <div class="mb-3"><label class="form-label">العنوان</label><input type="text" id="artTitle" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">ملخص المقال</label><input type="text" id="artSummary" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">محتوى المقال كاملاً</label><textarea id="artContent" class="form-control" rows="5" required></textarea></div>
+                <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color); border:none;">نشر المقال فوراً بالمدونة</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="reviews-tab" class="tab-content d-none">
+        <div class="card card-custom p-4">
+            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-star-fill text-warning me-2"></i>رقابة التقييمات والآراء المرفوعة</h4>
+            <table class="table table-hover align-middle">
+                <thead><tr><th>المستفيد</th><th>التعليق والتقييم</th><th>حالة النشر</th><th>الإجراءات</th></tr></thead>
+                <tbody id="reviewsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
 <script>
-    // ربط نشر المقالات والآراء بالسيرفر
-    async function publishPost(event) {
-        event.preventDefault();
-        const title = document.getElementById('post-title').value;
-        const type = document.getElementById('post-type').value;
-        const content = document.getElementById('post-content').value;
+    let currentRequestId = null;
 
+    window.addEventListener('load', async () => {
         try {
-            const response = await fetch('/api/posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, type, content })
-            });
-            if (response.ok) {
-                const status = document.getElementById('publish-status');
-                status.style.display = 'block';
-                document.getElementById('publish-form').reset();
-                setTimeout(() => status.style.display = 'none', 4000);
+            const res = await AuthAPI.verifySession();
+            if (!res.success || res.user.role !== 'admin') {
+                window.location.href = '/login.html';
+            } else {
+                await loadAdminRequests();
+                await loadAIInstructions();
+                await loadAdminReviews();
             }
-        } catch (error) {
-            alert('حدث خطأ أثناء الاتصال بالسيرفر لنشر المقال.');
+        } catch (e) { window.location.href = '/login.html'; }
+    });
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('d-none'));
+        document.querySelectorAll('.nav-link-custom').forEach(link => link.classList.remove('active'));
+        document.getElementById(tabId).classList.remove('d-none');
+        event.currentTarget.classList.add('active');
+    }
+
+    async function loadAdminRequests() {
+        try {
+            const requests = await AdminAPI.getAllRequests();
+            const list = document.getElementById('adminRequestsList');
+            list.innerHTML = '';
+            if (requests.length === 0) {
+                list.innerHTML = `<div class="text-center p-3 text-muted">لا توجد أي طلبات واردة.</div>`;
+                return;
+            }
+            requests.forEach(req => {
+                const item = document.createElement('button');
+                item.className = `list-group-item list-group-item-action p-3 text-start d-flex justify-content-between align-items-center ${currentRequestId === req.id ? 'active' : ''}`;
+                item.onclick = () => selectAdminRequest(req);
+                item.innerHTML = `
+                    <div>
+                        <h6 class="fw-bold mb-1">${req.fullName}</h6>
+                        <small class="text-muted">${req.serviceType}</small>
+                    </div>
+                    <span class="badge ${getStatusBadgeClass(req.status)}">${getStatusText(req.status)}</span>
+                `;
+                list.appendChild(item);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case 'pending': return 'bg-secondary';
+            case 'accepted_waiting_payment': return 'bg-warning text-dark';
+            case 'payment_submitted': return 'bg-info text-dark';
+            case 'processing': return 'bg-primary';
+            case 'diagnosed': return 'bg-success';
+            default: return 'bg-danger';
         }
     }
 
-    // ربط إرشادات المساعد الذكي بالسيرفر لتحديث الـ Prompt
-    async function saveAiPrompt(event) {
-        event.preventDefault();
-        const promptText = document.getElementById('ai-instruction').value;
-
-        try {
-            const response = await fetch('/api/admin/update-ai-prompt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ systemPrompt: promptText })
-            });
-            if (response.ok) {
-                const status = document.getElementById('prompt-status');
-                status.style.display = 'block';
-                setTimeout(() => status.style.display = 'none', 4000);
-            }
-        } catch (error) {
-            alert('حدث خطأ أثناء تحديث توجيهات المساعد الذكي.');
+    function getStatusText(status) {
+        switch(status) {
+            case 'pending': return 'انتظار مراجعتك';
+            case 'accepted_waiting_payment': return 'مقبول / بانتظار الدفع';
+            case 'payment_submitted': return 'أرسل إثبات الحوالة';
+            case 'processing': return 'قيد إعداد العلاج والرقية';
+            case 'diagnosed': return 'تم إصدار التشخيص والعلاج';
+            default: return 'مرفوض';
         }
     }
+
+    async function selectAdminRequest(req) {
+        currentRequestId = req.id;
+        document.getElementById('adminEmptyState').classList.add('d-none');
+        document.getElementById('adminDetailsCard').classList.remove('d-none');
+        await loadAdminRequests();
+
+        document.getElementById('admDetServiceType').innerText = req.serviceType;
+        document.getElementById('admDetUser').innerText = `المستفيد: ${req.fullName} | هاتف: ${req.userPhone}`;
+        document.getElementById('admDetDescription').innerText = req.description;
+        
+        const badge = document.getElementById('admDetStatus');
+        badge.className = `badge ${getStatusBadgeClass(req.status)}`;
+        badge.innerText = getStatusText(req.status);
+
+        const actionSection = document.getElementById('admActionsSection');
+        actionSection.classList.toggle('d-none', req.status !== 'pending');
+
+        const payReviewSection = document.getElementById('admPaymentReviewSection');
+        if(req.status === 'payment_submitted') {
+            payReviewSection.classList.remove('d-none');
+            document.getElementById('payDetMethod').innerText = req.paymentMethod || 'غير محدد';
+            document.getElementById('payDetName').innerText = req.payment_sender_name || 'غير محدد';
+            document.getElementById('payDetNumber').innerText = req.payment_transfer_number || 'غير محدد';
+        } else { payReviewSection.classList.add('d-none'); }
+
+        await loadAdminMessages();
+    }
+
+    async function loadAdminMessages() {
+        if (!currentRequestId) return;
+        try {
+            const data = await MessagesAPI.getMessages(currentRequestId);
+            if (data.success) {
+                const chatBox = document.getElementById('admChatBox');
+                chatBox.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `msg-bubble d-flex flex-column ${msg.senderRole === 'admin' ? 'msg-admin' : 'msg-sender'}`;
+                    bubble.innerHTML = `<span class="small fw-bold text-dark mb-1">${msg.senderName}</span><span>${msg.messageText}</span>`;
+                    chatBox.appendChild(bubble);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('admMessageForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = document.getElementById('admMessageText').value;
+        if (!text.trim()) return;
+        try {
+            const res = await MessagesAPI.sendMessage(currentRequestId, text);
+            if (res.success) { document.getElementById('admMessageText').value = ''; await loadAdminMessages(); }
+        } catch (e) { alert(e.message); }
+    });
+
+    async function actionAcceptInitial() {
+        try { const res = await AdminAPI.acceptInitial(currentRequestId); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
+    }
+
+    async function actionRejectInitial() {
+        const reason = prompt('سبب الرفض المبدئي لإبلاغ العميل:');
+        if (!reason) return;
+        try { const res = await AdminAPI.rejectInitial(currentRequestId, reason); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
+    }
+
+    async function actionApprovePayment() {
+        try { const res = await AdminAPI.approvePayment(currentRequestId); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
+    }
+
+    async function actionRejectPayment() {
+        const reason = prompt('سبب رفض الحوالة لوجود خطأ:');
+        if (!reason) return;
+        try { const res = await AdminAPI.rejectPayment(currentRequestId, reason); alert(res.message); location.reload(); } catch(e) { alert(e.message); }
+    }
+
+    document.getElementById('diagnoseForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await AdminAPI.diagnoseAndPrescribe(currentRequestId, {
+                initialDiagnosis: document.getElementById('admDiagnosis').value,
+                treatmentPlan: document.getElementById('admPlan').value
+            });
+            alert(res.message); location.reload();
+        } catch(e) { alert(e.message); }
+    });
+
+    async function loadAIInstructions() {
+        try {
+            const res = await AdminAPI.getAIInstructions();
+            if (res.success) document.getElementById('aiPromptTextarea').value = res.instructions;
+        } catch(e) { console.error(e); }
+    }
+
+    document.getElementById('aiPromptForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await AdminAPI.updateAIInstructions(document.getElementById('aiPromptTextarea').value);
+            alert(res.message);
+        } catch (e) { alert(e.message); }
+    });
+
+    document.getElementById('articleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await AdminAPI.createArticle(document.getElementById('artTitle').value, document.getElementById('artSummary').value, document.getElementById('artContent').value);
+            if (res.success) { alert(res.message); document.getElementById('articleForm').reset(); }
+        } catch(e) { alert(e.message); }
+    });
+
+    async function loadAdminReviews() {
+        try {
+            const res = await AdminAPI.getAllReviewsForAdmin();
+            if (res.success) {
+                const tbody = document.getElementById('reviewsTableBody');
+                tbody.innerHTML = '';
+                res.reviews.forEach(rev => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${rev.fullName}</strong></td>
+                        <td>${rev.comment}</td>
+                        <td><span class="badge ${rev.isApproved ? 'bg-success' : 'bg-warning text-dark'}">${rev.isApproved ? 'معتمد' : 'معلق'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-success py-1" onclick="approveReview(${rev.id}, true)">قبول</button>
+                            <button class="btn btn-sm btn-danger py-1" onclick="deleteReview(${rev.id})">حذف</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function approveReview(id, status) {
+        try { const res = await AdminAPI.updateReviewStatus(id, status); alert(res.message); await loadAdminReviews(); } catch(e) { alert(e.message); }
+    }
+
+    async function deleteReview(id) {
+        if(!confirm('حذف التقييم نهائياً؟')) return;
+        try { const res = await AdminAPI.deleteReview(id); alert(res.message); await loadAdminReviews(); } catch(e) { alert(e.message); }
+    }
+
+    setInterval(loadAdminMessages, 5000);
 </script>
 </body>
 </html>
