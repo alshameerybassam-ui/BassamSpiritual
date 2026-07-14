@@ -65,7 +65,8 @@ const BeneficiaryAPI = {
     },
     async getRequestDetails(requestId) { return await fetchWithAuth(`/dashboard/request/${requestId}`, { method: 'GET' }); },
     async submitPaymentDetails(requestId, { paymentMethod, paymentSenderName, paymentTransferNumber }) {
-        return await fetchWithAuth(`/dashboard/request/${requestId}/submit-payment', {
+        // ✔️ تم تصحيح علامات الاقتباس هنا واستخدام الـ Backticks بشكل سليم ومطابق
+        return await fetchWithAuth(`/dashboard/request/${requestId}/submit-payment`, {
             method: 'PUT',
             body: JSON.stringify({ paymentMethod, paymentSenderName, paymentTransferNumber })
         });
@@ -83,21 +84,21 @@ const MessagesAPI = {
 };
 
 const AdminAPI = {
-    async getAllRequests() { return await fetchWithAuth('/admin/requests', { method: 'GET' }); },
-    async acceptInitial(requestId) { return await fetchWithAuth(`/admin/requests/${requestId}/accept-initial`, { method: 'PUT' }); },
-    async rejectInitial(requestId, reason) {
-        return await fetchWithAuth(`/admin/requests/${requestId}/reject-initial`, { method: 'PUT', body: JSON.stringify({ reason }) });
-    },
-    async approvePayment(requestId) { return await fetchWithAuth(`/admin/requests/${requestId}/approve-payment`, { method: 'PUT' }); },
-    async rejectPayment(requestId, reason) {
-        return await fetchWithAuth(`/admin/requests/${requestId}/reject-payment`, { method: 'PUT', body: JSON.stringify({ reason }) });
-    },
-    async diagnoseAndPrescribe(requestId, { initialDiagnosis, treatmentPlan }) {
-        return await fetchWithAuth(`/admin/requests/${requestId}/diagnose`, {
-            method: 'PUT',
-            body: JSON.stringify({ initialDiagnosis, treatmentPlan })
-        });
-    },
+    async getAllRequests() { return await fetchWithAuth('/admin/requests', { method: 'GET' }); },
+    async acceptInitial(requestId) { return await fetchWithAuth(`/admin/requests/${requestId}/accept-initial`, { method: 'PUT' }); },
+    async rejectInitial(requestId, reason) {
+        return await fetchWithAuth(`/admin/requests/${requestId}/reject-initial`, { method: 'PUT', body: JSON.stringify({ reason }) });
+    },
+    async approvePayment(requestId) { return await fetchWithAuth(`/admin/requests/${requestId}/approve-payment`, { method: 'PUT' }); },
+    async rejectPayment(requestId, reason) {
+        return await fetchWithAuth(`/admin/requests/${requestId}/reject-payment`, { method: 'PUT', body: JSON.stringify({ reason }) });
+    },
+    async diagnoseAndPrescribe(requestId, { initialDiagnosis, treatmentPlan }) {
+        return await fetchWithAuth(`/admin/requests/${requestId}/diagnose`, {
+            method: 'PUT',
+            body: JSON.stringify({ initialDiagnosis, treatmentPlan })
+        });
+    },
     async createArticle(title, summary, content, icon = 'bi bi-heart-fill') {
         return await fetchWithAuth('/admin/articles', { method: 'POST', body: JSON.stringify({ title, summary, content, icon }) });
     },
