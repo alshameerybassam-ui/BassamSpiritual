@@ -97,7 +97,8 @@ const AdminAPI = {
             method: 'PUT',
             body: JSON.stringify({ initialDiagnosis, treatmentPlan })
         });
-    },
+    }
+};
     async createArticle(title, summary, content, icon = 'bi bi-heart-fill') {
         return await fetchWithAuth('/admin/articles', { method: 'POST', body: JSON.stringify({ title, summary, content, icon }) });
     },
