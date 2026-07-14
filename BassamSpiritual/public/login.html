@@ -70,10 +70,10 @@
         try {
             const res = await AuthAPI.login(emailInput, passwordInput);
             if(res.success) {
-                showAlert('مرحباً بك! جاري التوجيه...', 'success');
+                showAlert('مرحباً بك يا شيخ بسام! جاري التوجيه إلى لوحة التحكم...', 'success');
                 
                 setTimeout(() => {
-                    // 🟢 تحقق مزدوج وأمان إضافي: إذا كان الحساب يخص بريدك الإلكتروني أو دالة isAdmin() ترجع true
+                    // تحويل فوري بناءً على الإيميل أو الرتبة
                     if (emailInput === 'alshameerybassam@gmail.com' || AuthAPI.isAdmin()) {
                         window.location.href = '/admin.html';
                     } else {
@@ -81,20 +81,27 @@
                     }
                 }, 1000);
             }
-        } catch(e) { showAlert(e.message); }
+        } catch(e) { 
+            showAlert(e.message); 
+        }
     });
 
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const emailInput = document.getElementById('regEmail').value.trim().toLowerCase();
+        const passwordInput = document.getElementById('regPassword').value;
+        const nameInput = document.getElementById('regName').value;
+        const phoneInput = document.getElementById('regPhone').value;
+
         try {
-            const res = await AuthAPI.register(document.getElementById('regName').value, emailInput, document.getElementById('regPassword').value, document.getElementById('regPhone').value);
+            const res = await AuthAPI.register(nameInput, emailInput, passwordInput, phoneInput);
             if(res.success) {
-                showAlert('تم إنشاء الحساب، جاري تسجيل الدخول...', 'success');
-                await AuthAPI.login(emailInput, document.getElementById('regPassword').value);
+                showAlert('تم إنشاء الحساب بنجاح، جاري الدخول والتوجيه...', 'success');
+                
+                // تسجيل دخول تلقائي بعد التسجيل مباشرة لإنشاء الجلسة
+                await AuthAPI.login(emailInput, passwordInput);
                 
                 setTimeout(() => {
-                    // 🟢 تحقق عند التسجيل أيضاً
                     if (emailInput === 'alshameerybassam@gmail.com') {
                         window.location.href = '/admin.html';
                     } else {
@@ -102,7 +109,9 @@
                     }
                 }, 1000);
             }
-        } catch(e) { showAlert(e.message); }
+        } catch(e) { 
+            showAlert(e.message); 
+        }
     });
 </script>
 </body>
