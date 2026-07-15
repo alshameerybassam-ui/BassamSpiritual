@@ -4,16 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مركز النور الرباني والنفس الرحماني | الشيخ بسام الشميري (آل الكدهي)</title>
-    
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="style.css">
-    
     <style>
         .hero-section {
             background: linear-gradient(135deg, #0A1628 0%, #1B2A3D 100%);
@@ -45,189 +41,39 @@
             background: linear-gradient(90deg, transparent, #F5B041, #E67E22, #F5B041, transparent);
             animation: glowMove 8s ease-in-out infinite;
         }
-        @keyframes glowMove {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
-        }
-        @media (max-width: 768px) {
-            .hero-section { padding: 30px 15px 25px; border-radius: 20px; }
-            .hero-section h1 { font-size: 1.8rem !important; }
-        }
+        @keyframes glowMove { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-        /* 🔮 تنسيقات المساعد الذكي العائم المطور */
-        .chat-icon-container {
-            position: fixed;
-            bottom: 25px;
-            left: 25px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .chat-icon-m {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #F5B041, #E67E22);
-            color: #0A1628;
-            font-size: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(245, 176, 65, 0.4);
-            border: 2px solid #fff;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-        }
-        .chat-icon-m:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 15px 35px rgba(245, 176, 65, 0.6);
-        }
-        .chat-icon-m .pulse-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 3px solid rgba(245, 176, 65, 0.5);
-            animation: ringPulse 2s infinite ease-out;
-            pointer-events: none;
-        }
-        @keyframes ringPulse {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        .chat-badge-m {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #e74c3c;
-            color: white;
-            font-size: 11px;
-            padding: 3px 7px;
-            border-radius: 10px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
-        /* تحسين صندوق نافذة الشات العائم */
-        .chat-window-m {
-            position: fixed;
-            bottom: 105px;
-            left: 25px;
-            width: 360px;
-            max-width: calc(100vw - 50px);
-            height: 500px;
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
-            border: 1px solid rgba(10, 22, 40, 0.08);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 101;
-            animation: slideUp 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
-        }
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .chat-header-m {
-            background: linear-gradient(135deg, #0A1628 0%, #1B2A3D 100%);
-            color: #fff;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #F5B041;
-        }
-        .chat-body-m {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #fcfbf9;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .chat-message-m {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 15px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        .chat-message-m.bot {
-            background-color: #f1f2f6;
-            color: #2c3e50;
-            align-self: flex-start;
-            border-bottom-right-radius: 3px;
-        }
-        .chat-message-m.user {
-            background-color: #F5B041;
-            color: #0A1628;
-            align-self: flex-end;
-            border-bottom-left-radius: 3px;
-            font-weight: 600;
-        }
-        .chat-footer-m {
-            padding: 12px;
-            background: #fff;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-        }
-        .chat-input-m {
-            flex: 1;
-            border: 1px solid #e2e8f0;
-            padding: 10px 15px;
-            border-radius: 30px;
-            outline: none;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        .chat-input-m:focus {
-            border-color: #F5B041;
-            box-shadow: 0 0 0 3px rgba(245, 176, 65, 0.15);
-        }
-        .chat-send-btn-m {
-            background: linear-gradient(135deg, #F5B041, #E67E22);
-            border: none;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            color: #0A1628;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 10px rgba(245, 176, 65, 0.3);
-            transition: 0.3s;
-        }
-        .chat-send-btn-m:hover {
-            transform: scale(1.05);
-        }
+        .chat-icon-container { position: fixed; bottom: 25px; left: 25px; z-index: 1000; }
+        .chat-icon-m { width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #F5B041, #E67E22); color: #0A1628; font-size: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(245, 176, 65, 0.4); border: 2px solid #fff; transition: all 0.3s; position: relative; }
+        .chat-icon-m:hover { transform: scale(1.1) rotate(5deg); }
+        .chat-icon-m .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid rgba(245, 176, 65, 0.5); animation: ringPulse 2s infinite ease-out; pointer-events: none; }
+        @keyframes ringPulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        .chat-badge-m { position: absolute; top: -2px; right: -2px; background: #e74c3c; color: white; font-size: 11px; padding: 3px 7px; border-radius: 10px; font-weight: bold; }
+
+        /* شريط المقالات الأفقي */
+        .articles-scroll-wrapper { overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding-bottom: 15px; margin-bottom: 20px; direction: rtl; }
+        .articles-scroll-wrapper::-webkit-scrollbar { height: 6px; }
+        .articles-scroll-wrapper::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .articles-scroll-wrapper::-webkit-scrollbar-thumb { background: #F5B041; border-radius: 10px; }
+        .articles-scroll-inner { display: flex; gap: 20px; padding: 10px 5px; }
+        .article-scroll-card { flex: 0 0 300px; scroll-snap-align: start; background: #fff; border-radius: 20px; padding: 25px 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.04); cursor: pointer; transition: 0.3s; display: inline-block; white-space: normal; position: relative; overflow: hidden; }
+        .article-scroll-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(10, 22, 40, 0.12); border-color: rgba(245, 176, 65, 0.3); }
+        .article-scroll-card .article-icon { font-size: 2rem; color: #D4AF37; margin-bottom: 15px; }
+        .article-scroll-card h3 { font-size: 1.2rem; font-weight: 700; color: #0A1628; margin-bottom: 8px; line-height: 1.4; }
+        .article-scroll-card p { font-size: 0.9rem; color: #4A5A6A; line-height: 1.6; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .article-scroll-card .article-date { font-size: 0.8rem; color: #94A3B8; }
+        .article-scroll-card .read-more { display: inline-block; margin-top: 10px; color: #F5B041; font-weight: 600; font-size: 0.85rem; }
+        @media (max-width: 768px) { .hero-section { padding: 30px 15px 25px; border-radius: 20px; } .hero-section h1 { font-size: 1.8rem !important; } .article-scroll-card { flex: 0 0 260px; } }
     </style>
 </head>
 <body>
-
     <div id="notification" class="notification"></div>
-    
     <div class="header-actions">
         <div class="header-buttons">
-            <a href="/login.html" class="btn-header btn-request" id="requestBtn">
-                <i class="bi bi-pencil-square"></i> قدم طلبك الآن
-            </a>
-            <a href="/register.html" class="btn-header btn-register" id="registerBtn">
-                <i class="bi bi-person-plus-fill"></i> سجل الآن
-            </a>
-            <a href="/login.html" class="btn-header btn-login" id="loginBtn">
-                <i class="bi bi-box-arrow-in-left"></i> دخول
-            </a>
-            <a href="/dashboard.html" class="btn-header btn-dashboard" id="dashboardLink" style="display:none;">
-                <i class="bi bi-person-circle"></i> حسابي
-            </a>
+            <a href="/login.html" class="btn-header btn-request" id="requestBtn"><i class="bi bi-pencil-square"></i> قدم طلبك الآن</a>
+            <a href="/register.html" class="btn-header btn-register" id="registerBtn"><i class="bi bi-person-plus-fill"></i> سجل الآن</a>
+            <a href="/login.html" class="btn-header btn-login" id="loginBtn"><i class="bi bi-box-arrow-in-left"></i> دخول</a>
+            <a href="/dashboard.html" class="btn-header btn-dashboard" id="dashboardLink" style="display:none;"><i class="bi bi-person-circle"></i> حسابي</a>
         </div>
     </div>
 
@@ -236,48 +82,24 @@
             <div class="hero-glow"></div>
             <div style="text-align: center; position: relative; z-index: 2;">
                 <div class="hero-badge"><i class="bi bi-patch-check-fill"></i> مركز معتمد للاستشفاء الروحي</div>
-                <h1 style="font-size: 3.2rem; font-weight: 800; color: #fff; margin: 20px 0 12px; line-height: 1.4;">
-                    مركز <span style="color:#F5B041;">النور الرباني</span><br>و<span style="color:#F5B041;">النَفَس الرحماني</span>
-                </h1>
+                <h1 style="font-size: 3.2rem; font-weight: 800; color: #fff; margin: 20px 0 12px; line-height: 1.4;">مركز <span style="color:#F5B041;">النور الرباني</span><br>و<span style="color:#F5B041;">النَفَس الرحماني</span></h1>
                 <p class="sub-title" style="font-size:1.3rem; color:#E0C88A; font-weight:400; margin-bottom:20px; letter-spacing:2px;">﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
-                
-                <div class="management-line" style="color:#ccc;">
-                    <i class="bi bi-award-fill" style="color:#F5B041;"></i>
-                    بإدارة الشيخ <strong style="color:#fff;">بسام الشميري</strong> <span class="lineage-tag">(آل الكدهي)</span>
-                </div>
-                
+                <div class="management-line" style="color:#ccc;"><i class="bi bi-award-fill" style="color:#F5B041;"></i> بإدارة الشيخ <strong style="color:#fff;">بسام الشميري</strong> <span class="lineage-tag">(آل الكدهي)</span></div>
                 <div class="expert-badges" style="justify-content: center; margin: 25px 0;">
                     <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;"><i class="bi bi-book-half" style="color:#F5B041;"></i> راقي شرعي</span>
                     <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;"><i class="bi bi-heart-pulse-fill" style="color:#F5B041;"></i> معالج روحاني</span>
                     <span class="badge" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;"><i class="bi bi-activity" style="color:#F5B041;"></i> مستشار نفسي</span>
                 </div>
-                
-                <div style="margin: 20px 0 30px;">
-                    <a href="/about-sheikh.html" style="color:#F5B041; text-decoration:none; font-weight:600; font-size:1rem; border-bottom:2px solid transparent; padding-bottom:4px; transition:0.3s;" onmouseover="this.style.borderColor='#F5B041'" onmouseout="this.style.borderColor='transparent'">
-                        <i class="bi bi-tree-fill"></i> النسب الشريف للشيخ بسام الشميري
-                    </a>
-                </div>
-                
+                <div style="margin: 20px 0 30px;"><a href="/about-sheikh.html" style="color:#F5B041; text-decoration:none; font-weight:600; font-size:1rem; border-bottom:2px solid transparent; padding-bottom:4px; transition:0.3s;" onmouseover="this.style.borderColor='#F5B041'" onmouseout="this.style.borderColor='transparent'"><i class="bi bi-tree-fill"></i> النسب الشريف للشيخ بسام الشميري</a></div>
                 <div>
-                    <a href="/login.html" style="background: linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; border:none; padding:16px 42px; border-radius:60px; font-size:1.25rem; font-weight:800; text-decoration: none; cursor:pointer; box-shadow:0 12px 35px rgba(245,176,65,0.45); display:inline-flex; align-items:center; gap:12px; transition:0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 18px 45px rgba(245,176,65,0.6)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 12px 35px rgba(245,176,65,0.45)';">
-                        <i class="bi bi-send-check-fill" style="font-size:1.6rem;"></i> ابدأ رحلة التشخيص والعلاج والرقية
-                    </a>
+                    <a href="/login.html" style="background: linear-gradient(135deg, #F5B041, #E67E22); color:#0A1628; border:none; padding:16px 42px; border-radius:60px; font-size:1.25rem; font-weight:800; text-decoration: none; cursor:pointer; box-shadow:0 12px 35px rgba(245,176,65,0.45); display:inline-flex; align-items:center; gap:12px; transition:0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 18px 45px rgba(245,176,65,0.6)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 12px 35px rgba(245,176,65,0.45)';"><i class="bi bi-send-check-fill" style="font-size:1.6rem;"></i> ابدأ رحلة التشخيص والعلاج والرقية</a>
                     <p style="font-size:0.85rem; color:#8A9AA8; margin-top:12px;"><i class="bi bi-shield-fill-check" style="color:#F5B041;"></i> تواصل مغلق وخاص ومحمي بالكامل بخصوصية مطلقة</p>
                 </div>
-                
                 <p style="color:#8A9AA8; margin-top:25px; font-size:1.05rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px;">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
             </div>
         </div>
 
-        <div class="trust-card">
-            <div class="trust-icon"><i class="bi bi-shield-shaded"></i><i class="bi bi-lock-fill lock-overlay"></i></div>
-            <div class="trust-content">
-                <h3><i class="bi bi-check-circle-fill"></i> عهد السرية التامة لجميع خدمات المركز</h3>
-                <p>نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن. <strong>السرية التامة هي عهدنا المقدس مع كل مستفيد</strong>، في جميع استشاراتنا وخدماتنا الروحية والنفسية دون استثناء. لا يطلع على تفاصيلك <strong>سوى الله</strong> ثم الشيخ بسام، لا تتجاوز أسرارك جدران هذا المركز المبارك، مهما كان نوع الخدمة التي تختارها.</p>
-                <p class="trust-assurance"><i class="bi bi-feather"></i> تحدث بكل راحة واطمئنان.. فأنت في ملاذٍ آمنٍ بإذن الله.</p>
-                <div class="trust-seal"><i class="bi bi-patch-check-fill"></i> <span>سياسة السرية تشمل جميع الخدمات: الاستشارات، العلاج، والجلسات الصوتية</span></div>
-            </div>
-        </div>
+        <div class="trust-card"><div class="trust-icon"><i class="bi bi-shield-shaded"></i><i class="bi bi-lock-fill lock-overlay"></i></div><div class="trust-content"><h3><i class="bi bi-check-circle-fill"></i> عهد السرية التامة لجميع خدمات المركز</h3><p>نحن ندرك أن بوح الروح يحتاج إلى حضنٍ آمن. <strong>السرية التامة هي عهدنا المقدس مع كل مستفيد</strong>، في جميع استشاراتنا وخدماتنا الروحية والنفسية دون استثناء. لا يطلع على تفاصيلك <strong>سوى الله</strong> ثم الشيخ بسام، لا تتجاوز أسرارك جدران هذا المركز المبارك، مهما كان نوع الخدمة التي تختارها.</p><p class="trust-assurance"><i class="bi bi-feather"></i> تحدث بكل راحة واطمئنان.. فأنت في ملاذٍ آمنٍ بإذن الله.</p><div class="trust-seal"><i class="bi bi-patch-check-fill"></i> <span>سياسة السرية تشمل جميع الخدمات: الاستشارات، العلاج، والجلسات الصوتية</span></div></div></div>
 
         <div class="trust-counter" id="counterSection">
             <div class="counter-item"><i class="bi bi-heart-fill"></i><span class="counter-number" data-target="963">0</span><p>حالة تم علاجها</p></div>
@@ -287,10 +109,8 @@
         </div>
 
         <section class="section">
-            <div class="section-header"><h2><i class="bi bi-feather"></i> مقالات روحية</h2><span>كنوز من النور والمعرفة</span></div>
-            <div id="articlesContainer" class="articles-grid">
-                <p style="text-align:center; width:100%; padding:20px; color:#E0C88A;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب المقالات والدروس...</p>
-            </div>
+            <div class="section-header"><h2><i class="bi bi-feather"></i> مقالات روحية</h2><span>اسحب لليمين واليسار</span></div>
+            <div class="articles-scroll-wrapper" id="articlesContainer"><div class="articles-scroll-inner"><p style="text-align:center; width:100%; padding:20px; color:#E0C88A;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب المقالات والدروس...</p></div></div>
         </section>
 
         <section class="section">
@@ -304,342 +124,36 @@
 
         <section class="section">
             <div class="section-header"><h2><i class="bi bi-chat-quote-fill"></i> آراء المستفيدين</h2><span>ما قالوه عن رحلة الشفاء</span></div>
-            <div id="testimonialsContainer" class="testimonials-grid">
-                <p style="text-align:center; width:100%; padding:20px; color:#E0C88A;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب آراء وتجارب المستفيدين...</p>
-            </div>
+            <div id="testimonialsContainer" class="testimonials-grid"><p style="text-align:center; width:100%; padding:20px; color:#E0C88A;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب آراء وتجارب المستفيدين...</p></div>
         </section>
     </div>
 
-    <div id="articleModal" class="modal-overlay" style="display: none;" onclick="closeArticleModalOnOverlay(event)">
-        <div class="modal-box">
-            <div class="modal-top-bar"></div>
-            <span class="modal-close-floating" onclick="closeArticleModal()">&times;</span>
-            <div class="modal-body" id="modalArticleContent"><p style="text-align:center; padding:20px;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري التحميل...</p></div>
-            <div class="modal-footer"><button onclick="closeArticleModal()" class="btn-modal-close">إغلاق المقال</button></div>
-        </div>
+    <div id="articleModal" class="modal-overlay" style="display: none;" onclick="closeArticleModalOnOverlay(event)"><div class="modal-box"><div class="modal-top-bar"></div><span class="modal-close-floating" onclick="closeArticleModal()">&times;</span><div class="modal-body" id="modalArticleContent"><p style="text-align:center; padding:20px;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري التحميل...</p></div><div class="modal-footer"><button onclick="closeArticleModal()" class="btn-modal-close">إغلاق المقال</button></div></div></div>
+
+    <div class="chat-icon-container"><div class="chat-icon-m" onclick="toggleChatNew()"><div class="pulse-ring"></div><i class="bi bi-robot"></i><span class="chat-badge-m">1</span></div></div>
+
+    <div id="chatWindowNew" class="chat-window-m" style="display: none;">
+        <div class="chat-header-m"><div style="display:flex; align-items:center; gap:10px;"><i class="bi bi-robot" style="color:#F5B041; font-size:20px;"></i><div><span style="font-weight:700;">المستشار الروحاني الذكي</span><span style="font-size:11px; color:#F5B041;">مستعد لخدمتك</span></div></div><button onclick="toggleChatNew()" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer;">&times;</button></div>
+        <div class="chat-body-m" id="chatBodyNew"><div class="chat-message-m bot">السلام عليكم ورحمة الله وبركاته 🌙<br>أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك الروحية.<br><strong>هل يمكنك إخباري بما تشعر به؟</strong></div></div>
+        <div class="chat-footer-m"><input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك..." onkeypress="if(event.key==='Enter') sendNewMessage()"><button onclick="sendNewMessage()" class="chat-send-btn-m"><i class="bi bi-send-fill"></i></button></div>
     </div>
 
-    <div class="chat-icon-container">
-        <div class="chat-icon-m" onclick="toggleChatNew()">
-            <div class="pulse-ring"></div>
-            <i class="bi bi-robot"></i>
-            <span class="chat-badge-m">1</span>
-        </div>
-    </div>
+    <footer class="footer-new"><div class="footer-content"><div class="footer-section"><h4><i class="bi bi-shield-check"></i> مركز النور الرباني</h4><p class="footer-desc">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة.</p><p class="footer-small">بإدارة الشيخ بسام الشميري (آل الكدهي)</p></div><div class="footer-section"><h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4><ul><li><a href="/">الرئيسية</a></li><li><a href="/about-sheikh.html">النسب الشريف</a></li><li><a href="/register.html">تسجيل جديد</a></li><li><a href="/login.html">دخول</a></li><li><a href="/dashboard.html">حسابي</a></li></ul></div><div class="footer-section"><h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4><ul class="contact-list"><li><i class="bi bi-telephone-fill"></i> +967777941366</li><li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li><li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li></ul></div></div><div class="footer-bottom"><p>© 2026 مركز النور الرباني. جميع الحقوق محفوظة.</p></div></footer>
 
-    <div id="chatWindowNew" class="chat-window-m">
-        <div class="chat-header-m">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <i class="bi bi-robot" style="color:#F5B041; font-size:20px;"></i>
-                <div style="display:flex; flex-direction:column;">
-                    <span style="font-weight:700; font-size:14px; line-height:1.2;">المستشار الروحاني الذكي</span>
-                    <span style="font-size:11px; color:#F5B041;">مستعد لخدمتك ومساعدتك</span>
-                </div>
-            </div>
-            <button onclick="toggleChatNew()" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
-        </div>
-        <div class="chat-body-m" id="chatBodyNew">
-            <div class="chat-message-m bot">
-                السلام عليكم ورحمة الله وبركاته 🌙<br>
-                أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك وتساؤلاتك الروحية وفق تطلعات وإرشادات الشيخ بسام الشميري.<br>
-                <strong>هل يمكنك إخباري بما تشعر به أو بنوع الخدمة التي تود الاستفسار عنها?</strong>
-            </div>
-        </div>
-        <div class="chat-footer-m">
-            <input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك أو استفسارك هنا..." onkeypress="if(event.key==='Enter') sendNewMessage()">
-            <button onclick="sendNewMessage()" class="chat-send-btn-m"><i class="bi bi-send-fill"></i></button>
-        </div>
-    </div>
-
-    <footer class="footer-new">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4><i class="bi bi-shield-check"></i> مركز النور الرباني والنَفَس الرحماني</h4>
-                <p class="footer-desc">رحلة الشفاء المتكاملة تبدأ من هنا.. بثقة وأمان وطمأنينة تحت ظل النور الرباني.</p>
-                <p class="footer-small">بإدارة الشيخ بسام الشميري (آل الكدهي)</p>
-            </div>
-            <div class="footer-section">
-                <h4><i class="bi bi-link-45deg"></i> روابط سريعة</h4>
-                <ul>
-                    <li><a href="/"><i class="bi bi-arrow-left-short"></i> الرئيسية</a></li>
-                    <li><a href="/about-sheikh.html"><i class="bi bi-tree-fill"></i> النسب الشريف</a></li>
-                    <li><a href="/register.html"><i class="bi bi-person-plus-fill"></i> تسجيل جديد</a></li>
-                    <li><a href="/login.html"><i class="bi bi-box-arrow-in-left"></i> دخول</a></li>
-                    <li><a href="/dashboard.html"><i class="bi bi-person-circle"></i> حسابي</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4><i class="bi bi-card-heading"></i> معلومات الاتصال</h4>
-                <ul class="contact-list">
-                    <li><i class="bi bi-telephone-fill"></i> +967777941366</li>
-                    <li><i class="bi bi-envelope-fill"></i> alshameerybassam@gmail.com</li>
-                    <li><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2026 مركز النور الرباني والنَفَس الرحماني. جميع الحقوق محفوظة.</p>
-        </div>
-    </footer>
-
+    <script src="api.js"></script>
     <script>
-        // 1. جلب وعرض المقالات من السيرفر
-        async function fetchAndShowArticles() {
-            const articlesContainer = document.getElementById('articlesContainer');
-            if (!articlesContainer) return;
-
-            try {
-                const response = await fetch('/api/articles');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const articles = await response.json();
-
-                if (articles.length === 0) {
-                    articlesContainer.innerHTML = `
-                        <div class="col-12 text-center text-muted py-4">
-                            <i class="bi bi-journal-x fs-2"></i>
-                            <p class="mt-2">لا توجد مقالات منشورة حالياً في المدونة.</p>
-                        </div>`;
-                    return;
-                }
-
-                articlesContainer.innerHTML = '';
-
-                articles.forEach(article => {
-                    const card = document.createElement('div');
-                    card.className = 'article-card';
-                    card.onclick = () => showArticleInModal(article);
-                    
-                    card.innerHTML = `
-                        <div class="article-icon-box">
-                            <i class="${article.icon || 'bi bi-book'}"></i>
-                        </div>
-                        <h3>${article.title}</h3>
-                        <p class="article-meta"><i class="bi bi-calendar3"></i> ${new Date(article.createdAt).toLocaleDateString('ar-YE')}</p>
-                        <p class="article-summary">${article.summary}</p>
-                        <span class="read-more-btn"><i class="bi bi-arrow-left"></i> اقرأ المقال بالكامل</span>
-                    `;
-                    articlesContainer.appendChild(card);
-                });
-
-            } catch (error) {
-                console.error('Error fetching articles:', error);
-                articlesContainer.innerHTML = `
-                    <p style="text-align:center; width:100%; padding:20px; color:#e74c3c;">
-                        <i class="bi bi-exclamation-triangle-fill"></i> تعذر تحميل المقالات حالياً. يرجى التحديث لاحقاً.
-                    </p>`;
-            }
-        }
-
-        // دالة مدمجة لعرض تفاصيل المقال المختار داخل الـ Modal
-        function showArticleInModal(article) {
-            const modal = document.getElementById('articleModal');
-            const content = document.getElementById('modalArticleContent');
-            
-            if (modal && content) {
-                content.innerHTML = `
-                    <div style="text-align: right; direction: rtl;">
-                        <h2 style="color: #0A1628; border-bottom: 2px solid #F5B041; padding-bottom: 10px; font-family: 'Cairo', sans-serif;">
-                            <i class="${article.icon || 'bi bi-book'}"></i> ${article.title}
-                        </h2>
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px;">
-                            <i class="bi bi-calendar3"></i> تاريخ النشر: ${new Date(article.createdAt).toLocaleDateString('ar-YE')}
-                        </p>
-                        <div style="font-size: 1.1rem; line-height: 1.8; color: #2c3e50; white-space: pre-line; font-family: 'Cairo', sans-serif;">
-                            ${article.content}
-                        </div>
-                    </div>
-                `;
-                modal.style.display = 'flex';
-            }
-        }
-
-        function closeArticleModal() {
-            const modal = document.getElementById('articleModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        function closeArticleModalOnOverlay(event) {
-            if (event.target.id === 'articleModal') {
-                closeArticleModal();
-            }
-        }
-
-        // 2. جلب وعرض آراء المستفيدين (Testimonials) من السيرفر
-        async function fetchAndShowTestimonials() {
-            const testimonialsContainer = document.getElementById('testimonialsContainer');
-            if (!testimonialsContainer) return;
-
-            try {
-                const response = await fetch('/api/testimonials');
-                if (!response.ok) throw new Error('Failed to fetch testimonials');
-                const testimonials = await response.json();
-
-                // عرض الآراء الموافَق عليها فقط (إذا كان السيرفر يعيدها مفلترة، أو نفلترها هنا)
-                const approvedTestimonials = testimonials.filter(t => t.approved !== false);
-
-                if (approvedTestimonials.length === 0) {
-                    testimonialsContainer.innerHTML = `
-                        <div class="col-12 text-center text-muted py-4">
-                            <p>لا توجد آراء منشورة حالياً. كن أول من يشارك تجربته!</p>
-                        </div>`;
-                    return;
-                }
-
-                testimonialsContainer.innerHTML = '';
-
-                approvedTestimonials.forEach(test => {
-                    const stars = '★'.repeat(test.rating || 5) + '☆'.repeat(5 - (test.rating || 5));
-                    const card = document.createElement('div');
-                    card.className = 'testimonial-card'; // يعتمد على تنسيق الاستايل الأصلي لديك
-                    card.innerHTML = `
-                        <div class="testimonial-content-box">
-                            <div class="testimonial-stars" style="color: #F5B041; margin-bottom: 8px;">${stars}</div>
-                            <p class="testimonial-text" style="font-style: italic; color: #2c3e50;">" ${test.feedback || test.content} "</p>
-                            <h5 class="testimonial-author" style="color: #0A1628; font-weight: 700; margin-top: 10px;">
-                                <i class="bi bi-person-fill"></i> ${test.name || 'مستفيد كريم'}
-                            </h5>
-                            <small class="text-muted">${test.service || 'استشفاء روحي ونفسي'}</small>
-                        </div>
-                    `;
-                    testimonialsContainer.appendChild(card);
-                });
-
-            } catch (error) {
-                console.error('Error fetching testimonials:', error);
-                testimonialsContainer.innerHTML = `
-                    <p style="text-align:center; width:100%; padding:20px; color:#e74c3c;">
-                        <i class="bi bi-exclamation-triangle-fill"></i> تعذر تحميل آراء المستفيدين حالياً.
-                    </p>`;
-            }
-        }
-
-        // تشغيل الجلب التلقائي فور تحميل الصفحة
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAndShowArticles();
-            fetchAndShowTestimonials();
-        });
-    </script>
-
-    <script>
-        // دالة إظهار وإخفاء صندوق المحادثة الجديد
-        function toggleChatNew() {
-            const chatWin = document.getElementById('chatWindowNew');
-            const badge = document.querySelector('.chat-badge-m');
-            
-            if (chatWin.style.display === 'none' || chatWin.style.display === '') {
-                chatWin.style.display = 'flex';
-                if(badge) badge.style.display = 'none'; // إخفاء الإشعار بمجرد الفتح
-            } else {
-                chatWin.style.display = 'none';
-            }
-        }
-
-        // دالة معالجة وإرسال الرسائل الفورية للمساعد الذكي
-        async function sendNewMessage() {
-            const inputEl = document.getElementById('chatInputNew');
-            const bodyEl = document.getElementById('chatBodyNew');
-            const queryText = inputEl.value.trim();
-
-            if (!queryText) return;
-
-            // إدراج فقاعة كلام المستخدم
-            const userBubble = document.createElement('div');
-            userBubble.className = 'chat-message-m user';
-            userBubble.innerText = queryText;
-            bodyEl.appendChild(userBubble);
-            bodyEl.scrollTop = bodyEl.scrollHeight;
-
-            inputEl.value = '';
-
-            // إدراج مؤشر جاري التحميل
-            const typingBubble = document.createElement('div');
-            typingBubble.className = 'chat-message-m bot';
-            typingBubble.id = 'typing-indicator-new';
-            typingBubble.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري استشارة التوجيهات...';
-            bodyEl.appendChild(typingBubble);
-            bodyEl.scrollTop = bodyEl.scrollHeight;
-
-            try {
-                const response = await fetch('/api/ai-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: queryText })
-                });
-                const data = await response.json();
-                
-                document.getElementById('typing-indicator-new').remove();
-
-                const aiBubble = document.createElement('div');
-                aiBubble.className = 'chat-message-m bot';
-                aiBubble.innerText = data.reply;
-                bodyEl.appendChild(aiBubble);
-                bodyEl.scrollTop = bodyEl.scrollHeight;
-            } catch (err) {
-                document.getElementById('typing-indicator-new').remove();
-                const errorBubble = document.createElement('div');
-                errorBubble.className = 'chat-message-m bot';
-                errorBubble.innerText = "أعتذر منك يا أخي الكريم، حدث انقطاع مؤقت في الاتصال مع السيرفر الرئيسي. أرجو إعادة المحاولة.";
-                bodyEl.appendChild(errorBubble);
-                bodyEl.scrollTop = bodyEl.scrollHeight;
-            }
-        }
-
-        // 🔄 تأثير تصاعد الأرقام التفاعلي المتكرر (عند الدخول والخروج من الشاشة)
         document.addEventListener('DOMContentLoaded', () => {
             const counterSection = document.getElementById('counterSection');
-            const counters = document.querySelectorAll('.counter-number');
-
             if (!counterSection) return;
-
-            const runCounterAnimation = () => {
-                counters.forEach(counter => {
-                    const target = parseInt(counter.getAttribute('data-target'));
-                    const duration = 1500; // مدة الحركة بالملي ثانية
-                    const startTime = performance.now();
-
-                    const updateCount = (currentTime) => {
-                        const elapsedTime = currentTime - startTime;
-                        const progress = Math.min(elapsedTime / duration, 1);
-                        
-                        // دالة تسارع انسيابية
-                        const easeOutQuad = progress * (2 - progress);
-                        const currentValue = Math.floor(easeOutQuad * target);
-
-                        counter.innerText = currentValue;
-
-                        if (progress < 1) {
-                            requestAnimationFrame(updateCount);
-                        } else {
-                            counter.innerText = target;
-                        }
-                    };
-
-                    requestAnimationFrame(updateCount);
-                });
-            };
-
-            // استخدام Intersection Observer لتتبع حركة ظهور واختفاء العداد أمام الزائر وتكراره
-            let isInside = false;
+            let hasRun = false;
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        if (!isInside) {
-                            runCounterAnimation(); // تشغيل الحركة فور دخول الشاشة
-                            isInside = true;
-                        }
-                    } else {
-                        // تصفير العداد عندما يخرج من الشاشة ليتحرك مجدداً عند العودة
-                        counters.forEach(c => c.innerText = "0");
-                        isInside = false;
-                    }
+                    if (entry.isIntersecting) { if (!hasRun) { HomeModule.initCounters(); hasRun = true; } }
+                    else { document.querySelectorAll('.counter-number').forEach(c => c.innerText = "0"); hasRun = false; }
                 });
-            }, {
-                threshold: 0.2 // يبدأ تصفير/تفعيل العداد عندما يظهر منه 20% على الأقل في الشاشة
-            });
-
+            }, { threshold: 0.2 });
             observer.observe(counterSection);
         });
     </script>
-    <script src="api.js"></script>
 </body>
 </html>
