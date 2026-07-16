@@ -3,9 +3,9 @@ const API_BASE = '/api';
 const TOKEN_KEY = 'bassam_auth_token';
 const USER_KEY = 'bassam_user';
 
-function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function getToken() { return (localStorage.getItem(TOKEN_KEY) || '').trim(); }
 function getUser() { try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch(e) { return null; } }
-function setSession(token, user) { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(USER_KEY, JSON.stringify(user)); }
+function setSession(token, user) { localStorage.setItem(TOKEN_KEY, token.trim()); localStorage.setItem(USER_KEY, JSON.stringify(user)); }
 function clearSession() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
 function isAdmin() { const u = getUser(); return u && u.role === 'admin'; }
 function showToast(msg, type='success') {
@@ -57,7 +57,8 @@ const AdminAPI = {
     approveReview: (id) => api('PUT', `/admin/reviews/${id}`, { isApproved: true }),
     deleteReview: (id) => api('DELETE', `/admin/reviews/${id}`),
     getAIInstructions: () => api('GET', '/admin/ai-instructions'),
-    saveAIInstructions: (instructions) => api('PUT', '/admin/ai-instructions', { instructions })
+    saveAIInstructions: (instructions) => api('PUT', '/admin/ai-instructions', { instructions }),
+    sendEngineerCommand: (command) => api('POST', '/admin/engineer-command', { command })
 };
 
 const PublicAPI = {
@@ -131,9 +132,13 @@ function sendNewMessage() { HomeModule.sendChat(); }
 function closeArticleModal() { HomeModule.closeArticleModal(); }
 function closeArticleModalOnOverlay(e) { if(e.target.id==='articleModal') closeArticleModal(); }
 
-// ========== لوحة المستفيد ==========
+// ========== لوحة المستفيد (مع إصلاح الجلسة) ==========
 const DashboardModule = {
-    async init() { if(!getToken()){ location.href='/login.html'; return; } await this.load(); },
+    async init() {
+        if(!getToken()){ location.href='/login.html'; return; }
+        try { await AuthAPI.verify(); } catch(e) { clearSession(); location.href='/login.html'; return; }
+        await this.load();
+    },
     async load() {
         try {
             const data = await UserAPI.getDashboard();
@@ -152,10 +157,14 @@ const DashboardModule = {
     }
 };
 
-// ========== لوحة المدير ==========
+// ========== لوحة المدير (مع إصلاح الجلسة + المهندس) ==========
 const AdminModule = {
     currentId: null,
-    async init() { try { await AuthAPI.verify(); if(!isAdmin()) throw new Error(); } catch(e) { location.href='/login.html'; return; } this.loadRequests(); this.loadAI(); this.loadArticles(); this.loadReviews(); },
+    async init() {
+        if(!getToken()){ location.href='/login.html'; return; }
+        try { await AuthAPI.verify(); if(!isAdmin()) throw new Error(); } catch(e) { clearSession(); location.href='/login.html'; return; }
+        this.loadRequests(); this.loadAI(); this.loadArticles(); this.loadReviews();
+    },
     async loadRequests() {
         try {
             const reqs = await AdminAPI.getRequests();
@@ -220,8 +229,21 @@ const AdminModule = {
         } catch(e) {}
     },
     async approveReview(id) { await AdminAPI.approveReview(id); showToast('تم النشر.'); this.loadReviews(); },
-    async deleteReview(id) { if(!confirm('حذف؟')) return; await AdminAPI.deleteReview(id); showToast('تم الحذف.'); this.loadReviews(); }
+    async deleteReview(id) { if(!confirm('حذف؟')) return; await AdminAPI.deleteReview(id); showToast('تم الحذف.'); this.loadReviews(); },
+    async sendEngineerCommand() {
+        const command = document.getElementById('engineerCommand').value.trim();
+        if (!command) return showToast('الرجاء كتابة أمر.', 'error');
+        try {
+            const res = await AdminAPI.sendEngineerCommand(command);
+            const responseDiv = document.getElementById('engineerResponse');
+            responseDiv.style.display = 'block';
+            responseDiv.textContent = res.reply;
+            document.getElementById('engineerCommand').value = '';
+        } catch (e) { showToast(e.message, 'error'); }
+    }
 };
+
+function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
 
 document.addEventListener('DOMContentLoaded', () => {
     const path = location.pathname;
