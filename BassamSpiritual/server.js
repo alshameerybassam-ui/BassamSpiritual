@@ -5,24 +5,27 @@ const bcrypt = require('bcryptjs');
 const cors = require('cors');
 
 // ==============================================
-// استيراد مكتبة SQLite3 (قاعدة بيانات احترافية في ملف واحد)
+// استيراد مكتبة SQLite3
 // ==============================================
 const sqlite3 = require('sqlite3').verbose();
 const dbFile = path.join(__dirname, 'database.sqlite');
-
-// فتح قاعدة البيانات (سيتم إنشاؤها تلقائياً إن لم تكن موجودة)
 const db = new sqlite3.Database(dbFile);
+
+// ==============================================
+// استيراد مهندس المنصة الداخلي
+// ==============================================
+const engineer = require('./engineer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'BASSAM_SPIRITUAL_SECRET_KEY_2026';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==============================================
-// بناء الجداول تلقائياً عند التشغيل
+// بناء الجداول تلقائياً
 // ==============================================
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, phone TEXT, role TEXT DEFAULT 'user')`);
@@ -40,7 +43,7 @@ db.serialize(() => {
 });
 
 // ==============================================
-// إنشاء حساب المدير (الشيخ بسام) تلقائياً
+// إنشاء حساب المدير تلقائياً
 // ==============================================
 (function initAdmin() {
     db.get(`SELECT id FROM users WHERE email = ?`, ['alshameerybassam@gmail.com'], (err, row) => {
@@ -95,7 +98,12 @@ app.post('/api/auth/login', (req, res) => {
     });
 });
 
-app.get('/api/auth/verify', authenticateToken, (req, res) => res.json({ success: true, user: req.user }));
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+    db.get(`SELECT id, full_name, email, role FROM users WHERE id = ?`, [req.user.id], (err, row) => {
+        if (err || !row) return res.status(401).json({ error: 'جلسة غير صالحة.' });
+        res.json({ success: true, user: row });
+    });
+});
 
 // ==============================================
 // 📌 2. مسارات لوحة المستفيد
@@ -246,4 +254,38 @@ app.post('/api/ai-chat', (req, res) => {
     });
 });
 
-app.listen(PORT, () => console.log(`🚀 السيرفر يعمل على ${PORT}`));
+// ==============================================
+// 🤖 6. مهندس المنصة الداخلي (النور الأسود)
+// ==============================================
+app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => {
+    const { command } = req.body;
+    if (!command) return res.status(400).json({ error: 'يرجى إرسال أمر.' });
+    try {
+        const reply = await engineer.executeCommand(command);
+        res.json({ success: true, reply });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message });
+    }
+});
+
+// ==============================================
+// 7. توجيه الصفحات (SPA)
+// ==============================================
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
+
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ success: false, error: 'المسار غير موجود.' });
+    }
+    res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+// ==============================================
+// 8. إطلاق الخادم
+// ==============================================
+app.listen(PORT, () => {
+    console.log(`🚀 السيرفر يعمل على ${PORT}`);
+});
