@@ -434,6 +434,24 @@ app.get('/test-db', async (req, res) => {
     }
 });
 
+// ⚠️ مسار طوارئ لضبط حساب المدير – يُستخدم مرة واحدة فقط
+app.get('/setup-admin', async (req, res) => {
+    const bcrypt = require('bcryptjs');
+    const email = 'alshameerybassam@gmail.com';
+    const password = 'bassam112358112358';
+    const hashed = bcrypt.hashSync(password, 8);
+    try {
+        await pool.query(
+            `INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)
+             ON CONFLICT (email) DO UPDATE SET password = $3, role = $4`,
+            ['الشيخ بسام', email, hashed, 'admin']
+        );
+        res.send('✅ تم ضبط حساب المدير بنجاح. يمكنك الآن تسجيل الدخول. احذف هذا المسار من الكود فوراً بعد الاستخدام.');
+    } catch (e) {
+        res.status(500).send('❌ خطأ: ' + e.message);
+    }
+});
+
 // ==============================================
 // 8. إطلاق الخادم
 // ==============================================
