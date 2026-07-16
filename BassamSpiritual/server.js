@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// بناء الجداول تلقائياً
+// بناء الجداول تلقائياً (مع إضافة عمود phone إذا لم يكن موجوداً)
 const initializeDatabase = async () => {
     try {
         await pool.query(`
@@ -32,10 +32,12 @@ const initializeDatabase = async () => {
                 full_name VARCHAR(255) NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                phone VARCHAR(50),
                 role VARCHAR(50) DEFAULT 'user'
             );
         `);
+        // إضافة عمود phone إذا لم يكن موجوداً (للتوافق مع النسخ القديمة)
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50)`);
+        
         await pool.query(`
             CREATE TABLE IF NOT EXISTS requests (
                 id SERIAL PRIMARY KEY,
@@ -106,6 +108,24 @@ const initializeDatabase = async () => {
 };
 initializeDatabase();
 
+// إنشاء حساب المدير تلقائياً (بدون phone)
+(async function initAdmin() {
+    try {
+        const adminEmail = 'alshameerybassam@gmail.com';
+        const adminCheck = await pool.query(`SELECT id FROM users WHERE email = $1`, [adminEmail]);
+        if (adminCheck.rows.length === 0) {
+            const hashedPassword = bcrypt.hashSync('bassam112358112358', 8);
+            await pool.query(
+                `INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)`,
+                ["الشيخ بسام", adminEmail, hashedPassword, "admin"]
+            );
+            console.log("💎 تم إنشاء حساب الإدارة التلقائي للشيخ بسام بنجاح!");
+        }
+    } catch (err) {
+        console.error("❌ خطأ في إنشاء حساب المدير:", err.message);
+    }
+})();
+
 // 🛡️ برمجيات التحقق والمصادقة (Middlewares)
 function authenticateToken(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
@@ -124,12 +144,12 @@ function requireAdmin(req, res, next) {
 
 // 📌 1. مسارات المصادقة
 app.post('/api/auth/register', async (req, res) => {
-    const { fullName, email, password, phone } = req.body;
+    const { fullName, email, password } = req.body;
     try {
         const userExists = await pool.query(`SELECT id FROM users WHERE email = $1`, [email]);
         if (userExists.rows.length > 0) return res.status(400).json({ error: 'البريد مسجل مسبقاً.' });
         const hashed = bcrypt.hashSync(password, 8);
-        await pool.query(`INSERT INTO users (full_name, email, password, phone) VALUES ($1, $2, $3, $4)`, [fullName, email, hashed, phone]);
+        await pool.query(`INSERT INTO users (full_name, email, password) VALUES ($1, $2, $3)`, [fullName, email, hashed]);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'خطأ في التسجيل.' }); }
 });
@@ -161,7 +181,7 @@ app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
             `SELECT id, serviceType, description, status, "createdAt", initial_diagnosis, treatment_plan 
              FROM requests WHERE user_id = $1 ORDER BY "createdAt" DESC`, [req.user.id]
         );
-        const user = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
+        const user = await pool.query(`SELECT full_name, email FROM users WHERE id = $1`, [req.user.id]);
         res.json({ success: true, user: user.rows[0], requests: requests.rows });
     } catch (err) { res.status(500).json({ error: 'خطأ في تحميل البيانات.' }); }
 });
@@ -171,11 +191,11 @@ app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
     if (!description || description.trim().length < 10)
         return res.status(400).json({ error: 'الرجاء كتابة وصف دقيق للحالة (10 أحرف على الأقل).' });
     try {
-        const user = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
+        const user = await pool.query(`SELECT full_name, email FROM users WHERE id = $1`, [req.user.id]);
         await pool.query(
-            `INSERT INTO requests (user_id, fullName, email, userPhone, serviceType, description, status) 
-             VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
-            [req.user.id, user.rows[0].full_name, user.rows[0].email, user.rows[0].phone, serviceType, description]
+            `INSERT INTO requests (user_id, fullName, email, serviceType, description, status) 
+             VALUES ($1, $2, $3, $4, $5, 'pending')`,
+            [req.user.id, user.rows[0].full_name, user.rows[0].email, serviceType, description]
         );
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'خطأ في تقديم الطلب.' }); }
@@ -223,131 +243,77 @@ app.get('/api/admin/requests', authenticateToken, requireAdmin, async (req, res)
 });
 
 app.put('/api/admin/requests/:id/accept-initial', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1`, [req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1`, [req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/requests/:id/reject-initial', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`UPDATE requests SET status = 'rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE requests SET status = 'rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/requests/:id/approve-payment', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`UPDATE requests SET status = 'processing' WHERE id = $1`, [req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE requests SET status = 'processing' WHERE id = $1`, [req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/requests/:id/reject-payment', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, async (req, res) => {
     const { initialDiagnosis, treatmentPlan } = req.body;
-    try {
-        await pool.query(`UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed' WHERE id = $3`, [initialDiagnosis, treatmentPlan, req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed' WHERE id = $3`, [initialDiagnosis, treatmentPlan, req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 // 📌 4. المراسلات
 app.get('/api/requests/:id/messages', authenticateToken, async (req, res) => {
-    try {
-        const messages = await pool.query(`SELECT * FROM messages WHERE "requestId" = $1 ORDER BY "createdAt" ASC`, [req.params.id]);
-        res.json({ success: true, messages: messages.rows });
-    } catch (e) { res.status(500).json({ error: 'خطأ في جلب المراسلات.' }); }
+    try { const messages = await pool.query(`SELECT * FROM messages WHERE "requestId" = $1 ORDER BY "createdAt" ASC`, [req.params.id]); res.json({ success: true, messages: messages.rows }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.post('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     const { messageText } = req.body;
-    try {
-        await pool.query(
-            `INSERT INTO messages ("requestId", "senderId", "senderName", "senderRole", "messageText") VALUES ($1, $2, $3, $4, $5)`,
-            [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]
-        );
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ في إرسال الرسالة.' }); }
+    try { await pool.query(`INSERT INTO messages ("requestId", "senderId", "senderName", "senderRole", "messageText") VALUES ($1, $2, $3, $4, $5)`, [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 // 📌 5. المقالات والتقييمات والذكاء الاصطناعي
 app.get('/api/articles', async (req, res) => {
-    try {
-        const result = await pool.query(`SELECT * FROM articles ORDER BY "createdAt" DESC`);
-        res.json(result.rows);
-    } catch (e) { res.status(500).json({ error: 'خطأ في تحميل المقالات.' }); }
+    try { const result = await pool.query(`SELECT * FROM articles ORDER BY "createdAt" DESC`); res.json(result.rows); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.post('/api/admin/articles', authenticateToken, requireAdmin, async (req, res) => {
     const { title, summary, content } = req.body;
-    try {
-        await pool.query(`INSERT INTO articles (title, summary, content) VALUES ($1, $2, $3)`, [title, summary, content]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ في حفظ المقال.' }); }
+    try { await pool.query(`INSERT INTO articles (title, summary, content) VALUES ($1, $2, $3)`, [title, summary, content]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/articles/:id', authenticateToken, requireAdmin, async (req, res) => {
     const { title, summary, content } = req.body;
-    try {
-        await pool.query(`UPDATE articles SET title=$1, summary=$2, content=$3 WHERE id=$4`, [title, summary, content, req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ في تحديث المقال.' }); }
+    try { await pool.query(`UPDATE articles SET title=$1, summary=$2, content=$3 WHERE id=$4`, [title, summary, content, req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.delete('/api/admin/articles/:id', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`DELETE FROM articles WHERE id = $1`, [req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ في حذف المقال.' }); }
+    try { await pool.query(`DELETE FROM articles WHERE id = $1`, [req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.get('/api/reviews', async (req, res) => {
-    try {
-        const result = await pool.query(`SELECT * FROM reviews WHERE "isApproved" = TRUE ORDER BY "createdAt" DESC`);
-        res.json(result.rows);
-    } catch (e) { res.status(500).json({ error: 'خطأ في تحميل التقييمات.' }); }
+    try { const result = await pool.query(`SELECT * FROM reviews WHERE "isApproved" = TRUE ORDER BY "createdAt" DESC`); res.json(result.rows); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.get('/api/admin/reviews', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const result = await pool.query(`SELECT * FROM reviews ORDER BY "createdAt" DESC`);
-        res.json({ success: true, reviews: result.rows });
-    } catch (e) { res.status(500).json({ error: 'خطأ في تحميل المراجعات.' }); }
+    try { const result = await pool.query(`SELECT * FROM reviews ORDER BY "createdAt" DESC`); res.json({ success: true, reviews: result.rows }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/reviews/:id', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`UPDATE reviews SET "isApproved" = $1 WHERE id = $2`, [req.body.isApproved, req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE reviews SET "isApproved" = $1 WHERE id = $2`, [req.body.isApproved, req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.delete('/api/admin/reviews/:id', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`DELETE FROM reviews WHERE id = $1`, [req.params.id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`DELETE FROM reviews WHERE id = $1`, [req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.get('/api/admin/ai-instructions', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const result = await pool.query(`SELECT instructions FROM ai_config ORDER BY id DESC LIMIT 1`);
-        res.json({ success: true, instructions: result.rows[0]?.instructions || '' });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { const result = await pool.query(`SELECT instructions FROM ai_config ORDER BY id DESC LIMIT 1`); res.json({ success: true, instructions: result.rows[0]?.instructions || '' }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.put('/api/admin/ai-instructions', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query(`UPDATE ai_config SET instructions = $1`, [req.body.instructions]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
+    try { await pool.query(`UPDATE ai_config SET instructions = $1`, [req.body.instructions]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
 app.post('/api/ai-chat', async (req, res) => {
@@ -367,12 +333,7 @@ const engineer = require('./engineer');
 app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => {
     const { command } = req.body;
     if (!command) return res.status(400).json({ error: 'يرجى إرسال أمر.' });
-    try {
-        const reply = await engineer.executeCommand(command);
-        res.json({ success: true, reply });
-    } catch (e) {
-        res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message });
-    }
+    try { const reply = await engineer.executeCommand(command); res.json({ success: true, reply }); } catch (e) { res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message }); }
 });
 
 // 🔐 صفحة إعادة ضبط المدير (تُستخدم لمرة واحدة – احذفها بعد الاستخدام)
@@ -384,8 +345,8 @@ app.get('/force-reset-admin', async (req, res) => {
     try {
         await pool.query(`DELETE FROM users WHERE email = $1`, [email]);
         await pool.query(
-            `INSERT INTO users (full_name, email, password, phone, role) VALUES ($1, $2, $3, $4, $5)`,
-            ['الشيخ بسام', email, hashed, '777941366', 'admin']
+            `INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)`,
+            ['الشيخ بسام', email, hashed, 'admin']
         );
         const token = jwt.sign(
             { id: 0, email: email, role: 'admin', full_name: 'الشيخ بسام' },
@@ -416,12 +377,7 @@ app.get('/force-reset-admin', async (req, res) => {
 
 // 7. توجيه الصفحات (SPA)
 app.get('/test-db', async (req, res) => {
-    try {
-        await pool.query(`SELECT 1`);
-        res.json({ message: '✅ قاعدة البيانات متصلة وتعمل.' });
-    } catch (e) {
-        res.status(500).json({ error: '❌ فشل الاتصال بقاعدة البيانات: ' + e.message });
-    }
+    try { await pool.query(`SELECT 1`); res.json({ message: '✅ قاعدة البيانات متصلة وتعمل.' }); } catch (e) { res.status(500).json({ error: '❌ فشل الاتصال بقاعدة البيانات: ' + e.message }); }
 });
 
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
