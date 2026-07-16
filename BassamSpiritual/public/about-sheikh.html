@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
@@ -22,9 +21,7 @@
             --text-medium: #334155;
             --text-light: #5C6B73;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Cairo', sans-serif;
             background: linear-gradient(135deg, #F8FAFC 0%, #F0F2F5 100%);
@@ -33,16 +30,13 @@
             padding: 0; margin: 0;
             direction: rtl; overflow-x: hidden;
         }
-
         body::before {
             content: '';
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                radial-gradient(circle at 15% 20%, rgba(245, 176, 65, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 85% 80%, rgba(10, 22, 40, 0.03) 0%, transparent 50%);
+            background-image: radial-gradient(circle at 15% 20%, rgba(245,176,65,0.04) 0%, transparent 50%),
+                                radial-gradient(circle at 85% 80%, rgba(10,22,40,0.03) 0%, transparent 50%);
             pointer-events: none; z-index: 0;
         }
-
         .top-nav {
             background: #0A1628; border-bottom: 2px solid var(--gold);
             padding: 12px 20px; position: sticky; top: 0; z-index: 1000;
@@ -53,84 +47,106 @@
         .top-nav .brand i { font-size: 1.4rem; }
         .top-nav .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
         .top-nav .nav-links a { color: #CBD5E1; text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; transition: all 0.3s; border: 1px solid transparent; display: flex; align-items: center; gap: 6px; }
-        .top-nav .nav-links a:hover { color: var(--gold); border-color: rgba(245, 176, 65, 0.3); background: rgba(245, 176, 65, 0.05); }
-
+        .top-nav .nav-links a:hover { color: var(--gold); border-color: rgba(245,176,65,0.3); background: rgba(245,176,65,0.05); }
         .noble-document-container {
             max-width: 860px; margin: 40px auto 50px; padding: 55px 50px;
             font-family: 'Cairo', sans-serif; background: #FCFBF4; color: #1A2530;
             border: 8px double var(--gold); border-radius: 8px; line-height: 2.3;
-            box-shadow: 0 30px 80px rgba(10, 22, 40, 0.12), 0 0 0 1px rgba(245, 176, 65, 0.1) inset;
+            box-shadow: 0 30px 80px rgba(10,22,40,0.12), 0 0 0 1px rgba(245,176,65,0.1) inset;
             position: relative; z-index: 1;
         }
-
         .corner-ornament { position: absolute; color: var(--gold); font-size: 1.8rem; opacity: 0.6; }
         .corner-ornament.top-right { top: 15px; right: 20px; }
         .corner-ornament.top-left { top: 15px; left: 20px; }
         .corner-ornament.bottom-right { bottom: 15px; right: 20px; }
         .corner-ornament.bottom-left { bottom: 15px; left: 20px; }
-
         .doc-header { text-align: center; margin-bottom: 30px; }
         .doc-header .icon-circle {
             width: 70px; height: 70px; border-radius: 50%;
             background: linear-gradient(135deg, #0A1628, #1B2A3D);
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 15px; font-size: 2rem; color: var(--gold);
-            border: 2px solid var(--gold); box-shadow: 0 8px 25px rgba(10, 22, 40, 0.2);
+            border: 2px solid var(--gold); box-shadow: 0 8px 25px rgba(10,22,40,0.2);
         }
         .doc-header h2 { font-family: 'Amiri', serif; font-size: 2.6rem; color: #0A1628; margin: 0 0 8px 0; font-weight: 700; letter-spacing: 1px; }
         .doc-header .subtitle { color: #5C6B73; font-size: 1.2rem; font-weight: 400; }
         .doc-header .subtitle strong { color: #0A1628; font-weight: 700; }
 
-        .sheikh-photo-wrapper { display: flex; align-items: center; justify-content: center; gap: 30px; margin: 25px 0; flex-wrap: wrap; }
-        .sheikh-photo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--gold); box-shadow: 0 8px 25px rgba(245, 176, 65, 0.3); transition: transform 0.3s ease; flex-shrink: 0; }
-        .sheikh-photo:hover { transform: scale(1.05); }
+        /* صورة الشيخ البيضاوية الفاخرة */
+        .sheikh-photo-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .sheikh-photo-frame {
+            position: relative;
+            display: inline-block;
+            padding: 6px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            border-radius: 50% / 40%;
+            box-shadow: 0 12px 35px rgba(245,176,65,0.4);
+        }
+        .sheikh-photo {
+            display: block;
+            width: 150px;
+            height: 190px;
+            object-fit: cover;
+            border-radius: 50% / 40%;
+            border: 4px solid #fff;
+        }
         .sheikh-info { text-align: right; }
         .sheikh-info h3 { font-family: 'Amiri', serif; font-size: 2rem; color: #0A1628; margin: 0 0 5px 0; }
-        .sheikh-info .lineage-badge { display: inline-block; background: rgba(245, 176, 65, 0.1); color: var(--gold-dark); padding: 4px 16px; border-radius: 30px; font-size: 0.9rem; font-weight: 700; border: 1px solid rgba(245, 176, 65, 0.3); }
+        .sheikh-info .lineage-badge {
+            display: inline-block;
+            background: rgba(245,176,65,0.1);
+            color: var(--gold-dark);
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: 1px solid rgba(245,176,65,0.3);
+        }
 
+        /* باقي التنسيقات */
         .gold-divider { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 30px 0; }
         .gold-divider .line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
         .gold-divider i { color: var(--gold); font-size: 1.2rem; }
-
         .basmala { text-align: center; font-family: 'Amiri', serif; font-size: 2.4rem; font-weight: bold; color: #0A1628; margin-bottom: 30px; letter-spacing: 2px; }
         .intro-text { text-align: justify; font-size: 1.1rem; color: #334155; margin-bottom: 20px; line-height: 2.2; }
         .intro-text strong { color: #0A1628; }
-
         .tree-title { text-align: center; color: #0A1628; font-size: 1.5rem; margin: 40px 0 25px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; }
         .tree-title i { color: var(--gold); }
-
         .lineage-tree { background: linear-gradient(180deg, rgba(245,176,65,0.04) 0%, rgba(245,176,65,0.01) 100%); border: 2px dashed var(--gold); border-radius: 20px; padding: 40px 20px; margin: 30px 0; display: flex; flex-direction: column; align-items: center; }
         .lineage-node { background: #FFFFFF; border: 1px solid #E2E8F0; padding: 12px 35px; border-radius: 35px; font-size: 1.2rem; font-weight: 600; color: #1E293B; box-shadow: 0 4px 12px rgba(0,0,0,0.03); position: relative; min-width: 280px; text-align: center; transition: all 0.35s ease; cursor: default; }
         .lineage-node:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: var(--gold); }
         .lineage-node strong { color: var(--gold-dark); font-weight: 700; }
-        .lineage-node.highlight { border-color: var(--gold); background: linear-gradient(135deg, #FFFDF4, #FFFBF0); box-shadow: 0 4px 18px rgba(245, 176, 65, 0.12); }
-        .lineage-node.prophet { background: linear-gradient(135deg, #0A1628, #152238); color: #FFFFFF; border-color: var(--gold); font-size: 1.35rem; padding: 16px 45px; box-shadow: 0 8px 30px rgba(10, 22, 40, 0.3); }
+        .lineage-node.highlight { border-color: var(--gold); background: linear-gradient(135deg, #FFFDF4, #FFFBF0); box-shadow: 0 4px 18px rgba(245,176,65,0.12); }
+        .lineage-node.prophet { background: linear-gradient(135deg, #0A1628, #152238); color: #FFFFFF; border-color: var(--gold); font-size: 1.35rem; padding: 16px 45px; box-shadow: 0 8px 30px rgba(10,22,40,0.3); }
         .lineage-node.prophet strong { color: var(--gold); font-size: 1.5rem; }
         .lineage-connector { width: 2px; height: 22px; background: linear-gradient(to bottom, var(--gold), #E2E8F0); position: relative; }
         .lineage-connector::after { content: "▾"; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); color: var(--gold); font-size: 0.7rem; }
-
         .section-heading { color: #0A1628; font-size: 1.45rem; margin-top: 45px; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; font-weight: 700; }
         .section-heading i { color: var(--gold); font-size: 1.5rem; }
-
         .docs-list { list-style: none; padding: 0; margin: 0; }
         .docs-item { position: relative; padding-right: 55px; margin-bottom: 28px; text-align: justify; }
-        .docs-index { position: absolute; right: 0; top: 2px; width: 36px; height: 36px; background: #0A1628; color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; border: 2px solid var(--gold); box-shadow: 0 4px 12px rgba(10, 22, 40, 0.15); }
+        .docs-index { position: absolute; right: 0; top: 2px; width: 36px; height: 36px; background: #0A1628; color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; border: 2px solid var(--gold); box-shadow: 0 4px 12px rgba(10,22,40,0.15); }
         .docs-content { font-size: 1.1rem; color: #334155; line-height: 2; }
         .docs-content strong { color: #0A1628; font-size: 1.2rem; display: block; margin-bottom: 4px; }
-
         .gold-divider-bottom { margin: 45px 0 20px; }
         .doc-footer-text { text-align: center; font-style: italic; color: #64748B; margin: 30px 0 35px; font-size: 1.15rem; line-height: 2; }
-
-        .signature-card { margin-top: 35px; background: linear-gradient(135deg, #0A1628, #1B2A3D); border: 2px solid var(--gold); border-radius: 16px; padding: 35px 30px; color: #F8FAFC; text-align: center; box-shadow: 0 15px 40px rgba(10, 22, 40, 0.2); }
+        .signature-card { margin-top: 35px; background: linear-gradient(135deg, #0A1628, #1B2A3D); border: 2px solid var(--gold); border-radius: 16px; padding: 35px 30px; color: #F8FAFC; text-align: center; box-shadow: 0 15px 40px rgba(10,22,40,0.2); }
         .signature-card h4 { margin: 0 0 12px 0; font-size: 1.4rem; color: var(--gold); font-weight: 700; }
         .signature-card .role { margin: 0 0 20px 0; color: #A5B4FC; font-size: 0.95rem; }
         .signature-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; font-size: 0.95rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px; }
         .signature-meta a { color: #E2E8F0; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: color 0.3s; font-weight: 500; }
         .signature-meta a:hover { color: var(--gold); }
+        .back-home-btn { display: block; text-align: center; margin: 30px auto 20px; max-width: 300px; padding: 12px 30px; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #0A1628; text-decoration: none; border-radius: 40px; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 6px 20px rgba(245,176,65,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .back-home-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(245,176,65,0.45); }
 
-        .back-home-btn { display: block; text-align: center; margin: 30px auto 20px; max-width: 300px; padding: 12px 30px; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #0A1628; text-decoration: none; border-radius: 40px; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 6px 20px rgba(245, 176, 65, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .back-home-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(245, 176, 65, 0.45); }
-
+        /* 📱 تجاوب الجوال */
         @media (max-width: 768px) {
             .top-nav { padding: 10px 12px; justify-content: center; }
             .top-nav .brand { font-size: 0.95rem; }
@@ -144,7 +160,7 @@
             .doc-header .icon-circle { width: 50px; height: 50px; font-size: 1.4rem; }
             .doc-header h2 { font-size: 1.7rem; }
             .doc-header .subtitle { font-size: 1rem; }
-            .sheikh-photo { width: 90px; height: 90px; }
+            .sheikh-photo { width: 140px; height: 175px; }
             .sheikh-info h3 { font-size: 1.5rem; }
             .basmala { font-size: 1.8rem; margin-bottom: 18px; }
             .intro-text { font-size: 1rem; text-indent: 10px; margin-bottom: 15px; line-height: 2; }
@@ -165,11 +181,10 @@
             .signature-meta { flex-direction: column; gap: 10px; align-items: center; font-size: 0.9rem; }
             .gold-divider { margin: 20px 0; gap: 8px; }
         }
-
         @media (max-width: 400px) {
             .noble-document-container { padding: 18px 8px; margin: 8px 3px; }
             .doc-header h2 { font-size: 1.4rem; }
-            .sheikh-photo { width: 70px; height: 70px; }
+            .sheikh-photo { width: 130px; height: 165px; }
             .sheikh-info h3 { font-size: 1.3rem; }
             .basmala { font-size: 1.5rem; }
             .lineage-node { font-size: 0.9rem; min-width: 98%; }
@@ -200,7 +215,9 @@
             <h2>وثيقة النسب الشريف</h2>
             
             <div class="sheikh-photo-wrapper">
-                <img src="https://raw.githubusercontent.com/alshameerybassam-ui/BassamSpiritual/0da1a2d0f32198236f12d3b43360432542572eb2/BassamSpiritual/public/sheikh-bassam.jpg" alt="صورة الشيخ بسام الشميري" class="sheikh-photo">
+                <div class="sheikh-photo-frame">
+                    <img src="https://raw.githubusercontent.com/alshameerybassam-ui/BassamSpiritual/0da1a2d0f32198236f12d3b43360432542572eb2/BassamSpiritual/public/sheikh-bassam.jpg" alt="الشيخ بسام الشميري" class="sheikh-photo">
+                </div>
                 <div class="sheikh-info">
                     <h3>الشيخ بسام الشميري</h3>
                     <span class="lineage-badge">آل الكدهي</span>
@@ -210,149 +227,70 @@
             <p class="subtitle">النسب الشريف المحفوظ والمتصل</p>
         </div>
 
-        <div class="gold-divider">
-            <span class="line"></span><i class="bi bi-star-fill"></i><span class="line"></span>
-        </div>
-
+        <div class="gold-divider"><span class="line"></span><i class="bi bi-star-fill"></i><span class="line"></span></div>
         <div class="basmala">بسم الله الرحمن الرحيم</div>
         
-        <p class="intro-text">
-            الحمد لله الذي جعلنا من ذرية نبيّه المصطفى ﷺ، وشرّفنا بالانتساب إليه، وجعل شرف النسب مقرونًا بلزوم التقوى والعمل الصالح. والصلاة والسلام على سيدنا محمد، النبي الأمي، وعلى آله الطيبين الطاهرين، وصحبه الغر الميامين، ومن تبعهم بإحسان إلى يوم الدين.
-        </p>
-        <p class="intro-text">
-            أما بعد، فإن النسب الشريف المحفوظ والمتصل للشيخ <strong>بسام بن محمد بن هزاع الشميري</strong>، والمُثبَت في مشجرات الأسرة وكتب الأنساب المعتمدة، ينتظم على هذا الوجه المبارك:
-        </p>
+        <p class="intro-text">الحمد لله الذي جعلنا من ذرية نبيّه المصطفى ﷺ، وشرّفنا بالانتساب إليه، وجعل شرف النسب مقرونًا بلزوم التقوى والعمل الصالح. والصلاة والسلام على سيدنا محمد، النبي الأمي، وعلى آله الطيبين الطاهرين، وصحبه الغر الميامين، ومن تبعهم بإحسان إلى يوم الدين.</p>
+        <p class="intro-text">أما بعد، فإن النسب الشريف المحفوظ والمتصل للشيخ <strong>بسام بن محمد بن هزاع الشميري</strong>، والمُثبَت في مشجرات الأسرة وكتب الأنساب المعتمدة، ينتظم على هذا الوجه المبارك:</p>
 
         <h3 class="tree-title"><i class="bi bi-tree"></i> عمود النسب المتصل</h3>
-        
         <div class="lineage-tree">
             <div class="lineage-node highlight"><strong>بسام</strong> (صاحب الوثيقة)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>محمد</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>هزاع</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>محمد</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>قائد</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>ثابت</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>حسن</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>عثمان</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>سعيد</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن <strong>بدر الدين</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن الفقيه <strong>عبيد الله</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن السيد <strong>برهان الدين إبراهيم</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>بدر الدين حسن</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>شمس الدين علي</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>أحمد</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن <strong>علي</strong> (صاحب كِدْه)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن <strong>محمد الفقيه المقدم</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>علي</strong> (أبي الحسن)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>محمد</strong> (صاحب مرباط)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>علي</strong> (خالع قسم)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>علوي</strong> (عم الفقيه)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>محمد</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن <strong>علوي</strong> (أول داخل حضرموت)</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>عبيد الله</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن <strong>أحمد المهاجر</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>عيسى النقيب</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>محمد النقيب</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن <strong>علي العريضي</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن الإمام <strong>جعفر الصادق</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن الإمام <strong>محمد الباقر</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن الإمام <strong>علي زين العابدين</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node highlight">بن الإمام <strong>الحسين السبط</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">بن أمير المؤمنين <strong>علي بن أبي طالب</strong></div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node">والسيدة <strong>فاطمة الزهراء</strong> بنت رسول الله</div>
-            <div class="lineage-connector"></div>
-            <div class="lineage-node prophet">سيدنا <strong>محمد</strong> رسول الله ﷺ</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>هزاع</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>قائد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>ثابت</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>حسن</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>عثمان</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>سعيد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>بدر الدين</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن الفقيه <strong>عبيد الله</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن السيد <strong>برهان الدين إبراهيم</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>بدر الدين حسن</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>شمس الدين علي</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>أحمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>علي</strong> (صاحب كِدْه)</div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>محمد الفقيه المقدم</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علي</strong> (أبي الحسن)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong> (صاحب مرباط)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علي</strong> (خالع قسم)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علوي</strong> (عم الفقيه)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>علوي</strong> (أول داخل حضرموت)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>عبيد الله</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>أحمد المهاجر</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>عيسى النقيب</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد النقيب</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علي العريضي</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن الإمام <strong>جعفر الصادق</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن الإمام <strong>محمد الباقر</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن الإمام <strong>علي زين العابدين</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن الإمام <strong>الحسين السبط</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن أمير المؤمنين <strong>علي بن أبي طالب</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">والسيدة <strong>فاطمة الزهراء</strong> بنت رسول الله</div>
+            <div class="lineage-connector"></div><div class="lineage-node prophet">سيدنا <strong>محمد</strong> رسول الله ﷺ</div>
         </div>
 
         <h3 class="section-heading"><i class="bi bi-journal-bookmark-fill"></i> بيان الألقاب وأصل النسب</h3>
-        <p class="intro-text">
-            ينحدر الشيخ <strong>بسام بن محمد بن هزاع الشميري</strong> من دوحة السادة <strong>آل الكدهي</strong>، وهم فرع علوي شريف من أفنان السادة آل أبي علوي، يرتفعون بنسبهم إلى الإمام <strong>علي بن محمد الفقيه المقدم</strong>.
-        </p>
-        <p class="intro-text">
-            هذا الإمام الجليل هو أول من انتقل من حضرموت إلى تعز، واستوطن منطقة عُرفت بـ <strong>الكدهية</strong>، فاشتهر بين الناس بلقب <strong>"صاحب الكده"</strong>، وبه عُرف هو وعقبه من بعده. ومن صلبه تفرع السادة <strong>آل الكدهي</strong> الذين أقاموا في تعز قرونًا متطاولة، وكان لهم شأن في العلم والصلاح، واشتهر منهم أعلام كالسيد <strong>برهان الدين إبراهيم الكدهي</strong>، وولده الفقيه <strong>عبيد الله</strong>، الذي تنتظم إليه سلسلة نسبنا مباشرة.
-        </p>
-        <p class="intro-text">
-            أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً، فقد أضافه الوالد <strong>محمد بن هزاع</strong>، عندما اختار الانتساب إلى مخلاف شمير الأشمل بدلاً من النسبة إلى القرية الخاصة. وهذا الاجتهاد في الانتساب المكاني لا يعارض الأصل العلوي الثابت، بل هو مرحلة طارئة من مراحل الاستيطان، والدليل القاطع على ذلك أن عم الشيخ تخير لنفسه لقب <strong>(الخليدي)</strong>؛ فاختلاف الألقاب بين الإخوة هو البرهان الساطع على أن الأصل واحد، وأن النسب الشريف هو الجامع، ولا تعارض بين اللقبين، بل هما يُثبتان أن الأصل واحد، والرحم موصولة، والنسب محفوظ بحمد الله.
-        </p>
+        <p class="intro-text">ينحدر الشيخ <strong>بسام بن محمد بن هزاع الشميري</strong> من دوحة السادة <strong>آل الكدهي</strong>...</p>
+        <p class="intro-text">هذا الإمام الجليل هو أول من انتقل من حضرموت إلى تعز...</p>
+        <p class="intro-text">أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً...</p>
 
         <h3 class="section-heading"><i class="bi bi-shield-check"></i> مستندات التوثيق والتحقيق التاريخي</h3>
-        
         <ul class="docs-list">
-            <li class="docs-item">
-                <div class="docs-index">١</div>
-                <div class="docs-content">
-                    <strong>الجزء من بسام إلى الفقيه عبيد الله</strong>
-                    ثابت ومحفوظ في المشجرات والوثائق العائلية المتوارثة لدى أسرة <strong>(الخليدي)</strong> والتي قام بجمعها وتتبعها أحد أبناء الأسرة المباركة الباحث <strong>محبوب بن حسان بن محمد بن قائد</strong>، وهو ابن عم لوالد الشيخ (حفظه الله ورعاه) وهذا الجزء من النسب موثق عنده ومتفق عليه دون خلاف.
-                </div>
-            </li>
-            <li class="docs-item">
-                <div class="docs-index">٢</div>
-                <div class="docs-content">
-                    <strong>الجزء من السيد برهان الدين إبراهيم إلى الإمام علي صاحب كده</strong>
-                    ثابت بكتاب <strong>"المشرع الروي في مناقب السادة بني علوي"</strong> لمحمد بن أبي بكر الشلّي، وفيه النص على عقب أحمد بن علي صاحب كده وأن منهم "السيد بدر الدين حسن وولده برهان الدين إبراهيم، ولهم ذرية في نواحي تعز يعرفون بآل الكدهي". وكذلك هو مدون في مخطوط <strong>"البيان في أنساب آل الكدهي"</strong>.
-                </div>
-            </li>
-            <li class="docs-item">
-                <div class="docs-index">٣</div>
-                <div class="docs-content">
-                    <strong>الجزء من محمد الفقيه المقدم إلى أحمد المهاجر</strong>
-                    ثابت في <strong>"المشرع الروي"</strong> و<strong>"الدرر البهية في أنساب السادة العلوية"</strong> لأحمد الشامي، و<strong>"شجرة الأنساب العلوية"</strong>.
-                </div>
-            </li>
-            <li class="docs-item">
-                <div class="docs-index">٤</div>
-                <div class="docs-content">
-                    <strong>الجزء من أحمد المهاجر إلى رسول الله ﷺ</strong>
-                    هو العمود العلوي المتفق عليه لدى جهابذة نقباء الأنساب، والمتواتر في كتب السادة آل أبي علوي قاطبة.
-                </div>
-            </li>
+            <li class="docs-item"><div class="docs-index">١</div><div class="docs-content"><strong>الجزء من بسام إلى الفقيه عبيد الله</strong> ثابت ومحفوظ...</div></li>
+            <li class="docs-item"><div class="docs-index">٢</div><div class="docs-content"><strong>الجزء من السيد برهان الدين إبراهيم إلى الإمام علي صاحب كده</strong> ثابت بكتاب "المشرع الروي"...</div></li>
+            <li class="docs-item"><div class="docs-index">٣</div><div class="docs-content"><strong>الجزء من محمد الفقيه المقدم إلى أحمد المهاجر</strong> ثابت في "المشرع الروي"...</div></li>
+            <li class="docs-item"><div class="docs-index">٤</div><div class="docs-content"><strong>الجزء من أحمد المهاجر إلى رسول الله ﷺ</strong> هو العمود العلوي المتفق عليه...</div></li>
         </ul>
 
-        <div class="gold-divider gold-divider-bottom">
-            <span class="line"></span><i class="bi bi-patch-check-fill"></i><span class="line"></span>
-        </div>
-        
-        <p class="doc-footer-text">
-            وآخر دعوانا أن الحمد لله رب العالمين، وصلى الله وسلم وبارك على سيدنا ونبينا محمد وعلى آله وصحبه الطيبين الطاهرين أجمعين.
-        </p>
+        <div class="gold-divider gold-divider-bottom"><span class="line"></span><i class="bi bi-patch-check-fill"></i><span class="line"></span></div>
+        <p class="doc-footer-text">وآخر دعوانا أن الحمد لله رب العالمين...</p>
         
         <div class="signature-card">
             <h4>الشيخ بسام بن محمد بن هزاع الشميري (آل الكدهي)</h4>
-            <p class="role">مدير مركز النور الرباني والنَفَس الرحماني لإعادة اتزان الروح والنفس والجسد</p>
-            
+            <p class="role">مدير مركز النور الرباني والنَفَس الرحماني</p>
             <div class="signature-meta">
                 <a href="mailto:alshameerybassam@gmail.com"><i class="bi bi-envelope-paper"></i> alshameerybassam@gmail.com</a>
                 <a href="https://bassam-spiritual-center.onrender.com" target="_blank"><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</a>
@@ -361,6 +299,5 @@
     </div>
 
     <a href="/" class="back-home-btn"><i class="bi bi-arrow-right"></i> العودة إلى الصفحة الرئيسية</a>
-
 </body>
 </html>
