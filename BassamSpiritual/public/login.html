@@ -2,117 +2,230 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - مركز النور الرباني</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تسجيل الدخول | مركز النور الرباني</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="style.css">
+    
     <style>
-        :root { --primary-color: #4A154B; --accent-color: #D4AF37; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin:0; }
-        .auth-card { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; background: #ffffff; max-width: 450px; width: 100%; }
-        .auth-header { background: linear-gradient(135deg, #4A154B 0%, #1A051D 100%); color: #ffffff; padding: 30px; text-align: center; border-bottom: 4px solid var(--accent-color); }
-        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); padding: 12px; font-weight: 600; }
-        .btn-primary:hover { background-color: #350f36; }
-        .toggle-link { color: var(--primary-color); text-decoration: none; cursor: pointer; font-weight: 600; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #F4F6F9 0%, #E2E8F0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .auth-wrapper {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(10, 22, 40, 0.15);
+            max-width: 440px;
+            width: 100%;
+            padding: 40px 30px;
+            border-top: 6px solid #F5B041;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-header i {
+            font-size: 3rem;
+            color: #F5B041;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .auth-header h2 {
+            font-size: 1.8rem;
+            color: #0A1628;
+            margin: 0;
+        }
+        .auth-header h2 span { color: #F5B041; }
+        .auth-header p { color: #64748B; font-size: 0.95rem; margin-top: 5px; }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #0A1628;
+            font-size: 0.9rem;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            font-size: 1.2rem;
+        }
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .input-wrapper input:focus {
+            border-color: #F5B041;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15);
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #F5B041, #E67E22);
+            color: #0A1628;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Cairo', sans-serif;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245, 176, 65, 0.4); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #64748B;
+            font-size: 0.95rem;
+        }
+        .auth-link a {
+            color: #F5B041;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            z-index: 9999;
+            display: none;
+            min-width: 300px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            font-family: 'Cairo';
+        }
+        .notification.success { background: #27ae60; }
+        .notification.error { background: #e74c3c; }
+        .notification.show { display: block; }
+        
+        .spinner-rotate { animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 500px) {
+            .auth-wrapper { padding: 25px 20px; }
+        }
     </style>
 </head>
 <body>
-<div class="container p-3">
-    <div class="auth-card mx-auto">
+
+    <div id="notification" class="notification"></div>
+
+    <div class="auth-wrapper">
         <div class="auth-header">
-            <i class="bi bi-moon-stars-fill mb-2 d-block fs-1 text-warning"></i>
-            <h3 class="fw-bold mb-1">مركز النور الرباني</h3>
-            <p class="small text-white-50 mb-0">للاستشارات والبرامج العلاجية الروحانية</p>
+            <i class="bi bi-shield-fill"></i>
+            <h2>مركز <span>النور الرباني</span></h2>
+            <p>﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
         </div>
-        <div class="card-body p-4">
-            <div id="alertBox" class="alert d-none"></div>
-            <form id="loginForm">
-                <h4 class="mb-4 text-center fw-bold text-dark">تسجيل الدخول</h4>
-                <div class="mb-3">
-                    <label class="form-label">البريد الإلكتروني</label>
-                    <input type="email" id="loginEmail" class="form-control" required>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="example@email.com" required>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">كلمة المرور</label>
-                    <input type="password" id="loginPassword" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="أدخل كلمة المرور" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">دخول آمن</button>
-                <p class="text-center small mb-0">ليس لديك حساب؟ <span class="toggle-link" onclick="toggleAuth(true)">إنشاء حساب جديد</span></p>
-            </form>
-            <form id="registerForm" class="d-none">
-                <h4 class="mb-4 text-center fw-bold text-dark">حساب مستفيد جديد</h4>
-                <div class="mb-3"><label class="form-label">الاسم الكامل ثلاثياً</label><input type="text" id="regName" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">البريد الإلكتروني</label><input type="email" id="regEmail" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">رقم الهاتف/الواتساب</label><input type="tel" id="regPhone" class="form-control" placeholder="966500000000" required></div>
-                <div class="mb-4"><label class="form-label">كلمة المرور</label><input type="password" id="regPassword" class="form-control" required></div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">تسجيل الحساب</button>
-                <p class="text-center small mb-0">لديك حساب؟ <span class="toggle-link" onclick="toggleAuth(false)">تسجيل الدخول</span></p>
-            </form>
+            </div>
+            <button type="submit" class="btn-submit" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> دخول آمن</button>
+        </form>
+
+        <div class="auth-link">
+            ليس لديك حساب؟ <a href="/register.html">إنشاء حساب جديد</a>
+        </div>
+        <div style="text-align:center; margin-top:15px;">
+            <a href="/" style="color:#64748B; text-decoration:none; font-size:0.9rem; display:inline-flex; align-items:center; gap:5px;">
+                <i class="bi bi-arrow-right"></i> العودة إلى الرئيسية
+            </a>
         </div>
     </div>
-</div>
-<script src="/js/api.js"></script>
-<script>
-    function toggleAuth(showRegister) {
-        document.getElementById('loginForm').classList.toggle('d-none', showRegister);
-        document.getElementById('registerForm').classList.toggle('d-none', !showRegister);
-    }
-    function showAlert(msg, type='danger') {
-        const box = document.getElementById('alertBox');
-        box.className = `alert alert-${type}`; box.innerText = msg; box.classList.remove('d-none');
-    }
-    
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
-        const passwordInput = document.getElementById('loginPassword').value;
 
-        try {
-            const res = await AuthAPI.login(emailInput, passwordInput);
-            if(res.success) {
-                showAlert('مرحباً بك يا شيخ بسام! جاري التوجيه إلى لوحة التحكم...', 'success');
-                
-                setTimeout(() => {
-                    // تحويل فوري بناءً على الإيميل أو الرتبة
-                    if (emailInput === 'alshameerybassam@gmail.com' || AuthAPI.isAdmin()) {
-                        window.location.href = '/admin.html';
-                    } else {
-                        window.location.href = '/dashboard.html';
-                    }
-                }, 1000);
-            }
-        } catch(e) { 
-            showAlert(e.message); 
+    <script src="api.js"></script>
+    <script>
+        function showToast(msg, type='success') {
+            const n = document.getElementById('notification');
+            if(!n) return;
+            n.textContent = msg;
+            n.className = `notification ${type} show`;
+            setTimeout(() => n.classList.remove('show'), 5000);
         }
-    });
 
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const emailInput = document.getElementById('regEmail').value.trim().toLowerCase();
-        const passwordInput = document.getElementById('regPassword').value;
-        const nameInput = document.getElementById('regName').value;
-        const phoneInput = document.getElementById('regPhone').value;
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            
+            if (!email || !password) return showToast('يرجى ملء جميع الحقول.', 'error');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري التحقق...';
 
-        try {
-            const res = await AuthAPI.register(nameInput, emailInput, passwordInput, phoneInput);
-            if(res.success) {
-                showAlert('تم إنشاء الحساب بنجاح، جاري الدخول والتوجيه...', 'success');
-                
-                // تسجيل دخول تلقائي بعد التسجيل مباشرة لإنشاء الجلسة
-                await AuthAPI.login(emailInput, passwordInput);
-                
-                setTimeout(() => {
-                    if (emailInput === 'alshameerybassam@gmail.com') {
-                        window.location.href = '/admin.html';
-                    } else {
-                        window.location.href = '/dashboard.html';
-                    }
-                }, 1000);
+            try {
+                const res = await AuthAPI.login(email, password);
+                if (res.success) {
+                    showToast('مرحباً بك! جاري التوجيه...', 'success');
+                    setTimeout(() => {
+                        const user = JSON.parse(localStorage.getItem('bassam_user'));
+                        if (user && (user.role === 'admin' || email === 'alshameerybassam@gmail.com')) {
+                            window.location.href = '/admin.html';
+                        } else {
+                            window.location.href = '/dashboard.html';
+                        }
+                    }, 1000);
+                }
+            } catch (err) {
+                showToast(err.message || 'بيانات الدخول غير صحيحة.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> دخول آمن';
             }
-        } catch(e) { 
-            showAlert(e.message); 
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
