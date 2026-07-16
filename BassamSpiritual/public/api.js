@@ -225,12 +225,27 @@ const AdminModule = {
     async loadReviews() { try { const data = await AdminAPI.getReviews(); const tbody = document.getElementById('reviewsTableBody'); if(!tbody) return; tbody.innerHTML = data.reviews.length ? data.reviews.map(r => `<tr><td>${r.fullName}</td><td>${r.comment}</td><td>${r.isApproved?'منشور':'معلق'}</td><td><button onclick="AdminModule.approveReview(${r.id})">نشر</button> <button onclick="AdminModule.deleteReview(${r.id})">حذف</button></td></tr>`).join('') : '<tr><td colspan="4">لا توجد تقييمات.</td></tr>'; } catch(e) {} },
     async approveReview(id) { await AdminAPI.approveReview(id); showToast('تم النشر.'); this.loadReviews(); },
     async deleteReview(id) { if(!confirm('حذف؟')) return; await AdminAPI.deleteReview(id); showToast('تم الحذف.'); this.loadReviews(); },
-    async sendEngineerCommand() { const command = document.getElementById('engineerCommand')?.value.trim(); if (!command) return showToast('الرجاء كتابة أمر.', 'error'); try { const res = await AdminAPI.sendEngineerCommand(command); const responseDiv = document.getElementById('engineerResponse'); if(responseDiv) { responseDiv.style.display = 'block'; responseDiv.textContent = res.reply; } document.getElementById('engineerCommand').value = ''; } catch (e) { showToast(e.message, 'error'); } }
+    // *** دالة إرسال الأوامر للمهندس الداخلي ***
+    async sendEngineerCommand() {
+        const command = document.getElementById('engineerCommand')?.value.trim();
+        if (!command) return showToast('الرجاء كتابة أمر.', 'error');
+        try {
+            const res = await AdminAPI.sendEngineerCommand(command);
+            const responseDiv = document.getElementById('engineerResponse');
+            if(responseDiv) {
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = res.reply;
+            }
+            document.getElementById('engineerCommand').value = '';
+        } catch (e) { showToast(e.message, 'error'); }
+    }
 };
 
+// دوال عامة لربط الأزرار
 function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
 function closeModal() { document.getElementById('detailsModal').classList.remove('show'); }
 
+// ---------- التشغيل التلقائي ----------
 document.addEventListener('DOMContentLoaded', () => {
     const path = location.pathname;
     if(path==='/'||path.endsWith('index.html')) HomeModule.init();
