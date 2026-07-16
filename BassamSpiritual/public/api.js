@@ -1,8 +1,9 @@
-// ========== api.js - الدماغ الواحد النهائي ==========
+// ========== api.js - الدماغ الواحد الكامل (النسخة النهائية) ==========
 const API_BASE = '/api';
 const TOKEN_KEY = 'bassam_auth_token';
 const USER_KEY = 'bassam_user';
 
+// ---------- الأدوات الأساسية ----------
 function getToken() { return (localStorage.getItem(TOKEN_KEY) || '').trim(); }
 function getUser() { try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch(e) { return null; } }
 function setSession(token, user) { localStorage.setItem(TOKEN_KEY, token.trim()); localStorage.setItem(USER_KEY, JSON.stringify(user)); }
@@ -13,7 +14,6 @@ function showToast(msg, type='success') {
     n.textContent = msg; n.className = `notification ${type} show`;
     setTimeout(() => n.classList.remove('show'), 5000);
 }
-
 async function api(method, endpoint, body = null) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     const token = getToken(); if(token) opts.headers['Authorization'] = `Bearer ${token}`;
@@ -25,13 +25,13 @@ async function api(method, endpoint, body = null) {
     return data;
 }
 
+// ---------- واجهات API ----------
 const AuthAPI = {
     login: (email, password) => api('POST', '/auth/login', { email, password }),
     register: (fullName, email, password, phone) => api('POST', '/auth/register', { fullName, email, password, phone }),
     verify: () => api('GET', '/auth/verify'),
     logout: () => { clearSession(); location.href = '/login.html'; }
 };
-
 const UserAPI = {
     getDashboard: () => api('GET', '/dashboard/me'),
     submitRequest: (serviceType, description) => api('POST', '/dashboard/request', { serviceType, description }),
@@ -39,7 +39,6 @@ const UserAPI = {
     submitPayment: (id, payMethod, paySender, payNumber) => api('PUT', `/dashboard/request/${id}/submit-payment`, { paymentMethod: payMethod, paymentSenderName: paySender, paymentTransferNumber: payNumber }),
     submitReview: (comment, rating) => api('POST', '/dashboard/reviews', { comment, rating })
 };
-
 const AdminAPI = {
     getRequests: () => api('GET', '/admin/requests'),
     acceptRequest: (id) => api('PUT', `/admin/requests/${id}/accept-initial`),
@@ -60,14 +59,13 @@ const AdminAPI = {
     saveAIInstructions: (instructions) => api('PUT', '/admin/ai-instructions', { instructions }),
     sendEngineerCommand: (command) => api('POST', '/admin/engineer-command', { command })
 };
-
 const PublicAPI = {
     getArticles: () => fetch(API_BASE + '/articles').then(r => r.json()),
     getReviews: () => fetch(API_BASE + '/reviews').then(r => r.json()),
     aiChat: (message) => api('POST', '/ai-chat', { message })
 };
 
-// ========== الصفحة الرئيسية ==========
+// ---------- الصفحة الرئيسية ----------
 const HomeModule = {
     articles: [],
     async init() { this.updateUI(); await this.loadArticles(); await this.loadTestimonials(); this.initCounters(); this.initChat(); },
@@ -132,7 +130,7 @@ function sendNewMessage() { HomeModule.sendChat(); }
 function closeArticleModal() { HomeModule.closeArticleModal(); }
 function closeArticleModalOnOverlay(e) { if(e.target.id==='articleModal') closeArticleModal(); }
 
-// ========== لوحة المستفيد التفاعلية ==========
+// ---------- لوحة المستفيد ----------
 const DashboardModule = {
     async init() {
         if(!getToken()){ location.href='/login.html'; return; }
@@ -145,30 +143,20 @@ const DashboardModule = {
             document.getElementById('welcomeMessage').innerHTML = `أهلاً بك يا <span>${data.user?.full_name||''}</span>`;
             const reqs = data.requests||[];
             const container = document.getElementById('requestsContainer');
-            
-            // إحصائيات
             document.getElementById('statTotal').textContent = reqs.length;
             document.getElementById('statPending').textContent = reqs.filter(r => r.status === 'pending').length;
             document.getElementById('statCompleted').textContent = reqs.filter(r => r.status === 'diagnosed' || r.status === 'completed').length;
             document.getElementById('statRejected').textContent = reqs.filter(r => r.status === 'rejected').length;
-            
             if(!reqs.length) { container.innerHTML = '<p style="text-align:center;padding:30px;color:#888;">📭 لا توجد طلبات بعد.</p>'; return; }
             container.innerHTML = reqs.map(req => {
                 let badge = '', text = '';
                 if(req.status==='pending') { badge='badge-pending'; text='قيد المراجعة'; }
                 else if(req.status==='processing'||req.status==='accepted_waiting_payment'||req.status==='payment_submitted') { badge='badge-processing'; text='تحت المعالجة'; }
                 else { badge='badge-completed'; text='مكتمل'; }
-                
                 let diagnosisHtml = '';
-                if(req.initial_diagnosis) {
-                    diagnosisHtml = `<div style="margin-top:10px;background:#f0f4f8;padding:10px;border-radius:8px;"><strong>التشخيص:</strong> ${req.initial_diagnosis}<br><strong>العلاج:</strong> ${req.treatment_plan||'—'}</div>`;
-                }
-                
+                if(req.initial_diagnosis) diagnosisHtml = `<div style="margin-top:10px;background:#f0f4f8;padding:10px;border-radius:8px;"><strong>التشخيص:</strong> ${req.initial_diagnosis}<br><strong>العلاج:</strong> ${req.treatment_plan||'—'}</div>`;
                 let paymentHtml = '';
-                if(req.status === 'accepted_waiting_payment') {
-                    paymentHtml = `<div style="margin-top:10px;"><button onclick="DashboardModule.showPaymentForm('${req.id}')" style="background:#F5B041; color:#0A1628; border:none; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:600;">إرسال إيصال الدفع</button></div>`;
-                }
-                
+                if(req.status === 'accepted_waiting_payment') paymentHtml = `<div style="margin-top:10px;"><button onclick="DashboardModule.showPaymentForm('${req.id}')" style="background:#F5B041; color:#0A1628; border:none; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:600;">إرسال إيصال الدفع</button></div>`;
                 return `<div class="request-card"><div style="display:flex;justify-content:space-between;"><div><strong>${req.serviceType}</strong><p>${req.description?.substring(0,80)}...</p></div><span class="badge-status ${badge}">${text}</span></div>${diagnosisHtml}${paymentHtml}</div>`;
             }).join('');
         } catch(e) { showToast('تعذر تحميل البيانات.','error'); }
@@ -180,14 +168,13 @@ const DashboardModule = {
         if(!sender) return;
         const number = prompt('رقم الحوالة:');
         if(!number) return;
-        
         UserAPI.submitPayment(requestId, method, sender, number)
             .then(() => { showToast('تم إرسال الإيصال.'); this.load(); })
             .catch(e => showToast(e.message, 'error'));
     }
 };
 
-// ========== لوحة المدير الكاملة ==========
+// ---------- لوحة المدير ----------
 const AdminModule = {
     currentId: null,
     async init() {
@@ -199,13 +186,10 @@ const AdminModule = {
         try {
             const reqs = await AdminAPI.getRequests();
             const list = document.getElementById('adminRequestsList'); if(!list) return;
-            
-            // تحديث الإحصائيات
             document.getElementById('totalCount').textContent = reqs.length;
             document.getElementById('pendingCount').textContent = reqs.filter(r => r.status === 'pending').length;
             document.getElementById('completedCount').textContent = reqs.filter(r => r.status === 'diagnosed' || r.status === 'completed').length;
             document.getElementById('rejectedCount').textContent = reqs.filter(r => r.status === 'rejected').length;
-            
             list.innerHTML = reqs.length ? reqs.map(r => `<button class="list-group-item list-group-item-action" onclick="AdminModule.select('${r.id}')">${r.fullName} - ${r.serviceType} <span class="badge bg-${r.status==='pending'?'warning':r.status==='processing'?'primary':'success'}">${r.status}</span></button>`).join('') : '<p>لا توجد طلبات.</p>';
         } catch(e) { showToast('خطأ في جلب الطلبات.','error'); }
     },
@@ -214,125 +198,34 @@ const AdminModule = {
         try {
             const req = await UserAPI.getRequest(id);
             const modalBody = document.getElementById('modalBody');
-            
-            let html = `
-                <p><strong>المستفيد:</strong> ${req.fullName}</p>
-                <p><strong>الخدمة:</strong> ${req.serviceType}</p>
-                <p><strong>الوصف:</strong> ${req.description}</p>
-                <p><strong>الحالة:</strong> ${req.status}</p>
-            `;
-            
-            // أزرار الإجراءات
-            if(req.status === 'pending') {
-                html += `<div style="margin:15px 0;"><button onclick="AdminModule.acceptInitial()" style="background:#2ecc71; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-left:10px;">قبول</button><button onclick="AdminModule.rejectInitial()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">رفض</button></div>`;
-            }
-            
-            if(req.status === 'payment_submitted') {
-                html += `<p><strong>طريقة الدفع:</strong> ${req.paymentMethod}</p><p><strong>المحول:</strong> ${req.payment_sender_name}</p><p><strong>رقم الحوالة:</strong> ${req.payment_transfer_number}</p>`;
-                html += `<div style="margin:15px 0;"><button onclick="AdminModule.approvePayment()" style="background:#2ecc71; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-left:10px;">اعتماد الدفع</button><button onclick="AdminModule.rejectPayment()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">رفض الدفع</button></div>`;
-            }
-            
-            // سجل المراسلات
-            html += `<div style="margin-top:20px;"><strong>المراسلات:</strong><div id="adminChatBox" style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:8px; margin:10px 0;">جاري التحميل...</div>`;
-            html += `<input type="text" id="adminMessageInput" placeholder="اكتب رداً..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; margin-bottom:10px;">`;
-            html += `<button onclick="AdminModule.sendMessage()" style="background:#3498db; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">إرسال</button></div>`;
-            
-            // نموذج التشخيص
+            let html = `<p><strong>المستفيد:</strong> ${req.fullName}</p><p><strong>الخدمة:</strong> ${req.serviceType}</p><p><strong>الوصف:</strong> ${req.description}</p><p><strong>الحالة:</strong> ${req.status}</p>`;
+            if(req.status === 'pending') html += `<div style="margin:15px 0;"><button onclick="AdminModule.acceptInitial()" style="background:#2ecc71; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-left:10px;">قبول</button><button onclick="AdminModule.rejectInitial()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">رفض</button></div>`;
+            if(req.status === 'payment_submitted') { html += `<p><strong>طريقة الدفع:</strong> ${req.paymentMethod}</p><p><strong>المحول:</strong> ${req.payment_sender_name}</p><p><strong>رقم الحوالة:</strong> ${req.payment_transfer_number}</p><div style="margin:15px 0;"><button onclick="AdminModule.approvePayment()" style="background:#2ecc71; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-left:10px;">اعتماد الدفع</button><button onclick="AdminModule.rejectPayment()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">رفض الدفع</button></div>`; }
+            html += `<div style="margin-top:20px;"><strong>المراسلات:</strong><div id="adminChatBox" style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:8px; margin:10px 0;">جاري التحميل...</div><input type="text" id="adminMessageInput" placeholder="اكتب رداً..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; margin-bottom:10px;"><button onclick="AdminModule.sendMessage()" style="background:#3498db; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">إرسال</button></div>`;
             html += `<div style="margin-top:20px;"><strong>التشخيص والعلاج:</strong><textarea id="diagnosisInput" placeholder="التشخيص..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; margin:10px 0; min-height:60px;">${req.initial_diagnosis||''}</textarea><textarea id="planInput" placeholder="الخطة العلاجية..." style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; margin-bottom:10px; min-height:60px;">${req.treatment_plan||''}</textarea><button onclick="AdminModule.saveDiagnosis()" style="background:#27ae60; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">حفظ التشخيص</button></div>`;
-            
             modalBody.innerHTML = html;
             document.getElementById('detailsModal').classList.add('show');
-            
-            // تحميل المراسلات
             this.loadMessages();
         } catch(e) { showToast(e.message,'error'); }
     },
-    async loadMessages() {
-        if(!this.currentId) return;
-        try {
-            const data = await AdminAPI.getMessages(this.currentId);
-            const box = document.getElementById('adminChatBox');
-            if(!box) return;
-            box.innerHTML = data.messages.length ? data.messages.map(m => `<div style="margin-bottom:5px; padding:5px; background:${m.senderRole==='admin'?'#e8f5e9':'#f5f5f5'}; border-radius:4px;"><small>${m.senderName}:</small> ${m.messageText}</div>`).join('') : '<p style="color:#999;">لا توجد مراسلات بعد.</p>';
-            box.scrollTop = box.scrollHeight;
-        } catch(e) {}
-    },
-    async sendMessage() {
-        const text = document.getElementById('adminMessageInput')?.value.trim();
-        if(!text) return;
-        try {
-            await AdminAPI.sendMessage(this.currentId, text);
-            document.getElementById('adminMessageInput').value = '';
-            this.loadMessages();
-        } catch(e) { showToast(e.message,'error'); }
-    },
-    async saveDiagnosis() {
-        const diagnosis = document.getElementById('diagnosisInput')?.value.trim();
-        const plan = document.getElementById('planInput')?.value.trim();
-        if(!diagnosis) return showToast('يرجى كتابة التشخيص.','error');
-        try {
-            await AdminAPI.diagnose(this.currentId, diagnosis, plan||'');
-            showToast('تم حفظ التشخيص.');
-            this.loadRequests();
-            closeModal();
-        } catch(e) { showToast(e.message,'error'); }
-    },
+    async loadMessages() { if(!this.currentId) return; try { const data = await AdminAPI.getMessages(this.currentId); const box = document.getElementById('adminChatBox'); if(!box) return; box.innerHTML = data.messages.length ? data.messages.map(m => `<div style="margin-bottom:5px; padding:5px; background:${m.senderRole==='admin'?'#e8f5e9':'#f5f5f5'}; border-radius:4px;"><small>${m.senderName}:</small> ${m.messageText}</div>`).join('') : '<p style="color:#999;">لا توجد مراسلات بعد.</p>'; box.scrollTop = box.scrollHeight; } catch(e) {} },
+    async sendMessage() { const text = document.getElementById('adminMessageInput')?.value.trim(); if(!text) return; try { await AdminAPI.sendMessage(this.currentId, text); document.getElementById('adminMessageInput').value = ''; this.loadMessages(); } catch(e) { showToast(e.message,'error'); } },
+    async saveDiagnosis() { const diagnosis = document.getElementById('diagnosisInput')?.value.trim(); const plan = document.getElementById('planInput')?.value.trim(); if(!diagnosis) return showToast('يرجى كتابة التشخيص.','error'); try { await AdminAPI.diagnose(this.currentId, diagnosis, plan||''); showToast('تم حفظ التشخيص.'); this.loadRequests(); closeModal(); } catch(e) { showToast(e.message,'error'); } },
     async acceptInitial() { await AdminAPI.acceptRequest(this.currentId); showToast('تم القبول.'); this.loadRequests(); closeModal(); },
     async rejectInitial() { const r = prompt('سبب الرفض:'); if(!r) return; await AdminAPI.rejectRequest(this.currentId, r); showToast('تم الرفض.'); this.loadRequests(); closeModal(); },
     async approvePayment() { await AdminAPI.approvePayment(this.currentId); showToast('تم اعتماد الدفع.'); this.loadRequests(); closeModal(); },
     async rejectPayment() { const r = prompt('سبب الرفض:'); if(!r) return; await AdminAPI.rejectPayment(this.currentId, r); showToast('تم رفض الدفع.'); this.loadRequests(); closeModal(); },
     async loadAI() { try { const r = await AdminAPI.getAIInstructions(); document.getElementById('aiPromptTextarea').value = r.instructions||''; } catch(e) {} },
     async saveAI() { try { await AdminAPI.saveAIInstructions(document.getElementById('aiPromptTextarea').value); showToast('تم الحفظ.'); } catch(e) { showToast(e.message,'error'); } },
-    async loadArticles() {
-        try {
-            const arts = await AdminAPI.getArticles();
-            const tbody = document.getElementById('articlesTableBody'); if(!tbody) return;
-            tbody.innerHTML = arts.length ? arts.map(a => `<tr><td>${a.title}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleDateString('ar-YE'):''}</td><td><button onclick="AdminModule.editArticle('${a.id}','${a.title}','${a.summary}','${a.content}')">تعديل</button> <button onclick="AdminModule.deleteArticle('${a.id}')">حذف</button></td></tr>`).join('') : '<tr><td colspan="3">لا توجد مقالات.</td></tr>';
-        } catch(e) {}
-    },
+    async loadArticles() { try { const arts = await AdminAPI.getArticles(); const tbody = document.getElementById('articlesTableBody'); if(!tbody) return; tbody.innerHTML = arts.length ? arts.map(a => `<tr><td>${a.title}</td><td>${a.createdAt?new Date(a.createdAt).toLocaleDateString('ar-YE'):''}</td><td><button onclick="AdminModule.editArticle('${a.id}','${a.title}','${a.summary}','${a.content}')">تعديل</button> <button onclick="AdminModule.deleteArticle('${a.id}')">حذف</button></td></tr>`).join('') : '<tr><td colspan="3">لا توجد مقالات.</td></tr>'; } catch(e) {} },
     showArticleForm() { document.getElementById('articleFormContainer').style.display='block'; document.getElementById('editArticleId').value=''; document.getElementById('artTitle').value=''; document.getElementById('artSummary').value=''; document.getElementById('articleContentEditor').innerHTML = ''; },
-    async saveArticle(e) {
-        e.preventDefault();
-        const id = document.getElementById('editArticleId').value;
-        const title = document.getElementById('artTitle').value;
-        const summary = document.getElementById('artSummary').value;
-        const content = document.getElementById('articleContentEditor').innerHTML;
-        try {
-            if(id) await AdminAPI.updateArticle(id, title, summary, content);
-            else await AdminAPI.createArticle(title, summary, content);
-            showToast('تم الحفظ.'); this.loadArticles(); document.getElementById('articleFormContainer').style.display='none';
-        } catch(err) { showToast(err.message,'error'); }
-    },
-    editArticle(id, title, summary, content) {
-        document.getElementById('articleFormContainer').style.display='block';
-        document.getElementById('editArticleId').value = id;
-        document.getElementById('artTitle').value = title;
-        document.getElementById('artSummary').value = summary;
-        document.getElementById('articleContentEditor').innerHTML = content;
-    },
+    async saveArticle(e) { e.preventDefault(); const id = document.getElementById('editArticleId').value; const title = document.getElementById('artTitle').value; const summary = document.getElementById('artSummary').value; const content = document.getElementById('articleContentEditor').innerHTML; try { if(id) await AdminAPI.updateArticle(id, title, summary, content); else await AdminAPI.createArticle(title, summary, content); showToast('تم الحفظ.'); this.loadArticles(); document.getElementById('articleFormContainer').style.display='none'; } catch(err) { showToast(err.message,'error'); } },
+    editArticle(id, title, summary, content) { document.getElementById('articleFormContainer').style.display='block'; document.getElementById('editArticleId').value = id; document.getElementById('artTitle').value = title; document.getElementById('artSummary').value = summary; document.getElementById('articleContentEditor').innerHTML = content; },
     async deleteArticle(id) { if(!confirm('حذف؟')) return; await AdminAPI.deleteArticle(id); showToast('تم الحذف.'); this.loadArticles(); },
-    async loadReviews() {
-        try {
-            const data = await AdminAPI.getReviews();
-            const tbody = document.getElementById('reviewsTableBody'); if(!tbody) return;
-            tbody.innerHTML = data.reviews.length ? data.reviews.map(r => `<tr><td>${r.fullName}</td><td>${r.comment}</td><td>${r.isApproved?'منشور':'معلق'}</td><td><button onclick="AdminModule.approveReview(${r.id})">نشر</button> <button onclick="AdminModule.deleteReview(${r.id})">حذف</button></td></tr>`).join('') : '<tr><td colspan="4">لا توجد تقييمات.</td></tr>';
-        } catch(e) {}
-    },
+    async loadReviews() { try { const data = await AdminAPI.getReviews(); const tbody = document.getElementById('reviewsTableBody'); if(!tbody) return; tbody.innerHTML = data.reviews.length ? data.reviews.map(r => `<tr><td>${r.fullName}</td><td>${r.comment}</td><td>${r.isApproved?'منشور':'معلق'}</td><td><button onclick="AdminModule.approveReview(${r.id})">نشر</button> <button onclick="AdminModule.deleteReview(${r.id})">حذف</button></td></tr>`).join('') : '<tr><td colspan="4">لا توجد تقييمات.</td></tr>'; } catch(e) {} },
     async approveReview(id) { await AdminAPI.approveReview(id); showToast('تم النشر.'); this.loadReviews(); },
     async deleteReview(id) { if(!confirm('حذف؟')) return; await AdminAPI.deleteReview(id); showToast('تم الحذف.'); this.loadReviews(); },
-    async sendEngineerCommand() {
-        const command = document.getElementById('engineerCommand')?.value.trim();
-        if (!command) return showToast('الرجاء كتابة أمر.', 'error');
-        try {
-            const res = await AdminAPI.sendEngineerCommand(command);
-            const responseDiv = document.getElementById('engineerResponse');
-            if(responseDiv) {
-                responseDiv.style.display = 'block';
-                responseDiv.textContent = res.reply;
-            }
-            document.getElementById('engineerCommand').value = '';
-        } catch (e) { showToast(e.message, 'error'); }
-    }
+    async sendEngineerCommand() { const command = document.getElementById('engineerCommand')?.value.trim(); if (!command) return showToast('الرجاء كتابة أمر.', 'error'); try { const res = await AdminAPI.sendEngineerCommand(command); const responseDiv = document.getElementById('engineerResponse'); if(responseDiv) { responseDiv.style.display = 'block'; responseDiv.textContent = res.reply; } document.getElementById('engineerCommand').value = ''; } catch (e) { showToast(e.message, 'error'); } }
 };
 
 function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
