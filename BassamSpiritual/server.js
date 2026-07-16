@@ -330,10 +330,25 @@ app.post('/api/ai-chat', async (req, res) => {
 
 // 🤖 6. مهندس المنصة الداخلي (النور الأسود)
 const engineer = require('./engineer');
+
+// كائن db لتمرير الدوال إلى المهندس
+const db = {
+    updatePassword: async (email, newPassword) => {
+        const hashedPassword = bcrypt.hashSync(newPassword, 8);
+        await pool.query(`UPDATE users SET password = $1 WHERE email = $2`, [hashedPassword, email]);
+    }
+};
+
 app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => {
     const { command } = req.body;
     if (!command) return res.status(400).json({ error: 'يرجى إرسال أمر.' });
-    try { const reply = await engineer.executeCommand(command); res.json({ success: true, reply }); } catch (e) { res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message }); }
+    try {
+        // نمرر كائن db إلى المهندس
+        const reply = await engineer.executeCommand(command, db);
+        res.json({ success: true, reply });
+    } catch (e) {
+        res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message });
+    }
 });
 
 // 7. توجيه الصفحات (SPA)
