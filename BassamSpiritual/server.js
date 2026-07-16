@@ -421,10 +421,17 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
-
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'المسار غير موجود.' });
     res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+app.get('/test-db', async (req, res) => {
+    try {
+        await pool.query(`SELECT 1`);
+        res.json({ message: '✅ قاعدة البيانات متصلة وتعمل.' });
+    } catch (e) {
+        res.status(500).json({ error: '❌ فشل الاتصال بقاعدة البيانات: ' + e.message });
+    }
 });
 
 // ==============================================
