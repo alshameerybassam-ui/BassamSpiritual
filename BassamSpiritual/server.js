@@ -3,15 +3,13 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
-const { Pool } = require('pg'); // مكتبة PostgreSQL
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'BASSAM_SPIRITUAL_SECRET_KEY_2026';
 
-// ==============================================
 // الاتصال بقاعدة بيانات PostgreSQL في Render
-// ==============================================
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -25,9 +23,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ==============================================
 // بناء الجداول تلقائياً
-// ==============================================
 const initializeDatabase = async () => {
     try {
         await pool.query(`
@@ -97,7 +93,6 @@ const initializeDatabase = async () => {
                 instructions TEXT
             );
         `);
-        // إدراج إعدادات افتراضية للذكاء الاصطناعي
         const aiCount = await pool.query(`SELECT COUNT(*) FROM ai_config`);
         if (parseInt(aiCount.rows[0].count) === 0) {
             await pool.query(`INSERT INTO ai_config (instructions) VALUES ($1)`, [
@@ -111,29 +106,7 @@ const initializeDatabase = async () => {
 };
 initializeDatabase();
 
-// ==============================================
-// إنشاء حساب المدير تلقائياً
-// ==============================================
-(async function initAdmin() {
-    try {
-        const adminEmail = 'alshameerybassam@gmail.com';
-        const adminCheck = await pool.query(`SELECT id FROM users WHERE email = $1`, [adminEmail]);
-        if (adminCheck.rows.length === 0) {
-            const hashedPassword = bcrypt.hashSync('bassam112358112358', 8);
-            await pool.query(
-                `INSERT INTO users (full_name, email, password, phone, role) VALUES ($1, $2, $3, $4, $5)`,
-                ["الشيخ بسام", adminEmail, hashedPassword, "777941366", "admin"]
-            );
-            console.log("💎 تم إنشاء حساب الإدارة التلقائي للشيخ بسام بنجاح!");
-        }
-    } catch (err) {
-        console.error("❌ خطأ في إنشاء حساب المدير:", err.message);
-    }
-})();
-
-// ==============================================
 // 🛡️ برمجيات التحقق والمصادقة (Middlewares)
-// ==============================================
 function authenticateToken(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'الرجاء تسجيل الدخول.' });
@@ -149,9 +122,7 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// ==============================================
 // 📌 1. مسارات المصادقة
-// ==============================================
 app.post('/api/auth/register', async (req, res) => {
     const { fullName, email, password, phone } = req.body;
     try {
@@ -183,9 +154,7 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'خطأ في التحقق.' }); }
 });
 
-// ==============================================
 // 📌 2. مسارات لوحة المستفيد
-// ==============================================
 app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     try {
         const requests = await pool.query(
@@ -245,9 +214,7 @@ app.post('/api/dashboard/reviews', authenticateToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'خطأ في إرسال التقييم.' }); }
 });
 
-// ==============================================
 // 📌 3. مسارات لوحة المدير
-// ==============================================
 app.get('/api/admin/requests', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(`SELECT * FROM requests ORDER BY "createdAt" DESC`);
@@ -291,9 +258,7 @@ app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, asy
     } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
-// ==============================================
 // 📌 4. المراسلات
-// ==============================================
 app.get('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     try {
         const messages = await pool.query(`SELECT * FROM messages WHERE "requestId" = $1 ORDER BY "createdAt" ASC`, [req.params.id]);
@@ -312,9 +277,7 @@ app.post('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'خطأ في إرسال الرسالة.' }); }
 });
 
-// ==============================================
 // 📌 5. المقالات والتقييمات والذكاء الاصطناعي
-// ==============================================
 app.get('/api/articles', async (req, res) => {
     try {
         const result = await pool.query(`SELECT * FROM articles ORDER BY "createdAt" DESC`);
@@ -399,9 +362,7 @@ app.post('/api/ai-chat', async (req, res) => {
     } catch (e) { res.json({ success: true, reply: 'يرجى تقديم طلب للتشخيص.' }); }
 });
 
-// ==============================================
 // 🤖 6. مهندس المنصة الداخلي (النور الأسود)
-// ==============================================
 const engineer = require('./engineer');
 app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => {
     const { command } = req.body;
@@ -414,17 +375,46 @@ app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (
     }
 });
 
-// ==============================================
-// 7. توجيه الصفحات (SPA)
-// ==============================================
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'المسار غير موجود.' });
-    res.sendFile(path.join(__dirname, 'public/index.html'));
+// 🔐 صفحة إعادة ضبط المدير (تُستخدم لمرة واحدة – احذفها بعد الاستخدام)
+app.get('/force-reset-admin', async (req, res) => {
+    const email = 'alshameerybassam@gmail.com';
+    const newPassword = 'bassam112358112358';
+    const hashed = bcrypt.hashSync(newPassword, 8);
+
+    try {
+        await pool.query(`DELETE FROM users WHERE email = $1`, [email]);
+        await pool.query(
+            `INSERT INTO users (full_name, email, password, phone, role) VALUES ($1, $2, $3, $4, $5)`,
+            ['الشيخ بسام', email, hashed, '777941366', 'admin']
+        );
+        const token = jwt.sign(
+            { id: 0, email: email, role: 'admin', full_name: 'الشيخ بسام' },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        res.send(`
+            <!DOCTYPE html>
+            <html dir="rtl">
+            <head><meta charset="UTF-8"><title>تم بنجاح</title></head>
+            <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                <h1>✅ تم ضبط حساب المدير بنجاح</h1>
+                <p>يتم الآن توجيهك إلى لوحة التحكم...</p>
+                <script>
+                    localStorage.setItem('bassam_auth_token', '${token}');
+                    localStorage.setItem('bassam_user', JSON.stringify({ full_name: 'الشيخ بسام', email: '${email}', role: 'admin' }));
+                    setTimeout(function() {
+                        window.location.href = '/admin.html';
+                    }, 2000);
+                </script>
+            </body>
+            </html>
+        `);
+    } catch (e) {
+        res.status(500).send('❌ فشلت العملية: ' + e.message);
+    }
 });
+
+// 7. توجيه الصفحات (SPA)
 app.get('/test-db', async (req, res) => {
     try {
         await pool.query(`SELECT 1`);
@@ -434,27 +424,17 @@ app.get('/test-db', async (req, res) => {
     }
 });
 
-// ⚠️ مسار طوارئ لضبط حساب المدير – يُستخدم مرة واحدة فقط
-app.get('/setup-admin', async (req, res) => {
-    const bcrypt = require('bcryptjs');
-    const email = 'alshameerybassam@gmail.com';
-    const password = 'bassam112358112358';
-    const hashed = bcrypt.hashSync(password, 8);
-    try {
-        await pool.query(
-            `INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)
-             ON CONFLICT (email) DO UPDATE SET password = $3, role = $4`,
-            ['الشيخ بسام', email, hashed, 'admin']
-        );
-        res.send('✅ تم ضبط حساب المدير بنجاح. يمكنك الآن تسجيل الدخول. احذف هذا المسار من الكود فوراً بعد الاستخدام.');
-    } catch (e) {
-        res.status(500).send('❌ خطأ: ' + e.message);
-    }
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
+
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'المسار غير موجود.' });
+    res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// ==============================================
 // 8. إطلاق الخادم
-// ==============================================
 app.listen(PORT, () => {
     console.log(`🚀 السيرفر يعمل على ${PORT}`);
 });
