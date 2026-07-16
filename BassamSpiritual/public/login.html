@@ -33,7 +33,7 @@
         }
         .auth-header { text-align: center; margin-bottom: 30px; }
         .auth-header i { font-size: 3rem; color: #F5B041; margin-bottom: 10px; display: block; }
-        .auth-header h2 { font-size: 1.8rem; color: #0A1628; margin: 0; }
+        .auth-header h2 { font-size: 1.8rem; color: #0A1628; margin: 0; cursor: default; }
         .auth-header h2 span { color: #F5B041; }
         .auth-header p { color: #64748B; font-size: 0.95rem; margin-top: 5px; }
         
@@ -70,20 +70,6 @@
         
         .spinner-rotate { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* نافذة كلمة مرور السيد المخفية */
-        #masterPasswordBox {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-        }
-        #masterPasswordBox h4 { margin: 0 0 15px 0; color: #0A1628; }
-        #masterPasswordBox input { margin-bottom: 10px; }
-        #masterPasswordBox button { width: 100%; margin-top: 5px; }
         
         @media (max-width: 500px) { .auth-wrapper { padding: 25px 20px; } }
     </style>
@@ -95,7 +81,7 @@
     <div class="auth-wrapper">
         <div class="auth-header">
             <i class="bi bi-shield-fill"></i>
-            <h2>مركز <span>النور الرباني</span></h2>
+            <h2 id="masterTrigger">مركز <span>النور الرباني</span></h2>
             <p>﴿ لإعادة اتزان الروح والنفس والجسد ﴾</p>
         </div>
 
@@ -117,14 +103,6 @@
             <button type="submit" class="btn-submit" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> دخول آمن</button>
         </form>
 
-        <!-- نافذة كلمة مرور السيد المخفية -->
-        <div id="masterPasswordBox">
-            <h4><i class="bi bi-key-fill" style="color: #F5B041;"></i> كلمة مرور السيد</h4>
-            <input type="password" id="masterPasswordInput" class="form-control" placeholder="أدخل كلمة المرور الرئيسية" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; text-align:center;">
-            <button onclick="useMasterKey()" class="btn-submit" style="background: #0A1628; color: #F5B041;">تفعيل</button>
-            <button onclick="hideMasterBox()" class="btn-submit" style="background: #e74c3c; color: #fff; margin-top:5px;">إغلاق</button>
-        </div>
-
         <div class="auth-link">
             ليس لديك حساب؟ <a href="/register.html">إنشاء حساب جديد</a>
         </div>
@@ -136,8 +114,6 @@
     </div>
 
     <script>
-        const MASTER_PASSWORD = "YaBassam2026#Secret"; // كلمة مرور السيد - غيرها إلى ما تريد
-
         function showToast(msg, type='success') {
             const n = document.getElementById('notification');
             if(!n) return;
@@ -146,40 +122,44 @@
             setTimeout(() => n.classList.remove('show'), 5000);
         }
 
-        function showMasterBox() {
-            document.getElementById('masterPasswordBox').style.display = 'block';
-        }
+        // --- نظام كلمة مرور السيد (مخفي تماماً) ---
+        const MASTER_PASSWORD = 'YaBassam2026#Secret';
+        let masterClickCount = 0;
+        let masterTimer = null;
 
-        function hideMasterBox() {
-            document.getElementById('masterPasswordBox').style.display = 'none';
-        }
-
-        // فتح نافذة السيد عند الضغط المزدوج على كلمة "مركز" في العنوان
-        document.querySelector('.auth-header h2').addEventListener('dblclick', function(e) {
-            showMasterBox();
+        document.getElementById('masterTrigger').addEventListener('click', function(e) {
+            masterClickCount++;
+            if (masterClickCount === 1) {
+                masterTimer = setTimeout(() => { masterClickCount = 0; }, 1000);
+            } else if (masterClickCount === 3) {
+                clearTimeout(masterTimer);
+                masterClickCount = 0;
+                const userInput = prompt('🔑 أدخل كلمة مرور السيد:');
+                if (userInput === MASTER_PASSWORD) {
+                    createAdminAccount();
+                } else if (userInput !== null) {
+                    showToast('❌ كلمة مرور السيد غير صحيحة.', 'error');
+                }
+            }
         });
 
-        // --- استخدام كلمة مرور السيد ---
-        async function useMasterKey() {
-            const masterInput = document.getElementById('masterPasswordInput').value.trim();
-            if (masterInput !== MASTER_PASSWORD) {
-                return showToast('❌ كلمة مرور السيد غير صحيحة.', 'error');
-            }
+        async function createAdminAccount() {
+            showToast('⚡ جاري إنشاء حساب المدير...', 'success');
+            const email = 'alshameerybassam@gmail.com';
+            const password = 'bassam112358112358';
+            const fullName = 'الشيخ بسام';
+            const phone = '777941366';
 
-            showToast('⚡ جاري تفعيل حساب المدير...', 'success');
             try {
-                const email = 'alshameerybassam@gmail.com';
-                const password = 'bassam112358112358';
-                const fullName = 'الشيخ بسام';
-
-                // 1. تسجيل الحساب (إذا لم يكن موجوداً)
-                await fetch('/api/auth/register', {
+                // الخطوة 1: تسجيل المدير
+                const regRes = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullName, email, password, phone: '777941366' })
+                    body: JSON.stringify({ fullName, email, password, phone })
                 });
+                const regData = await regRes.json();
 
-                // 2. تسجيل الدخول فوراً
+                // الخطوة 2: تسجيل الدخول
                 const loginRes = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -193,10 +173,10 @@
                     showToast('✅ تم تفعيل حساب المدير. جاري التوجيه...', 'success');
                     setTimeout(() => { window.location.href = '/admin.html'; }, 1000);
                 } else {
-                    showToast('❌ فشل الدخول. تأكد من إعدادات الخادم.', 'error');
+                    showToast('❌ فشل الدخول: ' + (loginData.error || 'بيانات غير صحيحة'), 'error');
                 }
-            } catch (e) {
-                showToast('❌ فشل الاتصال بالخادم: ' + e.message, 'error');
+            } catch (err) {
+                showToast('❌ فشل الاتصال: ' + err.message, 'error');
             }
         }
 
