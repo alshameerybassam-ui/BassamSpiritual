@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
@@ -15,8 +14,8 @@ const dbFile = path.join(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbFile);
 
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'BASSAM_SUPER_SECRET_KEY_2026';
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'BASSAM_SPIRITUAL_SECRET_KEY_2026';
 
 app.use(cors());
 app.use(express.json());
@@ -26,75 +25,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 // بناء الجداول تلقائياً عند التشغيل
 // ==============================================
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        full_name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        phone TEXT,
-        role TEXT DEFAULT 'user'
-    )`);
+    db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, phone TEXT, role TEXT DEFAULT 'user')`);
+    db.run(`CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, fullName TEXT, email TEXT, userPhone TEXT, serviceType TEXT, description TEXT, status TEXT DEFAULT 'pending', createdAt TEXT, paymentMethod TEXT, payment_sender_name TEXT, payment_transfer_number TEXT, initial_diagnosis TEXT, treatment_plan TEXT, payment_rejection_reason TEXT, FOREIGN KEY (user_id) REFERENCES users(id))`);
+    db.run(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, requestId INTEGER, senderId INTEGER, senderName TEXT, senderRole TEXT, messageText TEXT, createdAt TEXT, FOREIGN KEY (requestId) REFERENCES requests(id))`);
+    db.run(`CREATE TABLE IF NOT EXISTS articles (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, summary TEXT, content TEXT, icon TEXT DEFAULT 'bi bi-heart-fill', createdAt TEXT)`);
+    db.run(`CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER, fullName TEXT, comment TEXT, rating INTEGER, isApproved INTEGER DEFAULT 0, FOREIGN KEY (userId) REFERENCES users(id))`);
+    db.run(`CREATE TABLE IF NOT EXISTS ai_config (id INTEGER PRIMARY KEY AUTOINCREMENT, instructions TEXT)`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        fullName TEXT,
-        email TEXT,
-        userPhone TEXT,
-        serviceType TEXT,
-        description TEXT,
-        status TEXT DEFAULT 'pending',
-        createdAt TEXT,
-        paymentMethod TEXT,
-        payment_sender_name TEXT,
-        payment_transfer_number TEXT,
-        initial_diagnosis TEXT,
-        treatment_plan TEXT,
-        payment_rejection_reason TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        requestId INTEGER,
-        senderId INTEGER,
-        senderName TEXT,
-        senderRole TEXT,
-        messageText TEXT,
-        createdAt TEXT,
-        FOREIGN KEY (requestId) REFERENCES requests(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS articles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        summary TEXT,
-        content TEXT,
-        icon TEXT DEFAULT 'bi bi-heart-fill',
-        createdAt TEXT
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS reviews (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId INTEGER,
-        fullName TEXT,
-        comment TEXT,
-        rating INTEGER,
-        isApproved INTEGER DEFAULT 0,
-        FOREIGN KEY (userId) REFERENCES users(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS ai_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        instructions TEXT
-    )`);
-
-    // إدراج إعدادات الذكاء الاصطناعي الافتراضية إن لم تكن موجودة
     db.get(`SELECT COUNT(*) as count FROM ai_config`, (err, row) => {
         if (row.count === 0) {
-            db.run(`INSERT INTO ai_config (instructions) VALUES (?)`, [
-                "أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام. أجب على استفسارات الزوار بلطف وأدب جم."
-            ]);
+            db.run(`INSERT INTO ai_config (instructions) VALUES (?)`, ["أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام. أجب على استفسارات الزوار بلطف وأدب جم."]);
         }
     });
 });
