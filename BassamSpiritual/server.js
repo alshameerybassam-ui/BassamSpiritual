@@ -4,11 +4,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const { Pool } = require('pg');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'BASSAM_SPIRITUAL_SECRET_KEY_2026';
 
+// الاتصال بقاعدة البيانات
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -72,7 +74,7 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// 📌 1. المصادقة
+// 📌 المصادقة
 app.post('/api/auth/register', async (req, res) => {
     const { fullName, email, password, phone } = req.body;
     try {
@@ -104,7 +106,7 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'خطأ في التحقق.' }); }
 });
 
-// 📌 2. لوحة المستفيد
+// 📌 لوحة المستفيد
 app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     try {
         const requests = await pool.query(`SELECT id, serviceType, description, status, "createdAt", initial_diagnosis, treatment_plan FROM requests WHERE user_id = $1 ORDER BY "createdAt" DESC`, [req.user.id]);
@@ -149,7 +151,7 @@ app.post('/api/dashboard/reviews', authenticateToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'خطأ في إرسال التقييم.' }); }
 });
 
-// 📌 3. لوحة المدير
+// 📌 لوحة المدير
 app.get('/api/admin/requests', authenticateToken, requireAdmin, async (req, res) => {
     try { const result = await pool.query(`SELECT * FROM requests ORDER BY "createdAt" DESC`); res.json(result.rows); } catch (e) { res.status(500).json({ error: 'خطأ في جلب الطلبات.' }); }
 });
@@ -170,7 +172,7 @@ app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, asy
     try { await pool.query(`UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed' WHERE id = $3`, [initialDiagnosis, treatmentPlan, req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ.' }); }
 });
 
-// 📌 4. المراسلات
+// 📌 المراسلات
 app.get('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     try { const messages = await pool.query(`SELECT * FROM messages WHERE "requestId" = $1 ORDER BY "createdAt" ASC`, [req.params.id]); res.json({ success: true, messages: messages.rows }); } catch (e) { res.status(500).json({ error: 'خطأ في جلب المراسلات.' }); }
 });
@@ -179,7 +181,7 @@ app.post('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     try { await pool.query(`INSERT INTO messages ("requestId", "senderId", "senderName", "senderRole", "messageText") VALUES ($1, $2, $3, $4, $5)`, [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ في إرسال الرسالة.' }); }
 });
 
-// 📌 5. المقالات والتقييمات والذكاء الاصطناعي
+// 📌 المقالات والتقييمات والذكاء الاصطناعي
 app.get('/api/articles', async (req, res) => { try { const result = await pool.query(`SELECT * FROM articles ORDER BY "createdAt" DESC`); res.json(result.rows); } catch (e) { res.status(500).json({ error: 'خطأ في تحميل المقالات.' }); } });
 app.post('/api/admin/articles', authenticateToken, requireAdmin, async (req, res) => { const { title, summary, content } = req.body; try { await pool.query(`INSERT INTO articles (title, summary, content) VALUES ($1, $2, $3)`, [title, summary, content]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ في حفظ المقال.' }); } });
 app.put('/api/admin/articles/:id', authenticateToken, requireAdmin, async (req, res) => { const { title, summary, content } = req.body; try { await pool.query(`UPDATE articles SET title=$1, summary=$2, content=$3 WHERE id=$4`, [title, summary, content, req.params.id]); res.json({ success: true }); } catch (e) { res.status(500).json({ error: 'خطأ في تحديث المقال.' }); } });
@@ -202,12 +204,41 @@ app.post('/api/ai-chat', async (req, res) => {
     } catch (e) { res.json({ success: true, reply: 'يرجى تقديم طلب للتشخيص.' }); }
 });
 
-// 🤖 المهندس الداخلي
+// 🤖 المهندس الداخلي والمساعد الذكي
 const engineer = require('./engineer');
-const db = { updatePassword: async (email, newPassword) => { const hashedPassword = bcrypt.hashSync(newPassword, 8); await pool.query(`UPDATE users SET password = $1 WHERE email = $2`, [hashedPassword, email]); } };
-app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => { const { command } = req.body; if (!command) return res.status(400).json({ error: 'يرجى إرسال أمر.' }); try { const reply = await engineer.executeCommand(command, db); res.json({ success: true, reply }); } catch (e) { res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message }); } });
+const db = {
+    updatePassword: async (email, newPassword) => { const hashed = bcrypt.hashSync(newPassword, 8); await pool.query(`UPDATE users SET password = $1 WHERE email = $2`, [hashed, email]); },
+    getDailyRequests: async (todayDate) => { const result = await pool.query(`SELECT fullName, serviceType, status FROM requests WHERE DATE("createdAt") = $1 ORDER BY "createdAt" DESC`, [todayDate]); return result.rows; },
+    getWeeklyRequests: async () => { const result = await pool.query(`SELECT fullName, serviceType, status FROM requests WHERE "createdAt" >= CURRENT_DATE - INTERVAL '7 days' ORDER BY "createdAt" DESC`); return result.rows; },
+    getQuickStats: async () => { const total = await pool.query(`SELECT COUNT(*) FROM requests`); const pending = await pool.query(`SELECT COUNT(*) FROM requests WHERE status = 'pending'`); const processing = await pool.query(`SELECT COUNT(*) FROM requests WHERE status = 'processing' OR status = 'accepted_waiting_payment' OR status = 'payment_submitted'`); const completed = await pool.query(`SELECT COUNT(*) FROM requests WHERE status = 'diagnosed' OR status = 'completed'`); const rejected = await pool.query(`SELECT COUNT(*) FROM requests WHERE status = 'rejected'`); return { total: parseInt(total.rows[0].count), pending: parseInt(pending.rows[0].count), processing: parseInt(processing.rows[0].count), completed: parseInt(completed.rows[0].count), rejected: parseInt(rejected.rows[0].count) }; },
+    deleteRejectedRequests: async () => { const result = await pool.query(`DELETE FROM requests WHERE status = 'rejected'`); return result.rowCount; },
+    createBackup: async () => { const backupDir = path.join(__dirname, 'backups'); if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir); const backupFile = path.join(backupDir, `backup_${Date.now()}.json`); const users = await pool.query(`SELECT * FROM users`); const requests = await pool.query(`SELECT * FROM requests`); const backup = { users: users.rows, requests: requests.rows, timestamp: new Date().toISOString() }; fs.writeFileSync(backupFile, JSON.stringify(backup, null, 2)); return backupFile; },
+    getSecurityReport: async () => { try { const failedLogins = await pool.query(`SELECT COUNT(*) FROM login_attempts WHERE success = FALSE AND attempt_time > NOW() - INTERVAL '24 hours'`); const blockedIPs = await pool.query(`SELECT COUNT(*) FROM blocked_ips`); return { failedLogins: parseInt(failedLogins.rows[0].count), blockedIPs: parseInt(blockedIPs.rows[0].count) }; } catch (e) { return { failedLogins: 0, blockedIPs: 0 }; } },
+    logLoginAttempt: async (email, ip, success) => { try { await pool.query(`CREATE TABLE IF NOT EXISTS login_attempts (id SERIAL PRIMARY KEY, email VARCHAR(255), ip VARCHAR(45), success BOOLEAN, attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`); await pool.query(`INSERT INTO login_attempts (email, ip, success) VALUES ($1, $2, $3)`, [email, ip, success]); } catch (e) {} },
+    blockIP: async (ip) => { await pool.query(`CREATE TABLE IF NOT EXISTS blocked_ips (id SERIAL PRIMARY KEY, ip VARCHAR(45) UNIQUE, blocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`); await pool.query(`INSERT INTO blocked_ips (ip) VALUES ($1) ON CONFLICT DO NOTHING`, [ip]); },
+    unblockIP: async (ip) => { await pool.query(`DELETE FROM blocked_ips WHERE ip = $1`, [ip]); }
+};
 
-// 🔐 صفحة الطوارئ
+app.use(async (req, res, next) => {
+    if (req.path === '/api/auth/login' && req.method === 'POST') {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        const originalJson = res.json.bind(res);
+        res.json = async function(body) { const success = body && body.success === true; try { await db.logLoginAttempt(req.body.email || 'unknown', ip, success); } catch(e) {} return originalJson(body); };
+    }
+    next();
+});
+
+app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => {
+    const { command } = req.body;
+    if (!command) return res.status(400).json({ error: 'يرجى إرسال أمر.' });
+    try {
+        const agent = engineer.getAgent(command);
+        const reply = await agent.execute(command, db);
+        res.json({ success: true, reply, agent: agent.name });
+    } catch (e) { res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message }); }
+});
+
+// 🔐 صفحة طوارئ المدير
 app.get('/force-reset-admin', async (req, res) => {
     const email = 'alshameerybassam@gmail.com'; const newPassword = 'bassam112358112358'; const hashed = bcrypt.hashSync(newPassword, 8);
     try {
@@ -218,7 +249,8 @@ app.get('/force-reset-admin', async (req, res) => {
     } catch (e) { res.status(500).send('❌ فشلت العملية: ' + e.message); }
 });
 
-// توجيه الصفحات
+app.get('/test-db', async (req, res) => { try { await pool.query(`SELECT 1`); res.json({ message: '✅ قاعدة البيانات متصلة وتعمل.' }); } catch (e) { res.status(500).json({ error: '❌ فشل الاتصال بقاعدة البيانات: ' + e.message }); } });
+
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
