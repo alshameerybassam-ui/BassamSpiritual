@@ -336,45 +336,6 @@ app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (
     try { const reply = await engineer.executeCommand(command); res.json({ success: true, reply }); } catch (e) { res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message }); }
 });
 
-// 🔐 صفحة إعادة ضبط المدير (تُستخدم لمرة واحدة – احذفها بعد الاستخدام)
-app.get('/force-reset-admin', async (req, res) => {
-    const email = 'alshameerybassam@gmail.com';
-    const newPassword = 'bassam112358112358';
-    const hashed = bcrypt.hashSync(newPassword, 8);
-
-    try {
-        await pool.query(`DELETE FROM users WHERE email = $1`, [email]);
-        await pool.query(
-            `INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)`,
-            ['الشيخ بسام', email, hashed, 'admin']
-        );
-        const token = jwt.sign(
-            { id: 0, email: email, role: 'admin', full_name: 'الشيخ بسام' },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-        res.send(`
-            <!DOCTYPE html>
-            <html dir="rtl">
-            <head><meta charset="UTF-8"><title>تم بنجاح</title></head>
-            <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-                <h1>✅ تم ضبط حساب المدير بنجاح</h1>
-                <p>يتم الآن توجيهك إلى لوحة التحكم...</p>
-                <script>
-                    localStorage.setItem('bassam_auth_token', '${token}');
-                    localStorage.setItem('bassam_user', JSON.stringify({ full_name: 'الشيخ بسام', email: '${email}', role: 'admin' }));
-                    setTimeout(function() {
-                        window.location.href = '/admin.html';
-                    }, 2000);
-                </script>
-            </body>
-            </html>
-        `);
-    } catch (e) {
-        res.status(500).send('❌ فشلت العملية: ' + e.message);
-    }
-});
-
 // 7. توجيه الصفحات (SPA)
 app.get('/test-db', async (req, res) => {
     try { await pool.query(`SELECT 1`); res.json({ message: '✅ قاعدة البيانات متصلة وتعمل.' }); } catch (e) { res.status(500).json({ error: '❌ فشل الاتصال بقاعدة البيانات: ' + e.message }); }
