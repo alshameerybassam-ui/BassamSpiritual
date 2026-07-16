@@ -20,7 +20,7 @@
             --text-dark: #1A2530;
             --text-medium: #334155;
             --text-light: #5C6B73;
-            --border-color: #D1C4A5;
+            --border-color: #D1C4A5; /* لون حدود أكثر هدوءًا من الذهب */
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -164,6 +164,7 @@
         .back-home-btn { display: block; text-align: center; margin: 30px auto 20px; max-width: 300px; padding: 12px 30px; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #0A1628; text-decoration: none; border-radius: 40px; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 6px 20px rgba(245,176,65,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
         .back-home-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(245,176,65,0.45); }
 
+        /* 📱 تجاوب الجوال */
         @media (max-width: 768px) {
             .top-nav { padding: 10px 12px; justify-content: center; }
             .top-nav .brand { font-size: 0.95rem; }
@@ -210,6 +211,7 @@
     </style>
 </head>
 <body>
+
     <nav class="top-nav">
         <a href="/" class="brand"><i class="bi bi-shield-fill"></i><span>مركز النور الرباني</span></a>
         <div class="nav-links">
@@ -229,6 +231,7 @@
             <div class="icon-circle"><i class="bi bi-tree-fill"></i></div>
             <h2>وثيقة النسب الشريف</h2>
             
+            <!-- ===== صورة التوثيق الرصينة ===== -->
             <div class="portrait-section">
                 <div class="portrait-frame">
                     <img src="https://raw.githubusercontent.com/alshameerybassam-ui/BassamSpiritual/0da1a2d0f32198236f12d3b43360432542572eb2/BassamSpiritual/public/sheikh-bassam.jpg" alt="الشيخ بسام الشميري" class="portrait-photo">
@@ -243,10 +246,75 @@
 
         <div class="gold-divider"><span class="line"></span><i class="bi bi-star-fill"></i><span class="line"></span></div>
         <div class="basmala">بسم الله الرحمن الرحيم</div>
-        <p class="intro-text">الحمد لله الذي جعلنا من ذرية نبيّه المصطفى ﷺ...</p>
-        <p class="intro-text">أما بعد، فإن النسب الشريف المحفوظ والمتصل للشيخ <strong>بسام بن محمد بن هزاع الشميري</strong>...</p>
-        <!-- بقية المحتوى كما هو في الملف السابق -->
+        
+        <p class="intro-text">الحمد لله الذي جعلنا من ذرية نبيّه المصطفى ﷺ، وشرّفنا بالانتساب إليه، وجعل شرف النسب مقرونًا بلزوم التقوى والعمل الصالح. والصلاة والسلام على سيدنا محمد، النبي الأمي، وعلى آله الطيبين الطاهرين، وصحبه الغر الميامين، ومن تبعهم بإحسان إلى يوم الدين.</p>
+        <p class="intro-text">أما بعد، فإن النسب الشريف المحفوظ والمتصل للشيخ <strong>بسام بن محمد بن هزاع الشميري</strong>، والمُثبَت في مشجرات الأسرة وكتب الأنساب المعتمدة، ينتظم على هذا الوجه المبارك:</p>
+
+        <h3 class="tree-title"><i class="bi bi-tree"></i> عمود النسب المتصل</h3>
+        <div class="lineage-tree">
+            <div class="lineage-node highlight"><strong>بسام</strong> (صاحب الوثيقة)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>هزاع</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>قائد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>ثابت</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>حسن</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>عثمان</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>سعيد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>بدر الدين</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن الفقيه <strong>عبيد الله</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن السيد <strong>برهان الدين إبراهيم</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>بدر الدين حسن</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>شمس الدين علي</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>أحمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>علي</strong> (صاحب كِدْه)</div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>محمد الفقيه المقدم</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علي</strong> (أبي الحسن)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong> (صاحب مرباط)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علي</strong> (خالع قسم)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علوي</strong> (عم الفقيه)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>علوي</strong> (أول داخل حضرموت)</div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>عبيد الله</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن <strong>أحمد المهاجر</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>عيسى النقيب</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>محمد النقيب</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن <strong>علي العريضي</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن الإمام <strong>جعفر الصادق</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن الإمام <strong>محمد الباقر</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن الإمام <strong>علي زين العابدين</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node highlight">بن الإمام <strong>الحسين السبط</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">بن أمير المؤمنين <strong>علي بن أبي طالب</strong></div>
+            <div class="lineage-connector"></div><div class="lineage-node">والسيدة <strong>فاطمة الزهراء</strong> بنت رسول الله</div>
+            <div class="lineage-connector"></div><div class="lineage-node prophet">سيدنا <strong>محمد</strong> رسول الله ﷺ</div>
+        </div>
+
+        <h3 class="section-heading"><i class="bi bi-journal-bookmark-fill"></i> بيان الألقاب وأصل النسب</h3>
+        <p class="intro-text">ينحدر الشيخ <strong>بسام بن محمد بن هزاع الشميري</strong> من دوحة السادة <strong>آل الكدهي</strong>...</p>
+        <p class="intro-text">هذا الإمام الجليل هو أول من انتقل من حضرموت إلى تعز...</p>
+        <p class="intro-text">أما لقب <strong>(الشميري)</strong> الذي تحمله الأسرة رسمياً...</p>
+
+        <h3 class="section-heading"><i class="bi bi-shield-check"></i> مستندات التوثيق والتحقيق التاريخي</h3>
+        <ul class="docs-list">
+            <li class="docs-item"><div class="docs-index">١</div><div class="docs-content"><strong>الجزء من بسام إلى الفقيه عبيد الله</strong> ثابت ومحفوظ...</div></li>
+            <li class="docs-item"><div class="docs-index">٢</div><div class="docs-content"><strong>الجزء من السيد برهان الدين إبراهيم إلى الإمام علي صاحب كده</strong> ثابت بكتاب "المشرع الروي"...</div></li>
+            <li class="docs-item"><div class="docs-index">٣</div><div class="docs-content"><strong>الجزء من محمد الفقيه المقدم إلى أحمد المهاجر</strong> ثابت في "المشرع الروي"...</div></li>
+            <li class="docs-item"><div class="docs-index">٤</div><div class="docs-content"><strong>الجزء من أحمد المهاجر إلى رسول الله ﷺ</strong> هو العمود العلوي المتفق عليه...</div></li>
+        </ul>
+
+        <div class="gold-divider gold-divider-bottom"><span class="line"></span><i class="bi bi-patch-check-fill"></i><span class="line"></span></div>
+        <p class="doc-footer-text">وآخر دعوانا أن الحمد لله رب العالمين...</p>
+        
+        <div class="signature-card">
+            <h4>الشيخ بسام بن محمد بن هزاع الشميري (آل الكدهي)</h4>
+            <p class="role">مدير مركز النور الرباني والنَفَس الرحماني</p>
+            <div class="signature-meta">
+                <a href="mailto:alshameerybassam@gmail.com"><i class="bi bi-envelope-paper"></i> alshameerybassam@gmail.com</a>
+                <a href="https://bassam-spiritual-center.onrender.com" target="_blank"><i class="bi bi-globe2"></i> bassam-spiritual-center.onrender.com</a>
+            </div>
+        </div>
     </div>
+
     <a href="/" class="back-home-btn"><i class="bi bi-arrow-right"></i> العودة إلى الصفحة الرئيسية</a>
 </body>
 </html>
