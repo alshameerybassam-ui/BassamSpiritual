@@ -2,268 +2,335 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لوحة المستفيد | مركز النور الرباني</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2 family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="style.css">
     
     <style>
+        :root {
+            --deep-navy: #0A1628;
+            --gold: #F5B041;
+            --gold-dark: #E67E22;
+            --card-bg: #FFFFFF;
+            --bg-main: #F4F6F9;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            margin: 0;
-            padding: 0;
+            background: var(--bg-main);
+            color: var(--deep-navy);
+            min-height: 100vh;
         }
-        .user-container {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 20px;
+        .dashboard-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 25px 20px 40px;
         }
-        .user-header {
-            background: linear-gradient(135deg, #0A1628 0%, #1B2A3D 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 20px;
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--deep-navy), #1B2A3D);
+            color: #fff;
+            padding: 25px 30px;
+            border-radius: 24px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(10, 22, 40, 0.15);
-            border-bottom: 4px solid #F5B041;
+            box-shadow: 0 15px 40px rgba(10,22,40,0.2);
+            border-bottom: 5px solid var(--gold);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        .user-header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
-        .user-header h1 span {
-            color: #F5B041;
-        }
-        .logout-btn {
-            background-color: rgba(231, 76, 60, 0.2);
-            color: #ff7675;
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            padding: 8px 16px;
-            border-radius: 10px;
-            cursor: pointer;
+        .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; }
+        .dashboard-header h1 span { color: var(--gold); }
+        .btn-outline-light {
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 18px;
+            border-radius: 30px;
             font-weight: 700;
+            cursor: pointer;
             text-decoration: none;
+            font-size: 0.9rem;
             transition: 0.3s;
         }
-        .logout-btn:hover {
-            background-color: #e74c3c;
-            color: white;
+        .btn-outline-light:hover { background: #e74c3c; border-color: #e74c3c; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #0A1628;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .dashboard-card {
-            background: #fff;
-            border-radius: 15px;
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,176,65,0.4); }
+        
+        .grid-2col { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.04);
+            border-right: 5px solid var(--gold);
             margin-bottom: 25px;
         }
-        .dashboard-card h3 {
-            margin-top: 0;
-            color: #0A1628;
-            border-bottom: 1px solid #f1f1f1;
-            padding-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .status-box {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background-color: #fdfaf4;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(245, 176, 65, 0.2);
-            margin-top: 15px;
-        }
-        .status-icon {
-            font-size: 2rem;
-            color: #F5B041;
-        }
-        .badge-status {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-        .badge-pending { background-color: #ffeaa7; color: #d63031; }
-        .badge-progress { background-color: #dfe6e9; color: #2d3436; }
-        .badge-completed { background-color: #dff9fb; color: #0984e3; }
+        .card h3 { font-size: 1.2rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .card h3 i { color: var(--gold); font-size: 1.4rem; }
         
-        .sheikh-notes {
-            background-color: #f0f3f6;
-            border-right: 4px solid #0A1628;
-            padding: 15px;
-            border-radius: 4px 12px 12px 4px;
-            margin-top: 15px;
+        .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .stat-item:last-child { border-bottom: none; }
+        
+        .request-card {
+            background: #FAFBFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 12px;
+            transition: 0.3s;
+        }
+        .request-card:hover { border-color: var(--gold); box-shadow: 0 5px 20px rgba(245,176,65,0.1); }
+        .request-card .badge-status {
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-pending { background: #FEF3C7; color: #92400E; }
+        .badge-processing { background: #DBEAFE; color: #1E40AF; }
+        .badge-completed { background: #D1FAE5; color: #065F46; }
+        .badge-rejected { background: #FEE2E2; color: #991B1B; }
+        
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,22,40,0.7);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 24px;
+            max-width: 550px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            border-top: 8px solid var(--gold);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 { margin-bottom: 20px; color: var(--deep-navy); }
+        .modal-box textarea, .modal-box select, .modal-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-family: 'Cairo';
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        .modal-box textarea { min-height: 120px; }
+        .modal-close {
+            float: left;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #999;
+            transition: 0.3s;
+            background: none;
+            border: none;
+        }
+        .modal-close:hover { color: #e74c3c; transform: rotate(90deg); }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            z-index: 99999;
+            display: none;
+            min-width: 300px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            font-family: 'Cairo';
+        }
+        .notification.success { background: #27ae60; }
+        .notification.error { background: #e74c3c; }
+        .notification.show { display: block; }
+        
+        @media (max-width: 768px) {
+            .grid-2col { grid-template-columns: 1fr; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
 
-    <div class="user-container">
-        <!-- ترويسة لوحة تحكم المستفيد -->
-        <header class="user-header">
-            <div>
-                <h1 id="welcomeMessage">أهلاً بك يا <span>مستفيد</span></h1>
-                <p style="margin: 5px 0 0; color: #aec1d4; font-size: 0.95rem;"><i class="bi bi-shield-fill-check" style="color: #F5B041;"></i> خصوصيتك وسريتك محفوظة بعهد الله ومحمية بالكامل.</p>
-            </div>
-            <a href="/logout" class="logout-btn"><i class="bi bi-box-arrow-right"></i> تسجيل الخروج</a>
-        </header>
+    <div id="notification" class="notification"></div>
 
-        <!-- كارت حالة طلب العلاج الحالي للزائر -->
-        <div class="dashboard-card">
-            <h3><i class="bi bi-activity" style="color: #F5B041;"></i> حالة طلب التشخيص والعلاج الحالي</h3>
-            
-            <div id="requestStatusContainer">
-                <p style="text-align: center; color: #7f8c8d;"><i class="bi bi-arrow-clockwise btn-spin"></i> جاري جلب تفاصيل طلبك بأمان...</p>
+    <div class="dashboard-container">
+        <!-- الهيدر -->
+        <div class="dashboard-header">
+            <div>
+                <h1 id="welcomeMessage">مرحباً، <span>مستفيد النور</span></h1>
+                <p style="opacity:0.8; margin-top:5px;"><i class="bi bi-shield-fill-check" style="color:var(--gold);"></i> جلسة آمنة ومشفرة بخصوصية تامة</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn-primary" onclick="openNewRequestModal()"><i class="bi bi-plus-circle"></i> طلب جديد</button>
+                <a href="/login.html" class="btn-outline-light" onclick="localStorage.clear()"><i class="bi bi-box-arrow-right"></i> خروج</a>
             </div>
         </div>
 
-        <!-- كارت تقديم رأي أو تجربة بعد الشفاء -->
-        <div class="dashboard-card" id="feedbackCard" style="display: none;">
-            <h3><i class="bi bi-chat-quote-fill" style="color: #F5B041;"></i> مشاركة تجربة شفائك (اختياري)</h3>
-            <p style="font-size: 0.9rem; color: #7f8c8d;">مشاركتك لتجربتك تساعد الآخرين على التمسك بالأمل واليقين بالشفاء الرباني. (يمكنك الكتابة باسم مستعار لحفظ كامل خصوصيتك).</p>
-            
-            <form id="testimonialForm" onsubmit="submitTestimonial(event)">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">الاسم (أو اسم مستعار يضمن خصوصيتك):</label>
-                    <input type="text" id="testName" class="form-control" placeholder="مثال: فاعل خير، أخت في الله، مستفيد كريم" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+        <div class="grid-2col">
+            <!-- العمود الأيسر: الملف الشخصي والإحصائيات -->
+            <div>
+                <div class="card">
+                    <h3><i class="bi bi-person-circle"></i> ملفي الشخصي</h3>
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                        <div style="width:55px; height:55px; border-radius:50%; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); display:flex; align-items:center; justify-content:center; color:#0A1628; font-size:1.5rem; font-weight:800;">ب</div>
+                        <div>
+                            <strong id="sidebarName" style="font-size:1.1rem;">---</strong>
+                            <br><small id="sidebarEmail" style="color:#666;">---</small>
+                        </div>
+                    </div>
+                    <div class="stat-item"><span>📱 الهاتف</span> <span id="sidebarPhone">---</span></div>
+                    <div class="stat-item"><span>📅 التسجيل</span> <span id="sidebarJoined">---</span></div>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">التقييم:</label>
-                    <select id="testRating" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                        <option value="5">⭐⭐⭐⭐⭐ ممتاز جداً</option>
-                        <option value="4">⭐⭐⭐⭐ جيد جداً</option>
-                        <option value="3">⭐⭐⭐ جيد</option>
-                    </select>
+
+                <div class="card">
+                    <h3><i class="bi bi-chart-pie"></i> إحصائياتي</h3>
+                    <div class="stat-item"><span>📋 إجمالي الطلبات</span> <span id="statTotal">0</span></div>
+                    <div class="stat-item"><span>⏳ قيد الانتظار</span> <span id="statPending">0</span></div>
+                    <div class="stat-item"><span>✅ مكتملة</span> <span id="statCompleted">0</span></div>
+                    <div class="stat-item"><span>❌ ملغاة</span> <span id="statRejected">0</span></div>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">اكتب تجربتك أو كلمتك للشيخ بسام:</label>
-                    <textarea id="testFeedback" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" placeholder="اكتب هنا ما شعرت به من تحسن وتجربتك مع الرقية والعلاج..." required></textarea>
+            </div>
+
+            <!-- العمود الأيمن: الطلبات -->
+            <div>
+                <div class="card" style="border-right-color: #1B4D3D;">
+                    <h3><i class="bi bi-list-ul"></i> طلباتي العلاجية</h3>
+                    <div id="requestsContainer">
+                        <p style="text-align:center; color:#888; padding:20px;">جاري تحميل الطلبات...</p>
+                    </div>
                 </div>
-                <button type="submit" style="background: linear-gradient(135deg, #F5B041, #E67E22); color: #0A1628; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">إرسال المراجعة</button>
+                
+                <!-- قسم التقييم يظهر عند اكتمال الطلب -->
+                <div id="feedbackSection" style="display:none;">
+                    <div class="card" style="border-right-color: #2ecc71;">
+                        <h3><i class="bi bi-chat-quote-fill" style="color:#2ecc71;"></i> شارك تجربتك</h3>
+                        <form id="reviewForm" onsubmit="submitReview(event)">
+                            <label style="font-weight:600; display:block; margin-bottom:5px;">التقييم</label>
+                            <select id="reviewRating" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; margin-bottom:10px; font-family:'Cairo';">
+                                <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
+                                <option value="4">⭐⭐⭐⭐ جيد جداً</option>
+                                <option value="3">⭐⭐⭐ جيد</option>
+                            </select>
+                            <label style="font-weight:600; display:block; margin-bottom:5px;">تعليقك</label>
+                            <textarea id="reviewComment" placeholder="اكتب تجربتك..." required></textarea>
+                            <button type="submit" class="btn-primary" style="width:100%;"><i class="bi bi-send"></i> إرسال</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تقديم طلب جديد -->
+    <div id="newRequestModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeNewRequestModal()">&times;</button>
+            <h3><i class="bi bi-heart-pulse"></i> تقديم طلب جديد</h3>
+            <form id="newRequestForm" onsubmit="submitNewRequest(event)">
+                <label style="font-weight:600; display:block; margin-bottom:5px;">نوع الخدمة</label>
+                <select id="reqServiceType" required>
+                    <option value="استشارة روحانية">استشارة روحانية (100 ر.س)</option>
+                    <option value="علاج روحي">علاج روحي (100 ر.س)</option>
+                    <option value="تفسير رؤيا">تفسير رؤيا (100 ر.س)</option>
+                    <option value="حل مشكلة أسرية">حل مشكلة أسرية (100 ر.س)</option>
+                    <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
+                </select>
+                <label style="font-weight:600; display:block; margin-bottom:5px;">وصف الحالة بالتفصيل</label>
+                <textarea id="reqDescription" placeholder="اكتب ما تعاني منه بكل وضوح..." required></textarea>
+                <button type="submit" class="btn-primary" style="width:100%;"><i class="bi bi-send"></i> إرسال الطلب</button>
             </form>
         </div>
     </div>
 
+    <script src="api.js"></script>
     <script>
-        // دالة جلب بيانات المستفيد وطلبه الشخصي فقط
-        async function fetchUserProfile() {
-            try {
-                // جلب بيانات الجلسة الحالية للمستفيد
-                const response = await fetch('/api/user/profile');
-                if (!response.ok) {
-                    window.location.href = '/login.html';
-                    return;
-                }
-                const data = await response.json();
-                
-                document.getElementById('welcomeMessage').innerHTML = `أهلاً بك يا <span>${data.name}</span>`;
-                
-                // جلب الطلب الخاص بهذا المستفيد فقط
-                fetchUserRequest(data.userId);
-            } catch (error) {
-                console.error(error);
-                window.location.href = '/login.html';
-            }
+        // ✅ دوال مساعدة
+        function showToast(msg, type='success') {
+            const n = document.getElementById('notification');
+            if(!n) return;
+            n.textContent = msg;
+            n.className = `notification ${type} show`;
+            setTimeout(() => n.classList.remove('show'), 5000);
         }
 
-        async function fetchUserRequest(userId) {
-            const container = document.getElementById('requestStatusContainer');
-            try {
-                const response = await fetch(`/api/user/requests`);
-                const reqs = await response.json();
-
-                if (!reqs || reqs.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 20px;">
-                            <i class="bi bi-clipboard-x-fill" style="font-size: 2.5rem; color: #bdc3c7;"></i>
-                            <p style="margin-top: 10px;">لم تقم بتقديم أي طلب علاج أو كشف بعد.</p>
-                            <a href="/login.html" style="color: #F5B041; text-decoration: none; font-weight: bold;">اضغط هنا لتقديم طلبك الأول الآن</a>
-                        </div>`;
-                    return;
-                }
-
-                // نأخذ آخر طلب قدمه المستفيد لمتابعته
-                const activeReq = reqs[0]; 
-
-                let statusBadge = '';
-                let statusDesc = '';
-
-                if (activeReq.status === 'pending') {
-                    statusBadge = '<span class="badge-status badge-pending">قيد المراجعة</span>';
-                    statusDesc = 'تلقينا طلبك بخصوصية تامة، وسيقوم الشيخ بسام بالاطلاع عليه وتشخيصه قريباً جداً بإذن الله.';
-                } else if (activeReq.status === 'progress') {
-                    statusBadge = '<span class="badge-status badge-progress">تحت العلاج والاتصال</span>';
-                    statusDesc = 'طلبك مقبول وهو الآن تحت رعاية ومتابعة الشيخ بسام المباشرة.';
-                } else {
-                    statusBadge = '<span class="badge-status badge-completed">تم العلاج والشفاء</span>';
-                    statusDesc = 'بفضل الله ونوره، تم إتمام خطتك العلاجية وحالتك مسجلة لدينا كمستكملة الشفاء.';
-                    // إظهار كارت كتابة الرأي للمستشفى الشافي
-                    document.getElementById('feedbackCard').style.display = 'block';
-                }
-
-                container.innerHTML = `
-                    <div class="status-box">
-                        <i class="bi bi-shield-fill-check status-icon"></i>
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                <strong style="font-size: 1.1rem;">نوع الخدمة: ${activeReq.serviceType || activeReq.service || 'استشفاء عام'}</strong>
-                                ${statusBadge}
-                            </div>
-                            <p style="margin: 0; font-size: 0.95rem; color: #555;">${statusDesc}</p>
-                        </div>
-                    </div>
-                    
-                    ${activeReq.adminNotes ? `
-                        <div class="sheikh-notes">
-                            <h5 style="margin: 0 0 5px 0; color: #0A1628;"><i class="bi bi-chat-left-text-fill"></i> توجيهات وخطة علاج الشيخ بسام الشميري:</h5>
-                            <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: #2c3e50;">${activeReq.adminNotes}</p>
-                        </div>
-                    ` : ''}
-                `;
-
-            } catch (error) {
-                container.innerHTML = `<p style="color: red; text-align: center;">حدث خطأ أثناء جلب تفاصيل طلبك.</p>`;
-            }
+        function openNewRequestModal() {
+            document.getElementById('newRequestModal').classList.add('show');
+        }
+        function closeNewRequestModal() {
+            document.getElementById('newRequestModal').classList.remove('show');
         }
 
-        async function submitTestimonial(event) {
-            event.preventDefault();
-            const name = document.getElementById('testName').value.trim();
-            const rating = document.getElementById('testRating').value;
-            const feedback = document.getElementById('testFeedback').value.trim();
-
+        // ✅ تقديم طلب جديد
+        async function submitNewRequest(e) {
+            e.preventDefault();
+            const serviceType = document.getElementById('reqServiceType').value;
+            const description = document.getElementById('reqDescription').value.trim();
+            if(!description) return showToast('الرجاء كتابة وصف للحالة.', 'error');
             try {
-                const response = await fetch('/api/testimonials', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, rating: parseInt(rating), feedback, service: "برنامج استشفائي متكامل" })
-                });
-
-                if (response.ok) {
-                    alert('تم إرسال تجربتك بنجاح يا أخي الكريم. ستبقى معلقة للمراجعة والسرية والموافقة قبل النشر العام.');
-                    document.getElementById('testimonialForm').reset();
-                } else {
-                    alert('عذراً، فشل إرسال التجربة.');
+                await UserAPI.submitRequest(serviceType, description);
+                showToast('تم تقديم الطلب بنجاح.');
+                closeNewRequestModal();
+                document.getElementById('newRequestForm').reset();
+                if (typeof DashboardModule !== 'undefined') {
+                    DashboardModule.load();
                 }
-            } catch (err) {
-                alert('خطأ في الاتصال بالخادم.');
-            }
+            } catch(err) { showToast(err.message, 'error'); }
         }
 
-        document.addEventListener('DOMContentLoaded', fetchUserProfile);
+        // ✅ تقديم تقييم
+        async function submitReview(e) {
+            e.preventDefault();
+            const rating = document.getElementById('reviewRating').value;
+            const comment = document.getElementById('reviewComment').value.trim();
+            if(!comment) return showToast('الرجاء كتابة تعليق.', 'error');
+            try {
+                await UserAPI.submitReview(comment, rating);
+                showToast('شكراً لمشاركتك تجربتك.');
+                document.getElementById('reviewForm').reset();
+            } catch(err) { showToast(err.message, 'error'); }
+        }
+
+        // ✅ تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof DashboardModule !== 'undefined') {
+                DashboardModule.init();
+            }
+        });
     </script>
 </body>
 </html>
