@@ -40,13 +40,49 @@
         .form-group { margin-bottom: 18px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #0A1628; font-size: 0.9rem; }
         .input-wrapper { position: relative; }
-        .input-wrapper i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 1.2rem; }
+        .input-wrapper .input-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 1.2rem; pointer-events: none; }
         .input-wrapper input {
-            width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #E2E8F0; border-radius: 12px;
+            width: 100%; padding: 12px 45px 12px 45px; border: 2px solid #E2E8F0; border-radius: 12px;
             font-family: 'Cairo', sans-serif; font-size: 1rem; transition: 0.3s; box-sizing: border-box;
         }
         .input-wrapper input:focus { border-color: #F5B041; outline: none; box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15); }
-        
+
+        /* أيقونة العين لإظهار/إخفاء كلمة المرور */
+        .toggle-password-btn {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            line-height: 1;
+            z-index: 2;
+        }
+        .toggle-password-btn:hover { color: #F5B041; }
+
+        /* أيقونة الميكروفون */
+        .mic-btn {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            line-height: 1;
+            z-index: 2;
+        }
+        .mic-btn:hover { color: #F5B041; }
+        .mic-btn.recording { color: #e74c3c; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
         .btn-submit {
             width: 100%; padding: 14px; background: linear-gradient(135deg, #F5B041, #E67E22);
             color: #0A1628; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 800;
@@ -59,6 +95,18 @@
         .auth-link { text-align: center; margin-top: 20px; color: #64748B; font-size: 0.95rem; }
         .auth-link a { color: #F5B041; text-decoration: none; font-weight: 700; }
         
+        .forgot-link {
+            text-align: center;
+            margin-top: 8px;
+        }
+        .forgot-link a {
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+        .forgot-link a:hover { color: #F5B041; }
+
         .notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 15px 25px;
             border-radius: 12px; color: #fff; font-weight: 600; z-index: 9999; display: none;
@@ -86,22 +134,35 @@
         </div>
 
         <form id="loginForm">
+            <!-- حقل البريد الإلكتروني مع ميكروفون -->
             <div class="form-group">
                 <label>البريد الإلكتروني</label>
                 <div class="input-wrapper">
-                    <i class="bi bi-envelope"></i>
+                    <i class="bi bi-envelope input-icon"></i>
                     <input type="email" id="loginEmail" placeholder="example@email.com" required>
+                    <button type="button" class="mic-btn" id="emailMicBtn" title="تحدث بالبريد الإلكتروني">
+                        <i class="bi bi-mic"></i>
+                    </button>
                 </div>
             </div>
+            <!-- حقل كلمة المرور مع أيقونة العين -->
             <div class="form-group">
                 <label>كلمة المرور</label>
                 <div class="input-wrapper">
-                    <i class="bi bi-lock"></i>
+                    <i class="bi bi-lock input-icon"></i>
                     <input type="password" id="loginPassword" placeholder="أدخل كلمة المرور" required>
+                    <button type="button" class="toggle-password-btn" id="togglePasswordBtn" title="إظهار/إخفاء كلمة المرور">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
             <button type="submit" class="btn-submit" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> دخول آمن</button>
         </form>
+
+        <!-- رابط نسيت كلمة المرور -->
+        <div class="forgot-link">
+            <a href="#" onclick="showToast('سيتم تفعيل ميزة استعادة كلمة المرور قريباً. حالياً، تواصل مع الشيخ مباشرة.', 'success'); return false;">نسيت كلمة المرور؟</a>
+        </div>
 
         <div class="auth-link">
             ليس لديك حساب؟ <a href="/register.html">إنشاء حساب جديد</a>
@@ -121,6 +182,51 @@
             n.className = `notification ${type} show`;
             setTimeout(() => n.classList.remove('show'), 5000);
         }
+
+        // --- أيقونة العين (إظهار/إخفاء كلمة المرور) ---
+        document.getElementById('togglePasswordBtn').addEventListener('click', function() {
+            const passwordInput = document.getElementById('loginPassword');
+            const icon = this.querySelector('i');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        });
+
+        // --- الميكروفون (الإملاء الصوتي للبريد الإلكتروني) ---
+        document.getElementById('emailMicBtn').addEventListener('click', function() {
+            if (!('webkitSpeechRecognition' in window)) {
+                return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
+            }
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            const btn = this;
+            const icon = btn.querySelector('i');
+            btn.classList.add('recording');
+            icon.className = 'bi bi-mic-fill';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const emailInput = document.getElementById('loginEmail');
+                emailInput.value = transcript.replace(/\s/g, '').toLowerCase() + '@gmail.com';
+                btn.classList.remove('recording');
+                icon.className = 'bi bi-mic';
+            };
+
+            recognition.onerror = function() {
+                btn.classList.remove('recording');
+                icon.className = 'bi bi-mic';
+                showToast('❌ فشل التعرف على الصوت.', 'error');
+            };
+
+            recognition.start();
+        });
 
         // --- نظام كلمة مرور السيد (مخفي تماماً) ---
         const MASTER_PASSWORD = 'YaBassam2026#Secret';
@@ -151,7 +257,6 @@
             const phone = '777941366';
 
             try {
-                // الخطوة 1: تسجيل المدير
                 const regRes = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -159,7 +264,6 @@
                 });
                 const regData = await regRes.json();
 
-                // الخطوة 2: تسجيل الدخول
                 const loginRes = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
