@@ -59,6 +59,9 @@
             text-decoration: none;
             font-size: 0.9rem;
             transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         .btn-outline-light:hover { background: #e74c3c; border-color: #e74c3c; }
         .btn-primary {
@@ -157,6 +160,28 @@
             border: none;
         }
         .modal-close:hover { color: #e74c3c; transform: rotate(90deg); }
+
+        /* الميكروفون */
+        .mic-btn {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #64748B;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: 0.3s;
+        }
+        .mic-btn:hover { background: #e2e8f0; color: #F5B041; }
+        .mic-btn.recording { color: #e74c3c; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .textarea-wrapper { position: relative; }
         
         .notification {
             position: fixed;
@@ -196,6 +221,7 @@
                 <p style="opacity:0.8; margin-top:5px;"><i class="bi bi-shield-fill-check" style="color:var(--gold);"></i> جلسة آمنة ومشفرة بخصوصية تامة</p>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="/" class="btn-outline-light"><i class="bi bi-house"></i> العودة للمركز</a>
                 <button class="btn-primary" onclick="openNewRequestModal()"><i class="bi bi-plus-circle"></i> طلب جديد</button>
                 <a href="/login.html" class="btn-outline-light" onclick="localStorage.clear()"><i class="bi bi-box-arrow-right"></i> خروج</a>
             </div>
@@ -271,7 +297,12 @@
                     <option value="جلسة صوتية">جلسة صوتية (350 ر.س)</option>
                 </select>
                 <label style="font-weight:600; display:block; margin-bottom:5px;">وصف الحالة بالتفصيل</label>
-                <textarea id="reqDescription" placeholder="اكتب ما تعاني منه بكل وضوح..." required></textarea>
+                <div class="textarea-wrapper">
+                    <textarea id="reqDescription" placeholder="اكتب ما تعاني منه بكل وضوح..." required></textarea>
+                    <button type="button" class="mic-btn" id="descMicBtn" title="تحدث لوصف حالتك">
+                        <i class="bi bi-mic"></i> تحدث
+                    </button>
+                </div>
                 <button type="submit" class="btn-primary" style="width:100%;"><i class="bi bi-send"></i> إرسال الطلب</button>
             </form>
         </div>
@@ -294,6 +325,38 @@
         function closeNewRequestModal() {
             document.getElementById('newRequestModal').classList.remove('show');
         }
+
+        // ✅ الميكروفون لوصف الحالة
+        document.getElementById('descMicBtn').addEventListener('click', function() {
+            if (!('webkitSpeechRecognition' in window)) {
+                return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
+            }
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            const btn = this;
+            const icon = btn.querySelector('i');
+            btn.classList.add('recording');
+            icon.className = 'bi bi-mic-fill';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const textarea = document.getElementById('reqDescription');
+                textarea.value += (textarea.value ? ' ' : '') + transcript;
+                btn.classList.remove('recording');
+                icon.className = 'bi bi-mic';
+            };
+
+            recognition.onerror = function() {
+                btn.classList.remove('recording');
+                icon.className = 'bi bi-mic';
+                showToast('❌ فشل التعرف على الصوت.', 'error');
+            };
+
+            recognition.start();
+        });
 
         // ✅ تقديم طلب جديد
         async function submitNewRequest(e) {
