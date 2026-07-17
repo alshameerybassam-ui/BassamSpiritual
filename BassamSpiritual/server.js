@@ -106,6 +106,42 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'خطأ في التحقق.' }); }
 });
 
+// 📧 استعادة كلمة المرور
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني.' });
+    try {
+        const user = await pool.query(`SELECT id, full_name FROM users WHERE email = $1`, [email]);
+        if (user.rows.length === 0) {
+            return res.json({ success: true, message: 'إذا كان البريد مسجلاً، فسيتم إرسال رابط إعادة التعيين.' });
+        }
+        const resetToken = jwt.sign(
+            { id: user.rows[0].id, email: email, type: 'password_reset' },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+        const resetLink = `https://bassam-spiritual-center.onrender.com/reset-password?token=${resetToken}`;
+        console.log(`🔗 رابط إعادة التعيين لـ ${email}: ${resetLink}`);
+        // TODO: إعداد nodemailer لإرسال البريد الفعلي
+        res.json({ success: true, message: 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني.', resetLink: resetLink });
+    } catch (e) { res.status(500).json({ error: 'خطأ في معالجة الطلب.' }); }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ error: 'يرجى إدخال جميع البيانات.' });
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded.type !== 'password_reset') return res.status(400).json({ error: 'رمز غير صالح.' });
+        const hashed = bcrypt.hashSync(newPassword, 8);
+        await pool.query(`UPDATE users SET password = $1 WHERE id = $2`, [hashed, decoded.id]);
+        res.json({ success: true, message: 'تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.' });
+    } catch (e) {
+        if (e.name === 'TokenExpiredError') return res.status(400).json({ error: 'انتهت صلاحية رابط إعادة التعيين.' });
+        res.status(400).json({ error: 'رمز غير صالح.' });
+    }
+});
+
 // 📌 لوحة المستفيد
 app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     try {
@@ -255,6 +291,58 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
+
+// صفحة إعادة تعيين كلمة المرور
+app.get('/reset-password', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>إعادة تعيين كلمة المرور | مركز النور الرباني</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Cairo', sans-serif; background: #F4F6F9; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 0; }
+                .reset-box { background: #fff; border-radius: 24px; box-shadow: 0 20px 60px rgba(10,22,40,0.15); max-width: 440px; width: 100%; padding: 40px 30px; border-top: 6px solid #F5B041; text-align: center; }
+                .reset-box input { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 12px; font-family: 'Cairo', sans-serif; font-size: 1rem; margin-bottom: 15px; }
+                .reset-box button { width: 100%; padding: 14px; background: linear-gradient(135deg, #F5B041, #E67E22); color: #0A1628; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+                .notification { background: #27ae60; color: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: none; }
+            </style>
+        </head>
+        <body>
+            <div class="reset-box">
+                <h2 style="color:#0A1628;">إعادة تعيين كلمة المرور</h2>
+                <div class="notification" id="msg"></div>
+                <form id="resetForm">
+                    <input type="password" id="newPassword" placeholder="كلمة المرور الجديدة" required minlength="6">
+                    <button type="submit">تغيير كلمة المرور</button>
+                </form>
+            </div>
+            <script>
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                if (!token) { document.getElementById('msg').style.display = 'block'; document.getElementById('msg').style.background = '#e74c3c'; document.getElementById('msg').textContent = 'رابط غير صالح.'; document.getElementById('resetForm').style.display = 'none'; }
+                document.getElementById('resetForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const newPassword = document.getElementById('newPassword').value;
+                    try {
+                        const res = await fetch('/api/auth/reset-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token, newPassword })
+                        });
+                        const data = await res.json();
+                        const msg = document.getElementById('msg'); msg.style.display = 'block';
+                        if (data.success) { msg.style.background = '#27ae60'; msg.textContent = '✅ تم تغيير كلمة المرور بنجاح. جاري التوجيه...'; setTimeout(() => { window.location.href = '/login.html'; }, 2000); }
+                        else { msg.style.background = '#e74c3c'; msg.textContent = '❌ ' + (data.error || 'خطأ'); }
+                    } catch (err) { alert('خطأ في الاتصال.'); }
+                });
+            </script>
+        </body>
+        </html>
+    `);
+});
+
 app.get('*', (req, res) => { if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'المسار غير موجود.' }); res.sendFile(path.join(__dirname, 'public/index.html')); });
 
 app.listen(PORT, () => { console.log(`🚀 السيرفر يعمل على ${PORT}`); });
