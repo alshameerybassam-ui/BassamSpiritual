@@ -110,7 +110,7 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
 app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     try {
         const requests = await pool.query(`SELECT id, serviceType, description, status, "createdAt", initial_diagnosis, treatment_plan FROM requests WHERE user_id = $1 ORDER BY "createdAt" DESC`, [req.user.id]);
-        const user = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
+        const user = await pool.query(`SELECT full_name, email FROM users WHERE id = $1`, [req.user.id]);
         res.json({ success: true, user: user.rows[0], requests: requests.rows });
     } catch (err) { res.status(500).json({ error: 'خطأ في تحميل البيانات.' }); }
 });
