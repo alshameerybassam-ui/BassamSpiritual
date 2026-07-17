@@ -53,12 +53,48 @@
         .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #0A1628; font-size: 0.9rem; }
         .form-group .optional { color: #999; font-weight: 400; font-size: 0.8rem; }
         .input-wrapper { position: relative; }
-        .input-wrapper i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 1.2rem; }
+        .input-wrapper .input-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 1.2rem; pointer-events: none; }
         .input-wrapper input {
-            width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #E2E8F0; border-radius: 12px;
+            width: 100%; padding: 12px 45px 12px 45px; border: 2px solid #E2E8F0; border-radius: 12px;
             font-family: 'Cairo', sans-serif; font-size: 1rem; transition: 0.3s; box-sizing: border-box;
         }
         .input-wrapper input:focus { border-color: #F5B041; outline: none; box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15); }
+
+        /* أيقونة العين */
+        .toggle-password-btn {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            line-height: 1;
+            z-index: 2;
+        }
+        .toggle-password-btn:hover { color: #F5B041; }
+
+        /* الميكروفون */
+        .mic-btn {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            line-height: 1;
+            z-index: 2;
+        }
+        .mic-btn:hover { color: #F5B041; }
+        .mic-btn.recording { color: #e74c3c; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
         .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; }
         .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; margin-top: 3px; accent-color: #F5B041; cursor: pointer; }
@@ -104,39 +140,53 @@
         </div>
 
         <form id="registerForm">
+            <!-- الاسم الرباعي مع ميكروفون -->
             <div class="form-group">
                 <label>الاسم الرباعي <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
-                    <i class="bi bi-person"></i>
+                    <i class="bi bi-person input-icon"></i>
                     <input type="text" id="fullName" placeholder="مثال: بسام محمد هزاع الشميري" required>
+                    <button type="button" class="mic-btn" id="nameMicBtn" title="تحدث بالاسم">
+                        <i class="bi bi-mic"></i>
+                    </button>
                 </div>
             </div>
+            <!-- البريد الإلكتروني -->
             <div class="form-group">
                 <label>البريد الإلكتروني <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
-                    <i class="bi bi-envelope"></i>
+                    <i class="bi bi-envelope input-icon"></i>
                     <input type="email" id="email" placeholder="example@email.com" required>
                 </div>
             </div>
+            <!-- رقم الهاتف -->
             <div class="form-group">
                 <label>رقم الهاتف (واتساب) <span class="optional">(اختياري)</span></label>
                 <div class="input-wrapper">
-                    <i class="bi bi-whatsapp"></i>
+                    <i class="bi bi-whatsapp input-icon"></i>
                     <input type="text" id="phone" placeholder="مثال: 777941366">
                 </div>
             </div>
+            <!-- كلمة المرور مع أيقونة العين -->
             <div class="form-group">
                 <label>كلمة المرور <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
-                    <i class="bi bi-lock"></i>
+                    <i class="bi bi-lock input-icon"></i>
                     <input type="password" id="password" placeholder="على الأقل 6 أحرف" required minlength="6">
+                    <button type="button" class="toggle-password-btn" id="togglePasswordBtn1" title="إظهار/إخفاء كلمة المرور">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
+            <!-- تأكيد كلمة المرور مع أيقونة العين -->
             <div class="form-group">
                 <label>تأكيد كلمة المرور <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
-                    <i class="bi bi-lock-fill"></i>
+                    <i class="bi bi-lock-fill input-icon"></i>
                     <input type="password" id="confirmPassword" placeholder="أعد كتابة كلمة المرور" required>
+                    <button type="button" class="toggle-password-btn" id="togglePasswordBtn2" title="إظهار/إخفاء كلمة المرور">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
             <div class="checkbox-group">
@@ -165,6 +215,62 @@
             setTimeout(() => n.classList.remove('show'), 5000);
         }
 
+        // --- دالة مساعدة لأزرار إظهار/إخفاء كلمة المرور ---
+        function setupTogglePassword(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            const input = document.getElementById(inputId);
+            if (!btn || !input) return;
+            btn.addEventListener('click', function() {
+                const icon = btn.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'bi bi-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'bi bi-eye';
+                }
+            });
+        }
+        setupTogglePassword('togglePasswordBtn1', 'password');
+        setupTogglePassword('togglePasswordBtn2', 'confirmPassword');
+
+        // --- دالة الميكروفون العامة ---
+        function setupMic(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            const input = document.getElementById(inputId);
+            if (!btn || !input) return;
+            btn.addEventListener('click', function() {
+                if (!('webkitSpeechRecognition' in window)) {
+                    return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
+                }
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'ar-SA';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                const icon = btn.querySelector('i');
+                btn.classList.add('recording');
+                icon.className = 'bi bi-mic-fill';
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    input.value = transcript;
+                    btn.classList.remove('recording');
+                    icon.className = 'bi bi-mic';
+                };
+
+                recognition.onerror = function() {
+                    btn.classList.remove('recording');
+                    icon.className = 'bi bi-mic';
+                    showToast('❌ فشل التعرف على الصوت.', 'error');
+                };
+
+                recognition.start();
+            });
+        }
+        setupMic('nameMicBtn', 'fullName');
+
+        // --- تسجيل الحساب ---
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fullName = document.getElementById('fullName').value.trim();
@@ -185,7 +291,6 @@
             btn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري إنشاء الحساب...';
 
             try {
-                // 1. تسجيل الحساب مباشرة
                 const regRes = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -194,7 +299,6 @@
                 const regData = await regRes.json();
                 if (!regData.success) throw new Error(regData.error || 'فشل التسجيل');
 
-                // 2. تسجيل دخول تلقائي
                 const loginRes = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -203,20 +307,13 @@
                 const loginData = await loginRes.json();
                 
                 if (loginData.success) {
-                    // حفظ الجلسة
                     localStorage.setItem('bassam_auth_token', loginData.token.trim());
                     localStorage.setItem('bassam_user', JSON.stringify(loginData.user));
-                    
                     showToast('✅ تم إنشاء الحساب وتفعيله بنجاح! جاري التوجيه...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/dashboard.html';
-                    }, 1000);
+                    setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
                 } else {
-                    // تم التسجيل ولكن فشل الدخول التلقائي
                     showToast('✅ تم إنشاء الحساب. يرجى تسجيل الدخول.', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
-                    }, 1500);
+                    setTimeout(() => { window.location.href = '/login.html'; }, 1500);
                 }
             } catch (err) {
                 showToast(err.message || 'حدث خطأ في التسجيل.', 'error');
