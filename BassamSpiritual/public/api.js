@@ -36,7 +36,11 @@ const AuthAPI = {
 };
 
 const UserAPI = {
-    getRequest: (id) => api('GET', `/dashboard/request/${id}`)
+    getDashboard: () => api('GET', '/dashboard/me'),
+    submitRequest: (serviceType, description) => api('POST', '/dashboard/request', { serviceType, description }),
+    getRequest: (id) => api('GET', `/dashboard/request/${id}`),
+    submitPayment: (id, payMethod, paySender, payNumber) => api('PUT', `/dashboard/request/${id}/submit-payment`, { paymentMethod: payMethod, paymentSenderName: paySender, paymentTransferNumber: payNumber }),
+    submitReview: (comment, rating) => api('POST', '/dashboard/reviews', { comment, rating })
 };
 
 const AdminAPI = {
