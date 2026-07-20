@@ -129,12 +129,50 @@ app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     res.json({ success: true, user: user.rows[0], requests: requests.rows });
 });
 
+// ===== المسار المعدل (POST /api/dashboard/request) =====
 app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
-    const { serviceType, description } = req.body;
-    if (!description || description.trim().length < 10) return res.status(400).json({ error: 'الرجاء كتابة وصف دقيق للحالة (10 أحرف على الأقل).' });
-    const user = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
-    await pool.query(`INSERT INTO requests (user_id, fullName, email, userPhone, serviceType, description) VALUES ($1, $2, $3, $4, $5, $6)`, [req.user.id, user.rows[0].full_name, user.rows[0].email, user.rows[0].phone, serviceType, description]);
-    res.json({ success: true });
+    try {
+        const { serviceType, description } = req.body;
+
+        // التحقق من صحة المدخلات
+        if (!description || description.trim().length < 10) {
+            return res.status(400).json({
+                success: false,
+                error: 'الرجاء كتابة وصف دقيق للحالة (10 أحرف على الأقل).'
+            });
+        }
+
+        // جلب بيانات المستخدم
+        const userResult = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'المستخدم غير موجود.'
+            });
+        }
+        const user = userResult.rows[0];
+
+        // إدراج الطلب
+        const insertResult = await pool.query(
+            `INSERT INTO requests (user_id, fullName, email, userPhone, serviceType, description)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id`,
+            [req.user.id, user.full_name, user.email, user.phone, serviceType, description]
+        );
+
+        return res.json({
+            success: true,
+            requestId: insertResult.rows[0].id,
+            message: 'تم استلام طلبك بنجاح.'
+        });
+
+    } catch (error) {
+        console.error('❌ خطأ في تقديم الطلب:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: 'حدث خطأ داخلي في الخادم. يرجى المحاولة مرة أخرى.'
+        });
+    }
 });
 
 app.get('/api/dashboard/request/:id', authenticateToken, async (req, res) => {
