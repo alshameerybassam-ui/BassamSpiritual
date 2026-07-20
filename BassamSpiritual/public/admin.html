@@ -110,6 +110,148 @@
             .main-content { margin-right: 0; }
             .hamburger { display: block; }
         }
+        
+        /* ===== تحسينات الجوال للوحة المدير ===== */
+@media (max-width: 768px) {
+    /* الشريط الجانبي */
+    .sidebar {
+        width: 100%;
+        max-width: 280px;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .hamburger {
+        display: block;
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 1100;
+        background: var(--navy);
+        color: var(--gold);
+        border: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 1.4rem;
+        cursor: pointer;
+    }
+    .main-content {
+        margin-right: 0 !important;
+        padding: 15px !important;
+        padding-top: 70px !important;
+    }
+    .page-title {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+    /* كروت الإحصائيات */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .stat-card {
+        padding: 12px;
+        gap: 10px;
+    }
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+    .stat-info h3 {
+        font-size: 1.3rem;
+    }
+    .stat-info p {
+        font-size: 0.7rem;
+    }
+    /* الجداول */
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table {
+        min-width: 600px;
+        font-size: 0.8rem;
+    }
+    th, td {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+    .panel {
+        padding: 15px;
+    }
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .panel-header h2 {
+        font-size: 1rem;
+    }
+    /* الأزرار في الجداول */
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+    .btn {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+    /* نموذج المقالات */
+    #articleFormBox {
+        padding: 12px !important;
+    }
+    #articleContentEditor {
+        min-height: 100px !important;
+    }
+    /* المودال */
+    .modal-box {
+        max-width: 95%;
+        margin: 10px;
+    }
+    .modal-header h3 {
+        font-size: 1rem;
+    }
+    .modal-body {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .stat-card {
+        padding: 10px;
+    }
+    .stat-info h3 {
+        font-size: 1.1rem;
+    }
+    .stat-icon {
+        font-size: 1.2rem;
+    }
+    .main-content {
+        padding: 10px !important;
+        padding-top: 65px !important;
+    }
+    .hamburger {
+        top: 8px;
+        right: 8px;
+        padding: 8px 12px;
+        font-size: 1.2rem;
+    }
+    table {
+        min-width: 500px;
+        font-size: 0.7rem;
+    }
+    th, td {
+        padding: 6px 8px;
+    }
+    .btn-sm {
+        padding: 3px 6px;
+        font-size: 0.65rem;
+    }
+}
     </style>
 </head>
 <body>
