@@ -19,15 +19,72 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ==============================================
 // تهيئة الجداول (متوافقة مع قاعدة بياناتك الحالية)
+// ==============================================
 const initializeDatabase = async () => {
     try {
-        await pool.query(`CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, full_name VARCHAR(255), email VARCHAR(255) UNIQUE, password VARCHAR(255), phone VARCHAR(50), role VARCHAR(50) DEFAULT 'user')`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), fullName VARCHAR(255), email VARCHAR(255), userPhone VARCHAR(50), serviceType VARCHAR(255), description TEXT, status VARCHAR(50) DEFAULT 'pending', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, paymentMethod VARCHAR(100), payment_sender_name VARCHAR(255), payment_transfer_number VARCHAR(100), payment_rejection_reason TEXT, initial_diagnosis TEXT, treatment_plan TEXT)`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, requestId INTEGER REFERENCES requests(id), senderId INTEGER, senderName VARCHAR(255), senderRole VARCHAR(50), messageText TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS articles (id SERIAL PRIMARY KEY, title VARCHAR(255), summary TEXT, content TEXT, icon VARCHAR(100), "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, userId INTEGER REFERENCES users(id), fullName VARCHAR(255), comment TEXT, rating INTEGER DEFAULT 5, isApproved BOOLEAN DEFAULT FALSE, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS ai_config (id SERIAL PRIMARY KEY, instructions TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY, 
+            full_name VARCHAR(255), 
+            email VARCHAR(255) UNIQUE, 
+            password VARCHAR(255), 
+            phone VARCHAR(50), 
+            role VARCHAR(50) DEFAULT 'user'
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS requests (
+            id SERIAL PRIMARY KEY, 
+            user_id INTEGER REFERENCES users(id), 
+            "fullName" VARCHAR(255), 
+            email VARCHAR(255), 
+            "userPhone" VARCHAR(50), 
+            "serviceType" VARCHAR(255), 
+            description TEXT, 
+            status VARCHAR(50) DEFAULT 'pending', 
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+            "paymentMethod" VARCHAR(100), 
+            "payment_sender_name" VARCHAR(255), 
+            "payment_transfer_number" VARCHAR(100), 
+            "payment_rejection_reason" TEXT, 
+            "initial_diagnosis" TEXT, 
+            "treatment_plan" TEXT
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY, 
+            "requestId" INTEGER REFERENCES requests(id), 
+            "senderId" INTEGER, 
+            "senderName" VARCHAR(255), 
+            "senderRole" VARCHAR(50), 
+            "messageText" TEXT, 
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS articles (
+            id SERIAL PRIMARY KEY, 
+            title VARCHAR(255), 
+            summary TEXT, 
+            content TEXT, 
+            icon VARCHAR(100), 
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS reviews (
+            id SERIAL PRIMARY KEY, 
+            "userId" INTEGER REFERENCES users(id), 
+            "fullName" VARCHAR(255), 
+            comment TEXT, 
+            rating INTEGER DEFAULT 5, 
+            "isApproved" BOOLEAN DEFAULT FALSE, 
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS ai_config (
+            id SERIAL PRIMARY KEY, 
+            instructions TEXT
+        )`);
+
         const aiCount = await pool.query(`SELECT COUNT(*) FROM ai_config`);
         if (parseInt(aiCount.rows[0].count) === 0) {
             await pool.query(`INSERT INTO ai_config (instructions) VALUES ($1)`, ['أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام.']);
@@ -37,7 +94,9 @@ const initializeDatabase = async () => {
 };
 initializeDatabase();
 
+// ==============================================
 // إنشاء المدير
+// ==============================================
 (async function initAdmin() {
     try {
         const adminEmail = 'alshameerybassam@gmail.com';
@@ -49,7 +108,9 @@ initializeDatabase();
     } catch (err) { console.error("❌ خطأ في إنشاء المدير:", err.message); }
 })();
 
+// ==============================================
 // Middleware
+// ==============================================
 const authenticateToken = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'غير مصرح' });
@@ -58,12 +119,15 @@ const authenticateToken = (req, res, next) => {
         req.user = user; next();
     });
 };
+
 const requireAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'للإدارة فقط' });
     next();
 };
 
-// ========== المصادقة ==========
+// ==============================================
+// المصادقة
+// ==============================================
 app.post('/api/auth/register', async (req, res) => {
     const { fullName, email, password, phone } = req.body;
     try {
@@ -92,7 +156,9 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
     res.json({ success: true, user: result.rows[0] });
 });
 
-// ========== استعادة كلمة المرور ==========
+// ==============================================
+// استعادة كلمة المرور
+// ==============================================
 app.post('/api/auth/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني.' });
@@ -122,19 +188,19 @@ app.get('/reset-password', (req, res) => {
     `);
 });
 
-// ========== لوحة المستفيد ==========
+// ==============================================
+// لوحة المستفيد
+// ==============================================
 app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     const requests = await pool.query(`SELECT * FROM requests WHERE user_id = $1 ORDER BY "createdAt" DESC`, [req.user.id]);
     const user = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
     res.json({ success: true, user: user.rows[0], requests: requests.rows });
 });
 
-// ===== المسار المعدل (POST /api/dashboard/request) =====
 app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
     try {
         const { serviceType, description } = req.body;
 
-        // التحقق من صحة المدخلات
         if (!description || description.trim().length < 10) {
             return res.status(400).json({
                 success: false,
@@ -142,7 +208,6 @@ app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
             });
         }
 
-        // جلب بيانات المستخدم
         const userResult = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
         if (userResult.rows.length === 0) {
             return res.status(404).json({
@@ -152,9 +217,8 @@ app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
         }
         const user = userResult.rows[0];
 
-        // إدراج الطلب
         const insertResult = await pool.query(
-            `INSERT INTO requests (user_id, fullName, email, userPhone, serviceType, description)
+            `INSERT INTO requests (user_id, "fullName", email, "userPhone", "serviceType", description)
              VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING id`,
             [req.user.id, user.full_name, user.email, user.phone, serviceType, description]
@@ -183,18 +247,20 @@ app.get('/api/dashboard/request/:id', authenticateToken, async (req, res) => {
 
 app.put('/api/dashboard/request/:id/submit-payment', authenticateToken, async (req, res) => {
     const { paymentMethod, paymentSenderName, paymentTransferNumber } = req.body;
-    await pool.query(`UPDATE requests SET paymentMethod=$1, payment_sender_name=$2, payment_transfer_number=$3, status='payment_submitted' WHERE id=$4`, [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id]);
+    await pool.query(`UPDATE requests SET "paymentMethod"=$1, "payment_sender_name"=$2, "payment_transfer_number"=$3, status='payment_submitted' WHERE id=$4`, [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id]);
     res.json({ success: true });
 });
 
 app.post('/api/dashboard/reviews', authenticateToken, async (req, res) => {
     const { comment, rating } = req.body;
     const user = await pool.query(`SELECT full_name FROM users WHERE id = $1`, [req.user.id]);
-    await pool.query(`INSERT INTO reviews (userId, fullName, comment, rating) VALUES ($1, $2, $3, $4)`, [req.user.id, user.rows[0].full_name, comment, rating]);
+    await pool.query(`INSERT INTO reviews ("userId", "fullName", comment, rating) VALUES ($1, $2, $3, $4)`, [req.user.id, user.rows[0].full_name, comment, rating]);
     res.json({ success: true });
 });
 
-// ========== لوحة المدير ==========
+// ==============================================
+// لوحة المدير
+// ==============================================
 app.get('/api/admin/requests', authenticateToken, requireAdmin, async (req, res) => {
     const result = await pool.query(`SELECT * FROM requests ORDER BY "createdAt" DESC`);
     res.json(result.rows);
@@ -204,82 +270,103 @@ app.put('/api/admin/requests/:id/accept-initial', authenticateToken, requireAdmi
     await pool.query(`UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/reject-initial', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE requests SET status = 'rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
+    await pool.query(`UPDATE requests SET status = 'rejected', "payment_rejection_reason" = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
     res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/approve-payment', authenticateToken, requireAdmin, async (req, res) => {
     await pool.query(`UPDATE requests SET status = 'processing' WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/reject-payment', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
+    await pool.query(`UPDATE requests SET status = 'payment_rejected', "payment_rejection_reason" = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
     res.json({ success: true });
 });
+
 app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, async (req, res) => {
     const { initial_diagnosis, treatment_plan } = req.body;
-    await pool.query(`UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed' WHERE id = $3`, [initial_diagnosis, treatment_plan, req.params.id]);
+    await pool.query(`UPDATE requests SET "initial_diagnosis" = $1, "treatment_plan" = $2, status = 'diagnosed' WHERE id = $3`, [initial_diagnosis, treatment_plan, req.params.id]);
     res.json({ success: true });
 });
 
+// ==============================================
 // المراسلات
+// ==============================================
 app.get('/api/requests/:id/messages', authenticateToken, async (req, res) => {
-    const result = await pool.query(`SELECT * FROM messages WHERE requestId = $1 ORDER BY "createdAt" ASC`, [req.params.id]);
+    const result = await pool.query(`SELECT * FROM messages WHERE "requestId" = $1 ORDER BY "createdAt" ASC`, [req.params.id]);
     res.json({ success: true, messages: result.rows });
 });
+
 app.post('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     const { messageText } = req.body;
-    await pool.query(`INSERT INTO messages (requestId, senderId, senderName, senderRole, messageText) VALUES ($1, $2, $3, $4, $5)`, [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]);
+    await pool.query(`INSERT INTO messages ("requestId", "senderId", "senderName", "senderRole", "messageText") VALUES ($1, $2, $3, $4, $5)`, [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]);
     res.json({ success: true });
 });
 
+// ==============================================
 // المقالات
+// ==============================================
 app.get('/api/articles', async (req, res) => {
     const result = await pool.query(`SELECT * FROM articles ORDER BY "createdAt" DESC`);
     res.json(result.rows);
 });
+
 app.post('/api/admin/articles', authenticateToken, requireAdmin, async (req, res) => {
     const { title, summary, content } = req.body;
     await pool.query(`INSERT INTO articles (title, summary, content) VALUES ($1, $2, $3)`, [title, summary, content]);
     res.json({ success: true });
 });
+
 app.put('/api/admin/articles/:id', authenticateToken, requireAdmin, async (req, res) => {
     const { title, summary, content } = req.body;
     await pool.query(`UPDATE articles SET title=$1, summary=$2, content=$3 WHERE id=$4`, [title, summary, content, req.params.id]);
     res.json({ success: true });
 });
+
 app.delete('/api/admin/articles/:id', authenticateToken, requireAdmin, async (req, res) => {
     await pool.query(`DELETE FROM articles WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
 
+// ==============================================
 // التقييمات
+// ==============================================
 app.get('/api/reviews', async (req, res) => {
-    const result = await pool.query(`SELECT * FROM reviews WHERE isApproved = TRUE ORDER BY "createdAt" DESC`);
+    const result = await pool.query(`SELECT * FROM reviews WHERE "isApproved" = TRUE ORDER BY "createdAt" DESC`);
     res.json(result.rows);
 });
+
 app.get('/api/admin/reviews', authenticateToken, requireAdmin, async (req, res) => {
     const result = await pool.query(`SELECT * FROM reviews ORDER BY "createdAt" DESC`);
     res.json({ success: true, reviews: result.rows });
 });
+
 app.put('/api/admin/reviews/:id', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE reviews SET isApproved = $1 WHERE id = $2`, [req.body.isApproved, req.params.id]);
+    await pool.query(`UPDATE reviews SET "isApproved" = $1 WHERE id = $2`, [req.body.isApproved, req.params.id]);
     res.json({ success: true });
 });
+
 app.delete('/api/admin/reviews/:id', authenticateToken, requireAdmin, async (req, res) => {
     await pool.query(`DELETE FROM reviews WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
 
+// ==============================================
 // الذكاء الاصطناعي
+// ==============================================
 app.get('/api/admin/ai-instructions', authenticateToken, requireAdmin, async (req, res) => {
     const result = await pool.query(`SELECT instructions FROM ai_config ORDER BY id DESC LIMIT 1`);
     res.json({ success: true, instructions: result.rows[0]?.instructions || '' });
 });
+
 app.put('/api/admin/ai-instructions', authenticateToken, requireAdmin, async (req, res) => {
     await pool.query(`UPDATE ai_config SET instructions = $1`, [req.body.instructions]);
     res.json({ success: true });
 });
+
 app.post('/api/ai-chat', async (req, res) => {
     const msg = req.body.message?.toLowerCase() || '';
     let reply = 'يرجى تقديم طلب للتشخيص الدقيق.';
@@ -288,18 +375,20 @@ app.post('/api/ai-chat', async (req, res) => {
     res.json({ success: true, reply });
 });
 
+// ==============================================
 // المهندس الداخلي
+// ==============================================
 const engineer = require('./engineer');
 const db = {
     updatePassword: async (email, newPassword) => {
         await pool.query(`UPDATE users SET password = $1 WHERE email = $2`, [bcrypt.hashSync(newPassword, 8), email]);
     },
     getDailyRequests: async (date) => {
-        const r = await pool.query(`SELECT fullName, serviceType, status FROM requests WHERE DATE("createdAt") = $1`, [date]);
+        const r = await pool.query(`SELECT "fullName", "serviceType", status FROM requests WHERE DATE("createdAt") = $1`, [date]);
         return r.rows;
     },
     getWeeklyRequests: async () => {
-        const r = await pool.query(`SELECT fullName, serviceType, status FROM requests WHERE "createdAt" >= CURRENT_DATE - INTERVAL '7 days'`);
+        const r = await pool.query(`SELECT "fullName", "serviceType", status FROM requests WHERE "createdAt" >= CURRENT_DATE - INTERVAL '7 days'`);
         return r.rows;
     },
     getQuickStats: async () => {
@@ -321,6 +410,7 @@ const db = {
         fs.writeFileSync(file, JSON.stringify({ users: u.rows, requests: rq.rows })); return file;
     }
 };
+
 app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (req, res) => {
     const { command } = req.body;
     if (!command) return res.status(400).json({ error: 'يرجى إرسال أمر.' });
@@ -331,11 +421,16 @@ app.post('/api/admin/engineer-command', authenticateToken, requireAdmin, async (
     } catch (e) { res.status(500).json({ error: 'فشل تنفيذ الأمر: ' + e.message }); }
 });
 
+// ==============================================
 // توجيه الصفحات
+// ==============================================
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public/dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 app.get('*', (req, res) => { if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'المسار غير موجود.' }); res.sendFile(path.join(__dirname, 'public/index.html')); });
 
+// ==============================================
+// تشغيل الخادم
+// ==============================================
 app.listen(PORT, () => console.log(`🚀 السيرفر يعمل على ${PORT}`));
