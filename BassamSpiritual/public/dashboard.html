@@ -161,7 +161,6 @@
         }
         .modal-close:hover { color: #e74c3c; transform: rotate(90deg); }
 
-        /* الميكروفون */
         .mic-btn {
             position: absolute;
             left: 10px;
@@ -214,7 +213,6 @@
     <div id="notification" class="notification"></div>
 
     <div class="dashboard-container">
-        <!-- الهيدر -->
         <div class="dashboard-header">
             <div>
                 <h1 id="welcomeMessage">مرحباً، <span>مستفيد النور</span></h1>
@@ -228,7 +226,6 @@
         </div>
 
         <div class="grid-2col">
-            <!-- العمود الأيسر: الملف الشخصي والإحصائيات -->
             <div>
                 <div class="card">
                     <h3><i class="bi bi-person-circle"></i> ملفي الشخصي</h3>
@@ -252,7 +249,6 @@
                 </div>
             </div>
 
-            <!-- العمود الأيمن: الطلبات -->
             <div>
                 <div class="card" style="border-right-color: #1B4D3D;">
                     <h3><i class="bi bi-list-ul"></i> طلباتي العلاجية</h3>
@@ -261,7 +257,6 @@
                     </div>
                 </div>
                 
-                <!-- قسم التقييم يظهر عند اكتمال الطلب -->
                 <div id="feedbackSection" style="display:none;">
                     <div class="card" style="border-right-color: #2ecc71;">
                         <h3><i class="bi bi-chat-quote-fill" style="color:#2ecc71;"></i> شارك تجربتك</h3>
@@ -282,7 +277,6 @@
         </div>
     </div>
 
-    <!-- نافذة تقديم طلب جديد -->
     <div id="newRequestModal" class="modal-overlay">
         <div class="modal-box">
             <button class="modal-close" onclick="closeNewRequestModal()">&times;</button>
@@ -310,15 +304,6 @@
 
     <script src="api.js"></script>
     <script>
-        // ✅ دوال مساعدة
-        function showToast(msg, type='success') {
-            const n = document.getElementById('notification');
-            if(!n) return;
-            n.textContent = msg;
-            n.className = `notification ${type} show`;
-            setTimeout(() => n.classList.remove('show'), 5000);
-        }
-
         function openNewRequestModal() {
             document.getElementById('newRequestModal').classList.add('show');
         }
@@ -326,7 +311,6 @@
             document.getElementById('newRequestModal').classList.remove('show');
         }
 
-        // ✅ الميكروفون لوصف الحالة
         document.getElementById('descMicBtn').addEventListener('click', function() {
             if (!('webkitSpeechRecognition' in window)) {
                 return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
@@ -335,12 +319,10 @@
             recognition.lang = 'ar-SA';
             recognition.continuous = false;
             recognition.interimResults = false;
-
             const btn = this;
             const icon = btn.querySelector('i');
             btn.classList.add('recording');
             icon.className = 'bi bi-mic-fill';
-
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript;
                 const textarea = document.getElementById('reqDescription');
@@ -348,17 +330,14 @@
                 btn.classList.remove('recording');
                 icon.className = 'bi bi-mic';
             };
-
             recognition.onerror = function() {
                 btn.classList.remove('recording');
                 icon.className = 'bi bi-mic';
                 showToast('❌ فشل التعرف على الصوت.', 'error');
             };
-
             recognition.start();
         });
 
-        // ✅ تقديم طلب جديد
         async function submitNewRequest(e) {
             e.preventDefault();
             const serviceType = document.getElementById('reqServiceType').value;
@@ -369,13 +348,10 @@
                 showToast('تم تقديم الطلب بنجاح.');
                 closeNewRequestModal();
                 document.getElementById('newRequestForm').reset();
-                if (typeof DashboardModule !== 'undefined') {
-                    DashboardModule.load();
-                }
+                DashboardModule.load();
             } catch(err) { showToast(err.message, 'error'); }
         }
 
-        // ✅ تقديم تقييم
         async function submitReview(e) {
             e.preventDefault();
             const rating = document.getElementById('reviewRating').value;
@@ -387,13 +363,6 @@
                 document.getElementById('reviewForm').reset();
             } catch(err) { showToast(err.message, 'error'); }
         }
-
-        // ✅ تهيئة الصفحة
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof DashboardModule !== 'undefined') {
-                DashboardModule.init();
-            }
-        });
     </script>
 </body>
 </html>
