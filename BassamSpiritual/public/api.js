@@ -1,11 +1,12 @@
 /**
- * api.js – النسخة النهائية الشاملة (جميع الدوال كاملة بدون اختصار)
- * يدعم عرض الجدول على سطح المكتب والبطاقات على الجوال
+ * api.js – النسخة النهائية الكاملة (مودال موحد بدل النوافذ المنبثقة)
+ * مركز النور الرباني والنفس الرحماني
  */
 const API_BASE = '/api';
 const TOKEN_KEY = 'bassam_auth_token';
 const USER_KEY = 'bassam_user';
 
+// =============== أدوات الجلسة ===============
 function getToken() { return (localStorage.getItem(TOKEN_KEY) || '').trim(); }
 function getUser() { try { const u = localStorage.getItem(USER_KEY); return u ? JSON.parse(u) : null; } catch (e) { return null; } }
 function clearSession() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
@@ -31,6 +32,100 @@ async function api(method, endpoint, body = null) {
     return data;
 }
 
+// =============== إنشاء المودال الموحد (يحل محل prompt, alert, confirm) ===============
+function createModal() {
+    // إزالة أي مودال قديم
+    const old = document.getElementById('unifiedModal');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'unifiedModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:16px;width:100%;max-width:400px;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;';
+    const header = document.createElement('div');
+    header.style.cssText = 'background:#0A1628;color:#F5B041;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;';
+    const title = document.createElement('h3');
+    title.style.cssText = 'margin:0;font-size:1.1rem;';
+    header.appendChild(title);
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;';
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(closeBtn);
+    box.appendChild(header);
+
+    const body = document.createElement('div');
+    body.style.cssText = 'padding:20px;';
+    box.appendChild(body);
+
+    const footer = document.createElement('div');
+    footer.style.cssText = 'padding:15px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;';
+    box.appendChild(footer);
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    return { overlay, title, body, footer, close: () => overlay.remove() };
+}
+
+function showModal(titleText, message, buttons) {
+    const modal = createModal();
+    modal.title.textContent = titleText;
+    modal.body.innerHTML = message;
+    modal.footer.innerHTML = '';
+    buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.textContent = btn.text;
+        button.style.cssText = 'padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-family:Cairo;' + (btn.style || '');
+        button.onclick = () => {
+            modal.close();
+            if (btn.callback) btn.callback();
+        };
+        modal.footer.appendChild(button);
+    });
+}
+
+function showAlert(titleText, message) {
+    return new Promise(resolve => {
+        showModal(titleText, message, [
+            { text: 'حسناً', style: 'background:#F5B041;color:#0A1628;', callback: resolve }
+        ]);
+    });
+}
+
+function showPrompt(titleText, message, defaultValue = '') {
+    return new Promise(resolve => {
+        const modal = createModal();
+        modal.title.textContent = titleText;
+        modal.body.innerHTML = `<p style="margin-bottom:12px;">${message}</p><input id="promptInput" value="${defaultValue}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:Cairo;">`;
+        modal.footer.innerHTML = '';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'إلغاء';
+        cancelBtn.style.cssText = 'padding:8px 20px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:600;font-family:Cairo;';
+        cancelBtn.onclick = () => { modal.close(); resolve(null); };
+        const okBtn = document.createElement('button');
+        okBtn.textContent = 'موافق';
+        okBtn.style.cssText = 'padding:8px 20px;border-radius:8px;border:none;background:#F5B041;color:#0A1628;cursor:pointer;font-weight:600;font-family:Cairo;';
+        okBtn.onclick = () => {
+            const val = document.getElementById('promptInput').value;
+            modal.close();
+            resolve(val);
+        };
+        modal.footer.appendChild(cancelBtn);
+        modal.footer.appendChild(okBtn);
+    });
+}
+
+function showConfirm(titleText, message) {
+    return new Promise(resolve => {
+        showModal(titleText, message, [
+            { text: 'إلغاء', style: 'background:#fff;border:1px solid #ddd;', callback: () => resolve(false) },
+            { text: 'موافق', style: 'background:#F5B041;color:#0A1628;', callback: () => resolve(true) }
+        ]);
+    });
+}
+
+// =============== واجهات API ===============
 const AuthAPI = {
     login: (email, password) => api('POST', '/auth/login', { email, password }),
     verify: () => api('GET', '/auth/verify'),
@@ -71,7 +166,7 @@ const AdminAPI = {
     sendEngineerCommand: (command) => api('POST', '/admin/engineer-command', { command })
 };
 
-// =============== دوال مساعدة لعرض البطاقات والجدول ===============
+// =============== دوال عرض البطاقات والجدول ===============
 function renderMobileCards(containerId, items, columns, rowActions) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -138,7 +233,7 @@ function renderDesktopTable(tableBodyId, items, columns, rowActions) {
     }).join('');
 }
 
-// =============== DashboardModule (كامل) ===============
+// =============== DashboardModule ===============
 const DashboardModule = {
     async init() {
         if (!getToken()) { window.location.href = '/login.html'; return; }
@@ -218,11 +313,12 @@ const DashboardModule = {
         }
     },
     async showPaymentForm(requestId) {
-        const method = prompt('طريقة الدفع (مثلاً: تحويل بنكي، محفظة إلكترونية):');
+        const method = await showPrompt('طريقة الدفع', 'أدخل طريقة الدفع (مثلاً: تحويل بنكي، محفظة إلكترونية):');
         if (!method) return;
-        const senderName = prompt('اسم مرسل الدفع:');
-        const transferNumber = prompt('رقم عملية التحويل:');
-        if (!senderName || !transferNumber) return;
+        const senderName = await showPrompt('اسم المرسل', 'أدخل اسم مرسل الدفع:');
+        if (!senderName) return;
+        const transferNumber = await showPrompt('رقم العملية', 'أدخل رقم عملية التحويل:');
+        if (!transferNumber) return;
         try {
             await UserAPI.submitPayment(requestId, method, senderName, transferNumber);
             showToast('✅ تم تقديم إثبات الدفع بنجاح.');
@@ -232,12 +328,12 @@ const DashboardModule = {
     async viewDiagnosis(requestId) {
         try {
             const req = await UserAPI.getRequest(requestId);
-            alert(`🩺 التشخيص:\n${req.initial_diagnosis || 'لا يوجد'}\n\n📋 الخطة العلاجية:\n${req.treatment_plan || 'لا توجد'}`);
+            await showAlert('التشخيص', `🩺 التشخيص:\n${req.initial_diagnosis || 'لا يوجد'}\n\n📋 الخطة العلاجية:\n${req.treatment_plan || 'لا توجد'}`);
         } catch (e) { showToast(e.message, 'error'); }
     }
 };
 
-// =============== AdminModule (كامل) ===============
+// =============== AdminModule ===============
 const AdminModule = {
     currentId: null,
     async init() {
@@ -279,7 +375,6 @@ const AdminModule = {
             renderDesktopTable('requestsTableBodyDesktop', reqs, columns, [
                 { html: '<i class="bi bi-eye"></i>', class: 'btn-primary', onclick: 'AdminModule.select(\'{id}\')' }
             ]);
-
             renderMobileCards('requestsMobileCards', reqs, columns, [
                 { html: '<i class="bi bi-eye"></i> عرض', class: 'btn-primary', onclick: 'AdminModule.select(\'{id}\')' }
             ]);
@@ -341,8 +436,8 @@ const AdminModule = {
         document.getElementById('detailsModal').classList.remove('show');
     },
     async rejectInitial() {
-        const reason = prompt('سبب الرفض:');
-        if (!reason) return;
+        const reason = await showPrompt('سبب الرفض', 'أدخل سبب الرفض:');
+        if (reason === null || reason === '') return; // ألغى أو ترك فارغاً
         await AdminAPI.rejectRequest(this.currentId, reason);
         showToast('تم الرفض');
         this.loadRequests();
@@ -355,8 +450,8 @@ const AdminModule = {
         document.getElementById('detailsModal').classList.remove('show');
     },
     async rejectPayment(id) {
-        const reason = prompt('سبب رفض الدفع:');
-        if (!reason) return;
+        const reason = await showPrompt('سبب رفض الدفع', 'أدخل سبب رفض الدفع:');
+        if (reason === null || reason === '') return;
         await AdminAPI.rejectPayment(id, reason);
         showToast('تم رفض الدفع');
         this.loadRequests();
@@ -413,7 +508,8 @@ const AdminModule = {
         } catch (e) {}
     },
     async deleteArticle(id) {
-        if (!confirm('حذف المقال؟')) return;
+        const confirmed = await showConfirm('تأكيد الحذف', 'هل أنت متأكد من حذف المقال؟');
+        if (!confirmed) return;
         await AdminAPI.deleteArticle(id);
         this.loadArticles();
         showToast('تم الحذف');
@@ -453,7 +549,13 @@ const AdminModule = {
         } catch (e) {}
     },
     async approveReview(id, approved) { await AdminAPI.approveReview(id, approved); this.loadReviews(); },
-    async deleteReview(id) { if (!confirm('حذف التقييم؟')) return; await AdminAPI.deleteReview(id); this.loadReviews(); },
+    async deleteReview(id) {
+        const confirmed = await showConfirm('تأكيد الحذف', 'هل أنت متأكد من حذف التقييم؟');
+        if (!confirmed) return;
+        await AdminAPI.deleteReview(id);
+        this.loadReviews();
+        showToast('تم الحذف');
+    },
 
     async loadAI() {
         try {
@@ -474,7 +576,7 @@ const AdminModule = {
     }
 };
 
-// =============== HomeModule (كامل) ===============
+// =============== HomeModule ===============
 const HomeModule = {
     articlesCache: [],
     async loadArticles() {
@@ -512,9 +614,9 @@ const HomeModule = {
     openArticle(id) {
         const article = this.articlesCache.find(a => a.id == id);
         if (article) {
-            alert(`📖 ${article.title}\n\n${article.content || article.summary}`);
+            showAlert(article.title, article.content || article.summary);
         } else {
-            alert('المقال غير متوفر حالياً.');
+            showAlert('خطأ', 'المقال غير متوفر حالياً.');
         }
     },
     startCounters() {
@@ -572,7 +674,6 @@ const HomeModule = {
 function closeModal() { document.getElementById('detailsModal').classList.remove('show'); }
 function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
 
-// =============== تصدير للـ window ===============
 window.getToken = getToken;
 window.getUser = getUser;
 window.clearSession = clearSession;
@@ -586,13 +687,8 @@ window.DashboardModule = DashboardModule;
 window.AdminModule = AdminModule;
 window.HomeModule = HomeModule;
 
-// =============== تشغيل تلقائي ===============
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.pathname.includes('admin')) {
-        if (typeof AdminModule !== 'undefined') AdminModule.init();
-    } else if (window.location.pathname.includes('dashboard')) {
-        if (typeof DashboardModule !== 'undefined') DashboardModule.init();
-    } else if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) {
-        if (typeof HomeModule !== 'undefined') HomeModule.init();
-    }
+    if (window.location.pathname.includes('admin')) AdminModule.init();
+    else if (window.location.pathname.includes('dashboard')) DashboardModule.init();
+    else if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) HomeModule.init();
 });
