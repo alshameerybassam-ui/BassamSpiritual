@@ -25,6 +25,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Cairo', sans-serif; background: var(--bg); display: flex; min-height: 100vh; }
 
+        /* الشريط الجانبي */
         .sidebar {
             width: 250px; background: var(--navy); color: #fff; display: flex; flex-direction: column;
             position: fixed; top: 0; right: 0; bottom: 0; z-index: 1000; transition: transform 0.3s;
@@ -43,6 +44,7 @@
         .nav-item i { font-size: 1.2rem; width: 24px; text-align: center; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: #64748B; text-align: center; }
 
+        /* المحتوى الرئيسي */
         .main-content { flex: 1; margin-right: 250px; padding: 30px; }
         .page-title { font-size: 1.5rem; font-weight: 800; color: var(--navy); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
 
@@ -65,11 +67,21 @@
         .panel-header h2 { font-size: 1.1rem; color: var(--navy); display: flex; align-items: center; gap: 8px; }
         .panel-header .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; font-size: 0.9rem; }
+        /* الجداول (تظهر فقط على الشاشات الكبيرة) */
+        .desktop-table { display: table; width: 100%; border-collapse: collapse; min-width: 700px; font-size: 0.9rem; }
         th { background: #F8FAFC; padding: 10px 12px; text-align: right; font-weight: 700; color: var(--navy); border-bottom: 3px solid var(--gold); font-size: 0.85rem; }
         td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         tr:hover td { background: #FAFBFC; }
+
+        /* بطاقات الجوال (تظهر فقط على الشاشات الصغيرة) */
+        .mobile-cards { display: none; flex-direction: column; gap: 12px; }
+        .mobile-card {
+            background: #FAFBFC; border: 1px solid var(--border); border-radius: 12px; padding: 15px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .mobile-card .card-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; }
+        .mobile-card .card-label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; }
+        .mobile-card .card-value { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
 
         .btn {
             padding: 6px 14px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer;
@@ -81,7 +93,6 @@
         .btn-success { background: var(--success); color: #fff; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
-
         .badge {
             padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; display: inline-block;
         }
@@ -90,12 +101,12 @@
         .badge-success { background: #D1FAE5; color: #065F46; }
         .badge-danger { background: #FEE2E2; color: #991B1B; }
 
-        /* تحسينات النافذة المنبثقة للجوال */
+        /* النافذة المنبثقة المحسنة */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 15px; }
         .modal-overlay.show { display: flex; }
         .modal-box {
-            background: #fff; border-radius: 16px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column;
+            background: #fff; border-radius: 16px; width: 100%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25); overflow: hidden;
         }
         .modal-header {
             padding: 15px 20px; background: var(--navy); color: var(--gold); display: flex;
@@ -105,9 +116,10 @@
         .modal-close { background: none; border: none; color: #fff; font-size: 1.8rem; cursor: pointer; line-height: 1; }
         .modal-body { padding: 20px; flex: 1; overflow-y: auto; }
 
+        /* زر الهامبرغر */
         .hamburger { display: none; position: fixed; top: 15px; right: 15px; z-index: 1100; background: var(--navy); color: var(--gold); border: none; padding: 10px; border-radius: 8px; font-size: 1.5rem; cursor: pointer; }
 
-        /* تجاوب الجوال */
+        /* التجاوب مع الجوال */
         @media (max-width: 992px) {
             .sidebar { transform: translateX(100%); }
             .sidebar.open { transform: translateX(0); }
@@ -129,24 +141,25 @@
             .panel { padding: 12px; }
             .panel-header { flex-direction: column; align-items: flex-start; }
             .panel-header h2 { font-size: 0.95rem; }
-            table { min-width: 550px; font-size: 0.75rem; }
-            th, td { padding: 6px 8px; white-space: nowrap; }
-            .btn { font-size: 0.7rem; padding: 5px 10px; }
-            .btn-sm { padding: 3px 6px; font-size: 0.65rem; }
 
-            /* نافذة منبثقة محسنة للجوال */
-            .modal-overlay { padding: 10px; align-items: flex-end; }
+            /* إخفاء الجدول وإظهار البطاقات */
+            .desktop-table { display: none !important; }
+            .mobile-cards { display: flex; }
+
+            /* نافذة منبثقة ملء الشاشة تقريباً */
+            .modal-overlay { padding: 0; align-items: flex-end; }
             .modal-box {
-                max-width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0;
-                margin: 0; width: 100%;
+                max-width: 100%; width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0;
+                margin: 0;
             }
             .modal-header { border-radius: 20px 20px 0 0; padding: 15px; }
             .modal-body { padding: 15px; }
             .modal-box textarea, .modal-box input, .modal-box select {
-                font-size: 0.9rem; padding: 10px;
+                font-size: 0.95rem; padding: 12px; width: 100%; margin-bottom: 12px;
             }
-            .modal-box .btn { width: 100%; justify-content: center; margin-bottom: 8px; }
+            .modal-box .btn { width: 100%; justify-content: center; margin-bottom: 8px; padding: 12px; font-size: 0.9rem; }
             .modal-box .btn + .btn { margin-right: 0; }
+            .modal-box #diag, .modal-box #plan { min-height: 100px; }
         }
 
         @media (max-width: 480px) {
@@ -156,10 +169,10 @@
             .stat-icon { font-size: 1.1rem; }
             .main-content { padding: 8px !important; padding-top: 60px !important; }
             .hamburger { top: 8px; right: 8px; padding: 6px 10px; font-size: 1.1rem; }
-            table { min-width: 450px; font-size: 0.7rem; }
-            th, td { padding: 4px 6px; }
-            .btn-sm { padding: 2px 5px; font-size: 0.6rem; }
+            .mobile-card { padding: 12px; }
+            .mobile-card .card-value { font-size: 0.8rem; }
             .btn { font-size: 0.65rem; padding: 4px 8px; }
+            .btn-sm { padding: 2px 5px; font-size: 0.6rem; }
             .modal-box { max-height: 85vh; }
             .modal-header h3 { font-size: 1rem; }
         }
@@ -192,6 +205,10 @@
             <div class="nav-item" data-tab="site" onclick="switchTab('site', this)">
                 <i class="bi bi-globe2"></i> الانتقال للموقع
             </div>
+            <!-- زر صفحة الاختبار الجديد -->
+            <div class="nav-item" onclick="window.open('/test.html', '_blank')">
+                <i class="bi bi-wrench-adjustable"></i> اختبار المنصة
+            </div>
         </nav>
         <div class="sidebar-footer">الشيخ بسام الشميري</div>
     </aside>
@@ -206,6 +223,7 @@
             <div class="stat-card red"><div class="stat-icon"><i class="bi bi-x-circle"></i></div><div class="stat-info"><h3 id="rejectedCount">0</h3><p>ملغاة</p></div></div>
         </div>
 
+        <!-- لوحة الطلبات -->
         <div class="panel active" id="tab-requests">
             <div class="panel-header">
                 <h2><i class="bi bi-people" style="color:var(--gold);"></i> الطلبات</h2>
@@ -214,25 +232,20 @@
                     <a href="/" target="_blank" class="btn btn-primary btn-sm"><i class="bi bi-box-arrow-up-right"></i> زيارة الموقع</a>
                 </div>
             </div>
-            <div class="table-wrap">
+            <!-- عرض الجدول للشاشات الكبيرة -->
+            <div class="desktop-table">
                 <table>
                     <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>المستفيد</th>
-                            <th>الخدمة</th>
-                            <th>الحالة</th>
-                            <th>التاريخ</th>
-                            <th>إجراء</th>
-                        </tr>
+                        <tr><th>#</th><th>المستفيد</th><th>الخدمة</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr>
                     </thead>
-                    <tbody id="requestsTableBody">
-                        <tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>
-                    </tbody>
+                    <tbody id="requestsTableBodyDesktop"></tbody>
                 </table>
             </div>
+            <!-- عرض البطاقات للجوال -->
+            <div class="mobile-cards" id="requestsMobileCards"></div>
         </div>
 
+        <!-- لوحة المقالات -->
         <div class="panel" id="tab-articles">
             <div class="panel-header">
                 <h2><i class="bi bi-file-earmark-text" style="color:var(--gold);"></i> المقالات</h2>
@@ -251,22 +264,16 @@
                     <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('articleFormBox').style.display='none'">إلغاء</button>
                 </form>
             </div>
-            <div class="table-wrap">
+            <div class="desktop-table">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>العنوان</th>
-                            <th>التاريخ</th>
-                            <th>إجراء</th>
-                        </tr>
-                    </thead>
-                    <tbody id="articlesTableBody">
-                        <tr><td colspan="3" style="text-align:center;">جاري التحميل...</td></tr>
-                    </tbody>
+                    <thead><tr><th>العنوان</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+                    <tbody id="articlesTableBodyDesktop"></tbody>
                 </table>
             </div>
+            <div class="mobile-cards" id="articlesMobileCards"></div>
         </div>
 
+        <!-- لوحة التقييمات -->
         <div class="panel" id="tab-reviews">
             <div class="panel-header">
                 <h2><i class="bi bi-star" style="color:var(--gold);"></i> التقييمات</h2>
@@ -274,23 +281,16 @@
                     <a href="/" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-box-arrow-up-right"></i> زيارة الموقع</a>
                 </div>
             </div>
-            <div class="table-wrap">
+            <div class="desktop-table">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>المستفيد</th>
-                            <th>التعليق</th>
-                            <th>الحالة</th>
-                            <th>إجراء</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reviewsTableBody">
-                        <tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>
-                    </tbody>
+                    <thead><tr><th>المستفيد</th><th>التعليق</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                    <tbody id="reviewsTableBodyDesktop"></tbody>
                 </table>
             </div>
+            <div class="mobile-cards" id="reviewsMobileCards"></div>
         </div>
 
+        <!-- لوحة الذكاء الاصطناعي -->
         <div class="panel" id="tab-ai">
             <div class="panel-header">
                 <h2><i class="bi bi-cpu" style="color:var(--gold);"></i> توجيه الذكاء الاصطناعي</h2>
@@ -302,6 +302,7 @@
             <button class="btn btn-primary" onclick="AdminModule.saveAI()"><i class="bi bi-save"></i> حفظ</button>
         </div>
 
+        <!-- لوحة المهندس -->
         <div class="panel" id="tab-engineer">
             <div class="panel-header">
                 <h2><i class="bi bi-robot" style="color:var(--gold);"></i> مهندس المنصة</h2>
@@ -316,6 +317,7 @@
             <div id="engineerResponse" style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:8px; white-space:pre-wrap; display:none;"></div>
         </div>
 
+        <!-- لوحة الانتقال للموقع -->
         <div class="panel" id="tab-site">
             <div class="panel-header">
                 <h2><i class="bi bi-globe2" style="color:var(--gold);"></i> الانتقال للموقع</h2>
@@ -330,6 +332,7 @@
         </div>
     </main>
 
+    <!-- النافذة المنبثقة لتفاصيل الطلب -->
     <div class="modal-overlay" id="detailsModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -343,12 +346,123 @@
     <script src="api.js"></script>
     <script>
         function switchTab(tab, el) {
-            document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-            var target = document.getElementById('tab-' + tab);
-            if (target) { target.classList.add('active'); }
-            document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-            if (el) { el.classList.add('active'); }
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
         }
+
+        // تعديل بسيط لـ AdminModule ليدعم عرض الجدول والبطاقات معًا
+        // ننتظر تحميل api.js ثم نضبط الدوال
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof AdminModule === 'undefined') return;
+
+            // حفظ الدوال الأصلية
+            const origLoadRequests = AdminModule.loadRequests;
+            const origLoadArticles = AdminModule.loadArticles;
+            const origLoadReviews = AdminModule.loadReviews;
+
+            // دالة مساعدة لإنشاء بطاقات من بيانات الجدول
+            function renderMobileCards(containerId, items, columns) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                if (!items || items.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:#888;">لا توجد بيانات.</p>';
+                    return;
+                }
+                container.innerHTML = items.map((item, idx) => {
+                    let html = `<div class="mobile-card">`;
+                    columns.forEach(col => {
+                        let value = item[col.key] || '—';
+                        if (col.key === 'createdAt' || col.key === 'createdat') {
+                            value = new Date(value).toLocaleDateString('ar-EG');
+                        }
+                        html += `<div class="card-row"><span class="card-label">${col.label}</span><span class="card-value">${value}</span></div>`;
+                    });
+                    // زر الإجراء
+                    if (col.action) {
+                        html += `<div class="card-row" style="justify-content:flex-end;">
+                            <button class="btn btn-sm btn-primary" onclick="${col.action.replace('{id}', item.id)}"><i class="bi bi-eye"></i> عرض</button>
+                        </div>`;
+                    }
+                    html += `</div>`;
+                    return html;
+                }).join('');
+            }
+
+            // تعديل loadRequests
+            AdminModule.loadRequests = async function() {
+                await origLoadRequests.call(this);
+                // بعد تحميل البيانات، نملأ البطاقات
+                const reqs = await AdminAPI.getRequests();
+                renderMobileCards('requestsMobileCards', reqs, [
+                    { label: 'المستفيد', key: 'fullName' },
+                    { label: 'الخدمة', key: 'serviceType' },
+                    { label: 'الحالة', key: 'status' },
+                    { label: 'التاريخ', key: 'createdAt' },
+                ]);
+                // إضافة زر عرض لكل بطاقة (سنستخدم onclick)
+                const cardsContainer = document.getElementById('requestsMobileCards');
+                if (cardsContainer && reqs.length > 0) {
+                    const cards = cardsContainer.querySelectorAll('.mobile-card');
+                    cards.forEach((card, i) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn btn-sm btn-primary';
+                        btn.innerHTML = '<i class="bi bi-eye"></i> عرض';
+                        btn.onclick = () => AdminModule.select(reqs[i].id);
+                        const row = document.createElement('div');
+                        row.className = 'card-row';
+                        row.style.justifyContent = 'flex-end';
+                        row.appendChild(btn);
+                        card.appendChild(row);
+                    });
+                }
+            };
+
+            // تعديل loadArticles
+            AdminModule.loadArticles = async function() {
+                await origLoadArticles.call(this);
+                const arts = await AdminAPI.getArticles();
+                renderMobileCards('articlesMobileCards', arts, [
+                    { label: 'العنوان', key: 'title' },
+                    { label: 'التاريخ', key: 'createdAt' }
+                ]);
+            };
+
+            // تعديل loadReviews
+            AdminModule.loadReviews = async function() {
+                await origLoadReviews.call(this);
+                const res = await AdminAPI.getReviews();
+                const reviews = res.reviews || [];
+                renderMobileCards('reviewsMobileCards', reviews, [
+                    { label: 'المستفيد', key: 'fullName' },
+                    { label: 'التعليق', key: 'comment' },
+                    { label: 'الحالة', key: 'isApproved' }
+                ]);
+                // إضافة أزرار الموافقة والحذف
+                const cardsContainer = document.getElementById('reviewsMobileCards');
+                if (cardsContainer && reviews.length > 0) {
+                    const cards = cardsContainer.querySelectorAll('.mobile-card');
+                    cards.forEach((card, i) => {
+                        const approveBtn = document.createElement('button');
+                        approveBtn.className = 'btn btn-sm btn-success';
+                        approveBtn.innerHTML = '<i class="bi bi-check"></i>';
+                        approveBtn.onclick = () => AdminModule.approveReview(reviews[i].id, true);
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-sm btn-danger';
+                        deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                        deleteBtn.onclick = () => AdminModule.deleteReview(reviews[i].id);
+                        const row = document.createElement('div');
+                        row.className = 'card-row';
+                        row.style.justifyContent = 'flex-end';
+                        row.style.gap = '5px';
+                        row.appendChild(approveBtn);
+                        row.appendChild(deleteBtn);
+                        card.appendChild(row);
+                    });
+                }
+            };
+        });
     </script>
 </body>
 </html>
