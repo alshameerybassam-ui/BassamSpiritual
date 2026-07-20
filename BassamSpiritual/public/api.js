@@ -1,6 +1,6 @@
 /**
- * api.js – النسخة النهائية الشاملة
- * يحتوي على كل الوحدات: AuthAPI, UserAPI, AdminAPI, DashboardModule, AdminModule, HomeModule
+ * api.js – النسخة النهائية الشاملة (جميع الدوال كاملة بدون اختصار)
+ * يدعم عرض الجدول على سطح المكتب والبطاقات على الجوال
  */
 const API_BASE = '/api';
 const TOKEN_KEY = 'bassam_auth_token';
@@ -71,6 +71,74 @@ const AdminAPI = {
     sendEngineerCommand: (command) => api('POST', '/admin/engineer-command', { command })
 };
 
+// =============== دوال مساعدة لعرض البطاقات والجدول ===============
+function renderMobileCards(containerId, items, columns, rowActions) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!items || items.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">لا توجد بيانات.</p>';
+        return;
+    }
+    container.innerHTML = items.map((item, idx) => {
+        let html = '<div class="mobile-card">';
+        columns.forEach(col => {
+            let value = item[col.key] || '—';
+            if (col.key === 'createdAt' || col.key === 'createdat') {
+                value = new Date(value).toLocaleDateString('ar-EG');
+            }
+            if (col.type === 'badge') {
+                const badgeClass = col.badgeMap ? (col.badgeMap[value] || 'secondary') : 'secondary';
+                value = `<span class="badge badge-${badgeClass}">${value}</span>`;
+            }
+            html += `<div class="card-row"><span class="card-label">${col.label}</span><span class="card-value">${value}</span></div>`;
+        });
+        if (rowActions) {
+            html += '<div class="card-row" style="justify-content:flex-end; gap:5px; margin-top:8px;">';
+            rowActions.forEach(action => {
+                const onclick = action.onclick.replace(/\{id\}/g, item.id).replace(/\{idx\}/g, idx);
+                html += `<button class="btn btn-sm ${action.class || 'btn-primary'}" onclick="${onclick}">${action.html || action.label}</button>`;
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }).join('');
+}
+
+function renderDesktopTable(tableBodyId, items, columns, rowActions) {
+    const tbody = document.getElementById(tableBodyId);
+    if (!tbody) return;
+    if (!items || items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${columns.length + (rowActions ? 1 : 0)}" style="text-align:center;">لا توجد بيانات.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = items.map((item, idx) => {
+        let html = '<tr>';
+        columns.forEach(col => {
+            let value = item[col.key] || '—';
+            if (col.key === 'createdAt' || col.key === 'createdat') {
+                value = new Date(value).toLocaleDateString('ar-EG');
+            }
+            if (col.type === 'badge') {
+                const badgeClass = col.badgeMap ? (col.badgeMap[value] || 'secondary') : 'secondary';
+                value = `<span class="badge badge-${badgeClass}">${value}</span>`;
+            }
+            html += `<td>${value}</td>`;
+        });
+        if (rowActions) {
+            html += '<td>';
+            rowActions.forEach(action => {
+                const onclick = action.onclick.replace(/\{id\}/g, item.id).replace(/\{idx\}/g, idx);
+                html += `<button class="btn btn-sm ${action.class || 'btn-primary'}" onclick="${onclick}" style="margin-left:4px;">${action.html || action.label}</button>`;
+            });
+            html += '</td>';
+        }
+        html += '</tr>';
+        return html;
+    }).join('');
+}
+
+// =============== DashboardModule (كامل) ===============
 const DashboardModule = {
     async init() {
         if (!getToken()) { window.location.href = '/login.html'; return; }
@@ -169,6 +237,7 @@ const DashboardModule = {
     }
 };
 
+// =============== AdminModule (كامل) ===============
 const AdminModule = {
     currentId: null,
     async init() {
@@ -186,6 +255,7 @@ const AdminModule = {
         this.loadReviews();
         this.loadAI();
     },
+
     async loadRequests() {
         try {
             const reqs = await AdminAPI.getRequests();
@@ -194,32 +264,28 @@ const AdminModule = {
             document.getElementById('completedCount').textContent = reqs.filter(r => r.status === 'diagnosed' || r.status === 'completed').length;
             document.getElementById('rejectedCount').textContent = reqs.filter(r => r.status === 'rejected').length;
 
-            const list = document.getElementById('requestsTableBody');
-            if (!reqs.length) { list.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد طلبات.</td></tr>'; return; }
-
             const badgeMap = {
-                'pending': 'warning',
-                'accepted_waiting_payment': 'info',
-                'payment_submitted': 'info',
-                'processing': 'info',
-                'diagnosed': 'success',
-                'completed': 'success',
-                'rejected': 'danger',
-                'payment_rejected': 'danger'
+                'pending': 'warning', 'accepted_waiting_payment': 'info', 'payment_submitted': 'info',
+                'processing': 'info', 'diagnosed': 'success', 'completed': 'success', 'rejected': 'danger', 'payment_rejected': 'danger'
             };
 
-            list.innerHTML = reqs.map((r, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td>${r.fullName || '—'}</td>
-                    <td>${r.serviceType || '—'}</td>
-                    <td><span class="badge badge-${badgeMap[r.status] || 'secondary'}">${r.status}</span></td>
-                    <td>${new Date(r.createdAt).toLocaleDateString('ar-EG')}</td>
-                    <td><button class="btn btn-sm btn-primary" onclick="AdminModule.select('${r.id}')"><i class="bi bi-eye"></i></button></td>
-                </tr>
-            `).join('');
+            const columns = [
+                { key: 'fullName', label: 'المستفيد' },
+                { key: 'serviceType', label: 'الخدمة' },
+                { key: 'status', label: 'الحالة', type: 'badge', badgeMap },
+                { key: 'createdAt', label: 'التاريخ' }
+            ];
+
+            renderDesktopTable('requestsTableBodyDesktop', reqs, columns, [
+                { html: '<i class="bi bi-eye"></i>', class: 'btn-primary', onclick: 'AdminModule.select(\'{id}\')' }
+            ]);
+
+            renderMobileCards('requestsMobileCards', reqs, columns, [
+                { html: '<i class="bi bi-eye"></i> عرض', class: 'btn-primary', onclick: 'AdminModule.select(\'{id}\')' }
+            ]);
         } catch (e) { showToast('خطأ في جلب الطلبات.', 'error'); }
     },
+
     async select(id) {
         this.currentId = id;
         try {
@@ -267,6 +333,7 @@ const AdminModule = {
             document.getElementById('detailsModal').classList.add('show');
         } catch (e) { showToast(e.message, 'error'); }
     },
+
     async acceptInitial() {
         await AdminAPI.acceptRequest(this.currentId);
         showToast('✅ تم القبول');
@@ -329,13 +396,20 @@ const AdminModule = {
         showToast('✅ تم الإرسال');
         this.viewMessages(id);
     },
+
     async loadArticles() {
         try {
             const arts = await AdminAPI.getArticles();
-            const body = document.getElementById('articlesTableBody');
-            if (!body) return;
-            if (!arts.length) { body.innerHTML = '<tr><td colspan="3">لا توجد مقالات.</td></tr>'; return; }
-            body.innerHTML = arts.map(a => `<tr><td>${a.title}</td><td>${new Date(a.createdAt).toLocaleDateString('ar-EG')}</td><td><button class="btn btn-danger btn-sm" onclick="AdminModule.deleteArticle(${a.id})">حذف</button></td></tr>`).join('');
+            const columns = [
+                { key: 'title', label: 'العنوان' },
+                { key: 'createdAt', label: 'التاريخ' }
+            ];
+            renderDesktopTable('articlesTableBodyDesktop', arts, columns, [
+                { html: 'حذف', class: 'btn-danger', onclick: 'AdminModule.deleteArticle(\'{id}\')' }
+            ]);
+            renderMobileCards('articlesMobileCards', arts, columns, [
+                { html: '🗑️', class: 'btn-danger', onclick: 'AdminModule.deleteArticle(\'{id}\')' }
+            ]);
         } catch (e) {}
     },
     async deleteArticle(id) {
@@ -358,38 +432,37 @@ const AdminModule = {
         this.loadArticles();
         document.getElementById('articleFormBox').style.display = 'none';
     },
+
     async loadReviews() {
         try {
             const res = await AdminAPI.getReviews();
             const reviews = res.reviews || [];
-            const body = document.getElementById('reviewsTableBody');
-            if (!body) return;
-            if (!reviews.length) { body.innerHTML = '<tr><td colspan="4">لا توجد تقييمات.</td></tr>'; return; }
-            body.innerHTML = reviews.map(r => `
-                <tr>
-                    <td>${r.fullName}</td>
-                    <td>${r.comment}</td>
-                    <td><span class="badge ${r.isApproved ? 'badge-success' : 'badge-warning'}">${r.isApproved ? 'منشور' : 'بانتظار الموافقة'}</span></td>
-                    <td>
-                        <button class="btn btn-success btn-sm" onclick="AdminModule.approveReview(${r.id}, true)"><i class="bi bi-check"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="AdminModule.deleteReview(${r.id})">حذف</button>
-                    </td>
-                </tr>
-            `).join('');
+            const columns = [
+                { key: 'fullName', label: 'المستفيد' },
+                { key: 'comment', label: 'التعليق' },
+                { key: 'isApproved', label: 'الحالة', type: 'badge', badgeMap: { true: 'success', false: 'warning' } }
+            ];
+            renderDesktopTable('reviewsTableBodyDesktop', reviews, columns, [
+                { html: '<i class="bi bi-check"></i>', class: 'btn-success', onclick: 'AdminModule.approveReview(\'{id}\', true)' },
+                { html: '<i class="bi bi-trash"></i>', class: 'btn-danger', onclick: 'AdminModule.deleteReview(\'{id}\')' }
+            ]);
+            renderMobileCards('reviewsMobileCards', reviews, columns, [
+                { html: '✅', class: 'btn-success', onclick: 'AdminModule.approveReview(\'{id}\', true)' },
+                { html: '🗑️', class: 'btn-danger', onclick: 'AdminModule.deleteReview(\'{id}\')' }
+            ]);
         } catch (e) {}
     },
     async approveReview(id, approved) { await AdminAPI.approveReview(id, approved); this.loadReviews(); },
     async deleteReview(id) { if (!confirm('حذف التقييم؟')) return; await AdminAPI.deleteReview(id); this.loadReviews(); },
+
     async loadAI() {
         try {
             const r = await AdminAPI.getAIInstructions();
-            const ta = document.getElementById('aiPromptTextarea');
-            if (ta) ta.value = r.instructions || '';
+            document.getElementById('aiPromptTextarea').value = r.instructions || '';
         } catch (e) {}
     },
     async saveAI() {
-        const ta = document.getElementById('aiPromptTextarea');
-        if (ta) await AdminAPI.saveAIInstructions(ta.value);
+        await AdminAPI.saveAIInstructions(document.getElementById('aiPromptTextarea').value);
         showToast('تم حفظ التوجيهات.');
     },
     async sendEngineerCommand() {
@@ -401,6 +474,7 @@ const AdminModule = {
     }
 };
 
+// =============== HomeModule (كامل) ===============
 const HomeModule = {
     articlesCache: [],
     async loadArticles() {
@@ -494,9 +568,11 @@ const HomeModule = {
     }
 };
 
+// =============== دوال عامة ===============
 function closeModal() { document.getElementById('detailsModal').classList.remove('show'); }
 function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
 
+// =============== تصدير للـ window ===============
 window.getToken = getToken;
 window.getUser = getUser;
 window.clearSession = clearSession;
@@ -510,6 +586,7 @@ window.DashboardModule = DashboardModule;
 window.AdminModule = AdminModule;
 window.HomeModule = HomeModule;
 
+// =============== تشغيل تلقائي ===============
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('admin')) {
         if (typeof AdminModule !== 'undefined') AdminModule.init();
