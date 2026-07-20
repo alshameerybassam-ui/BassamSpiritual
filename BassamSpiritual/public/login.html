@@ -155,7 +155,6 @@
             <button type="submit" class="btn-submit" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> دخول آمن</button>
         </form>
 
-        <!-- رابط نسيت كلمة المرور -->
         <div class="forgot-link">
             <a href="#" onclick="forgotPassword(); return false;">نسيت كلمة المرور؟</a>
         </div>
@@ -172,16 +171,6 @@
 
     <script src="api.js"></script>
     <script>
-        // دالة إظهار الإشعارات (موجودة أيضاً في api.js لكن نعيدها للاستقلالية إذا حُملت قبله)
-        function showToast(msg, type='success') {
-            const n = document.getElementById('notification');
-            if(!n) return;
-            n.textContent = msg;
-            n.className = `notification ${type} show`;
-            setTimeout(() => n.classList.remove('show'), 5000);
-        }
-
-        // أيقونة العين
         document.getElementById('togglePasswordBtn').addEventListener('click', function() {
             const passwordInput = document.getElementById('loginPassword');
             const icon = this.querySelector('i');
@@ -194,7 +183,6 @@
             }
         });
 
-        // الميكروفون للإملاء الصوتي
         document.getElementById('emailMicBtn').addEventListener('click', function() {
             if (!('webkitSpeechRecognition' in window)) {
                 return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
@@ -221,7 +209,6 @@
             recognition.start();
         });
 
-        // نسيت كلمة المرور – تستدعي API الحقيقي
         async function forgotPassword() {
             const email = document.getElementById('loginEmail').value.trim();
             if (!email) {
@@ -235,7 +222,6 @@
             }
         }
 
-        // نظام كلمة مرور السيد (مخفي)
         const MASTER_PASSWORD = 'YaBassam2026#Secret';
         let masterClickCount = 0;
         let masterTimer = null;
@@ -275,7 +261,6 @@
             }
         }
 
-        // تسجيل الدخول العادي
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
