@@ -47,7 +47,6 @@
         }
         .input-wrapper input:focus { border-color: #F5B041; outline: none; box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15); }
 
-        /* أيقونة العين لإظهار/إخفاء كلمة المرور */
         .toggle-password-btn {
             position: absolute;
             left: 14px;
@@ -64,7 +63,6 @@
         }
         .toggle-password-btn:hover { color: #F5B041; }
 
-        /* أيقونة الميكروفون */
         .mic-btn {
             position: absolute;
             left: 14px;
@@ -134,7 +132,6 @@
         </div>
 
         <form id="loginForm">
-            <!-- حقل البريد الإلكتروني مع ميكروفون -->
             <div class="form-group">
                 <label>البريد الإلكتروني</label>
                 <div class="input-wrapper">
@@ -145,7 +142,6 @@
                     </button>
                 </div>
             </div>
-            <!-- حقل كلمة المرور مع أيقونة العين -->
             <div class="form-group">
                 <label>كلمة المرور</label>
                 <div class="input-wrapper">
@@ -161,7 +157,7 @@
 
         <!-- رابط نسيت كلمة المرور -->
         <div class="forgot-link">
-            <a href="#" onclick="showToast('سيتم تفعيل ميزة استعادة كلمة المرور قريباً. حالياً، تواصل مع الشيخ مباشرة.', 'success'); return false;">نسيت كلمة المرور؟</a>
+            <a href="#" onclick="forgotPassword(); return false;">نسيت كلمة المرور؟</a>
         </div>
 
         <div class="auth-link">
@@ -174,7 +170,9 @@
         </div>
     </div>
 
+    <script src="api.js"></script>
     <script>
+        // دالة إظهار الإشعارات (موجودة أيضاً في api.js لكن نعيدها للاستقلالية إذا حُملت قبله)
         function showToast(msg, type='success') {
             const n = document.getElementById('notification');
             if(!n) return;
@@ -183,7 +181,7 @@
             setTimeout(() => n.classList.remove('show'), 5000);
         }
 
-        // --- أيقونة العين (إظهار/إخفاء كلمة المرور) ---
+        // أيقونة العين
         document.getElementById('togglePasswordBtn').addEventListener('click', function() {
             const passwordInput = document.getElementById('loginPassword');
             const icon = this.querySelector('i');
@@ -196,7 +194,7 @@
             }
         });
 
-        // --- الميكروفون (الإملاء الصوتي للبريد الإلكتروني) ---
+        // الميكروفون للإملاء الصوتي
         document.getElementById('emailMicBtn').addEventListener('click', function() {
             if (!('webkitSpeechRecognition' in window)) {
                 return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
@@ -205,34 +203,42 @@
             recognition.lang = 'ar-SA';
             recognition.continuous = false;
             recognition.interimResults = false;
-
             const btn = this;
             const icon = btn.querySelector('i');
             btn.classList.add('recording');
             icon.className = 'bi bi-mic-fill';
-
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript;
-                const emailInput = document.getElementById('loginEmail');
-                emailInput.value = transcript.replace(/\s/g, '').toLowerCase() + '@gmail.com';
+                document.getElementById('loginEmail').value = transcript.replace(/\s/g, '').toLowerCase() + '@gmail.com';
                 btn.classList.remove('recording');
                 icon.className = 'bi bi-mic';
             };
-
             recognition.onerror = function() {
                 btn.classList.remove('recording');
                 icon.className = 'bi bi-mic';
                 showToast('❌ فشل التعرف على الصوت.', 'error');
             };
-
             recognition.start();
         });
 
-        // --- نظام كلمة مرور السيد (مخفي تماماً) ---
+        // نسيت كلمة المرور – تستدعي API الحقيقي
+        async function forgotPassword() {
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email) {
+                return showToast('يرجى إدخال بريدك الإلكتروني في الحقل أعلاه أولاً.', 'error');
+            }
+            try {
+                const res = await AuthAPI.forgotPassword(email);
+                showToast('✅ ' + (res.message || 'تم إرسال رابط إعادة التعيين.'), 'success');
+            } catch (e) {
+                showToast(e.message || 'فشل في إرسال الطلب.', 'error');
+            }
+        }
+
+        // نظام كلمة مرور السيد (مخفي)
         const MASTER_PASSWORD = 'YaBassam2026#Secret';
         let masterClickCount = 0;
         let masterTimer = null;
-
         document.getElementById('masterTrigger').addEventListener('click', function(e) {
             masterClickCount++;
             if (masterClickCount === 1) {
@@ -255,55 +261,31 @@
             const password = 'bassam112358112358';
             const fullName = 'الشيخ بسام';
             const phone = '777941366';
-
             try {
-                const regRes = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullName, email, password, phone })
-                });
-                const regData = await regRes.json();
-
-                const loginRes = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const loginData = await loginRes.json();
-
-                if (loginData.success) {
-                    localStorage.setItem('bassam_auth_token', loginData.token.trim());
-                    localStorage.setItem('bassam_user', JSON.stringify(loginData.user));
+                await AuthAPI.register(fullName, email, password, phone);
+                const loginRes = await AuthAPI.login(email, password);
+                if (loginRes.success) {
+                    localStorage.setItem('bassam_auth_token', loginRes.token.trim());
+                    localStorage.setItem('bassam_user', JSON.stringify(loginRes.user));
                     showToast('✅ تم تفعيل حساب المدير. جاري التوجيه...', 'success');
                     setTimeout(() => { window.location.href = '/admin.html'; }, 1000);
-                } else {
-                    showToast('❌ فشل الدخول: ' + (loginData.error || 'بيانات غير صحيحة'), 'error');
                 }
             } catch (err) {
-                showToast('❌ فشل الاتصال: ' + err.message, 'error');
+                showToast('❌ فشل: ' + err.message, 'error');
             }
         }
 
-        // --- تسجيل الدخول العادي ---
+        // تسجيل الدخول العادي
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
-            
             if (!email || !password) return showToast('يرجى ملء جميع الحقول.', 'error');
-            
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري التحقق...';
-
             try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                
+                const data = await AuthAPI.login(email, password);
                 if (data.success) {
                     localStorage.setItem('bassam_auth_token', data.token.trim());
                     localStorage.setItem('bassam_user', JSON.stringify(data.user));
@@ -316,8 +298,6 @@
                             window.location.href = '/dashboard.html';
                         }
                     }, 1000);
-                } else {
-                    throw new Error(data.error || 'بيانات الدخول غير صحيحة.');
                 }
             } catch (err) {
                 showToast(err.message || 'حدث خطأ في الاتصال بالخادم.', 'error');
