@@ -1,7 +1,8 @@
-// engineer.js – الخبير الأمني والمهندس والمساعد الذكي (بدون أمر ترقية)
+// engineer.js – الخبير الأمني والمهندس والمساعد الذكي (متوافق مع جميع إصدارات Node.js)
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const https = require('https');
 
 // =============================================
 // أدوات مساعدة
@@ -20,19 +21,29 @@ function getTodayDateStr() {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 }
 
-// --- دوال أمنية ---
-async function lookupIP(ip) {
-    try {
-        const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,regionName,city,isp,query`);
-        const data = await response.json();
-        if (data.status === 'success') {
-            return `🌍 **معلومات IP:** \`${data.query}\`\n- 🏳️ البلد: ${data.country}\n- 🏙️ المنطقة: ${data.regionName}\n- 📍 المدينة: ${data.city}\n- 📡 مزود الخدمة: ${data.isp}`;
-        } else {
-            return `❌ فشل جلب معلومات IP: ${data.message}`;
-        }
-    } catch (e) {
-        return `❌ خطأ في الاتصال بخدمة فحص IP: ${e.message}`;
-    }
+// --- دوال أمنية (باستخدام https.get بدلاً من fetch) ---
+function lookupIP(ip) {
+    return new Promise((resolve) => {
+        const url = `https://ip-api.com/json/${ip}?fields=status,message,country,regionName,city,isp,query`;
+        https.get(url, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.status === 'success') {
+                        resolve(`🌍 **معلومات IP:** \`${parsed.query}\`\n- 🏳️ البلد: ${parsed.country}\n- 🏙️ المنطقة: ${parsed.regionName}\n- 📍 المدينة: ${parsed.city}\n- 📡 مزود الخدمة: ${parsed.isp}`);
+                    } else {
+                        resolve(`❌ فشل جلب معلومات IP: ${parsed.message}`);
+                    }
+                } catch (e) {
+                    resolve(`❌ خطأ في تحليل بيانات IP: ${e.message}`);
+                }
+            });
+        }).on('error', (e) => {
+            resolve(`❌ خطأ في الاتصال بخدمة فحص IP: ${e.message}`);
+        });
+    });
 }
 
 // =============================================
