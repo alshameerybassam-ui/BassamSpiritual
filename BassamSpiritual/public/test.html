@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار شامل | مركز النور الرباني</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background: #f4f6f9; padding: 20px; color: #0A1628; }
+        .container { max-width: 700px; margin: auto; background: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-top: 6px solid #F5B041; }
+        h1 { text-align: center; color: #0A1628; }
+        .test-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fff; }
+        .test-item h3 { margin: 0 0 8px 0; font-size: 1.1rem; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; margin-right: 10px; }
+        .ok { background: #D1FAE5; color: #065F46; }
+        .error { background: #FEE2E2; color: #991B1B; }
+        .info { background: #DBEAFE; color: #1E40AF; }
+        .response { background: #f8fafc; padding: 12px; border-radius: 8px; white-space: pre-wrap; font-size: 0.85rem; margin-top: 10px; max-height: 200px; overflow-y: auto; direction: ltr; }
+        button { background: #F5B041; color: #0A1628; border: none; padding: 12px 25px; border-radius: 40px; font-weight: 700; font-size: 1rem; cursor: pointer; margin: 10px 0; }
+        .summary { text-align: center; font-size: 1.2rem; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 اختبار شامل للمنصة</h1>
+        <p style="text-align:center; color:#666;">سيتم اختبار جميع خدمات الخادم وقاعدة البيانات تلقائياً</p>
+        <button onclick="runAllTests()">▶️ بدء الاختبار الشامل</button>
+        <div id="results"></div>
+        <div id="summary" class="summary"></div>
+    </div>
+
+    <script>
+        const BASE = '/api';
+        const token = localStorage.getItem('bassam_auth_token') || '';
+
+        function getHeaders() {
+            const h = { 'Content-Type': 'application/json' };
+            if (token) h['Authorization'] = `Bearer ${token}`;
+            return h;
+        }
+
+        async function testEndpoint(name, method, url, body = null, auth = true) {
+            const container = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'test-item';
+            div.innerHTML = `<h3>${name} ... ⏳ جارٍ</h3>`;
+            container.prepend(div);
+            try {
+                const opts = { method, headers: getHeaders() };
+                if (body) opts.body = JSON.stringify(body);
+                const res = await fetch(BASE + url, opts);
+                const data = await res.json().catch(() => ({ raw: 'استجابة غير JSON' }));
+                if (!res.ok) {
+                    div.innerHTML = `<h3>${name} <span class="status error">فشل (${res.status})</span></h3>
+                    <div class="response">${JSON.stringify(data, null, 2)}</div>`;
+                    return { ok: false, status: res.status, data };
+                } else {
+                    div.innerHTML = `<h3>${name} <span class="status ok">✅ ناجح</span></h3>
+                    <div class="response">${JSON.stringify(data, null, 2).substring(0, 500)}</div>`;
+                    return { ok: true, status: res.status, data };
+                }
+            } catch (err) {
+                div.innerHTML = `<h3>${name} <span class="status error">خطأ شبكة</span></h3>
+                <div class="response">${err.message}</div>`;
+                return { ok: false, error: err.message };
+            }
+        }
+
+        async function runAllTests() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+
+            const tests = [
+                { name: 'GET /articles (عام)', method: 'GET', url: '/articles', auth: false },
+                { name: 'GET /reviews (عام)', method: 'GET', url: '/reviews', auth: false },
+                { name: 'POST /ai-chat', method: 'POST', url: '/ai-chat', body: { message: 'عين' }, auth: false },
+                { name: 'POST /auth/login (اختبار مدير)', method: 'POST', url: '/auth/login', body: { email: 'alshameerybassam@gmail.com', password: 'bassam112358112358' }, auth: false },
+            ];
+
+            // محاولة استخدام token الموجود إذا كان المستخدم مسجلاً دخول
+            if (token) {
+                tests.push({ name: 'GET /auth/verify (جلسة)', method: 'GET', url: '/auth/verify' });
+                tests.push({ name: 'GET /dashboard/me (لوحة المستفيد)', method: 'GET', url: '/dashboard/me' });
+            } else {
+                tests.push({ name: 'تنبيه: لم يتم العثور على جلسة، يرجى تسجيل الدخول أولاً لاختبار لوحة المستفيد', method: null });
+            }
+
+            let okCount = 0, failCount = 0;
+            for (const t of tests) {
+                if (!t.method) {
+                    const container = document.getElementById('results');
+                    const div = document.createElement('div');
+                    div.className = 'test-item';
+                    div.innerHTML = `<h3><span class="status info">تنبيه</span> ${t.name}</h3>`;
+                    container.prepend(div);
+                    continue;
+                }
+                const result = await testEndpoint(t.name, t.method, t.url, t.body, t.auth !== false);
+                if (result.ok) okCount++; else failCount++;
+            }
+
+            document.getElementById('summary').innerHTML = `
+                <p>✅ ناجح: ${okCount} | ❌ فشل: ${failCount}</p>
+                ${failCount === 0 ? '<p style="color:#065F46;">🎉 جميع الاختبارات ناجحة! قاعدة البيانات والخدمات تعمل بكفاءة.</p>' : '<p style="color:#991B1B;">⚠️ توجد أخطاء. أرسل التفاصيل إلى الدعم مع وصف الحالة.</p>'}
+            `;
+        }
+
+        // تشغيل أولي عند تحميل الصفحة بعد 1 ثانية
+        setTimeout(runAllTests, 1000);
+    </script>
+</body>
+</html>
