@@ -25,7 +25,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Cairo', sans-serif; background: var(--bg); display: flex; min-height: 100vh; }
 
-        /* الشريط الجانبي */
         .sidebar {
             width: 250px; background: var(--navy); color: #fff; display: flex; flex-direction: column;
             position: fixed; top: 0; right: 0; bottom: 0; z-index: 1000; transition: transform 0.3s;
@@ -44,11 +43,9 @@
         .nav-item i { font-size: 1.2rem; width: 24px; text-align: center; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: #64748B; text-align: center; }
 
-        /* المحتوى الرئيسي */
         .main-content { flex: 1; margin-right: 250px; padding: 30px; }
         .page-title { font-size: 1.5rem; font-weight: 800; color: var(--navy); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
 
-        /* كروت الإحصائيات */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
         .stat-card {
             background: var(--card); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px;
@@ -59,7 +56,6 @@
         .stat-info h3 { font-size: 1.6rem; font-weight: 800; color: var(--navy); }
         .stat-info p { font-size: 0.85rem; color: var(--text-light); font-weight: 600; }
 
-        /* الألواح */
         .panel {
             background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 25px;
             display: none;
@@ -69,14 +65,12 @@
         .panel-header h2 { font-size: 1.1rem; color: var(--navy); display: flex; align-items: center; gap: 8px; }
         .panel-header .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        /* الجداول المتجاوبة */
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 700px; font-size: 0.9rem; }
         th { background: #F8FAFC; padding: 10px 12px; text-align: right; font-weight: 700; color: var(--navy); border-bottom: 3px solid var(--gold); font-size: 0.85rem; }
         td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         tr:hover td { background: #FAFBFC; }
 
-        /* الأزرار */
         .btn {
             padding: 6px 14px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer;
             font-family: 'Cairo'; font-size: 0.8rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px;
@@ -96,7 +90,6 @@
         .badge-success { background: #D1FAE5; color: #065F46; }
         .badge-danger { background: #FEE2E2; color: #991B1B; }
 
-        /* النافذة المنبثقة */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; }
         .modal-overlay.show { display: flex; }
         .modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
@@ -104,17 +97,14 @@
         .modal-close { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
         .modal-body { padding: 20px; }
 
-        /* زر الهامبرغر */
         .hamburger { display: none; position: fixed; top: 15px; right: 15px; z-index: 1100; background: var(--navy); color: var(--gold); border: none; padding: 10px; border-radius: 8px; font-size: 1.5rem; cursor: pointer; }
 
-        /* استجابة الجوال */
         @media (max-width: 992px) {
             .sidebar { transform: translateX(100%); }
             .sidebar.open { transform: translateX(0); }
             .main-content { margin-right: 0; }
             .hamburger { display: block; }
         }
-
         @media (max-width: 768px) {
             .sidebar { width: 100%; max-width: 280px; transform: translateX(100%); transition: transform 0.3s ease; }
             .sidebar.open { transform: translateX(0); }
@@ -139,7 +129,6 @@
             #articleFormBox { padding: 10px !important; }
             #articleContentEditor { min-height: 80px !important; }
         }
-
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
             .stat-card { padding: 8px; }
@@ -157,7 +146,6 @@
 <body>
     <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
-    <!-- الشريط الجانبي -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <i class="bi bi-shield-fill"></i>
@@ -186,11 +174,9 @@
         <div class="sidebar-footer">الشيخ بسام الشميري</div>
     </aside>
 
-    <!-- المحتوى الرئيسي -->
     <main class="main-content">
         <div class="page-title"><i class="bi bi-speedometer2" style="color:var(--gold);"></i> لوحة التحكم</div>
 
-        <!-- الإحصائيات -->
         <div class="stats-grid">
             <div class="stat-card gold"><div class="stat-icon"><i class="bi bi-folder"></i></div><div class="stat-info"><h3 id="totalCount">0</h3><p>إجمالي الطلبات</p></div></div>
             <div class="stat-card blue"><div class="stat-icon"><i class="bi bi-hourglass-split"></i></div><div class="stat-info"><h3 id="pendingCount">0</h3><p>قيد الانتظار</p></div></div>
@@ -198,7 +184,6 @@
             <div class="stat-card red"><div class="stat-icon"><i class="bi bi-x-circle"></i></div><div class="stat-info"><h3 id="rejectedCount">0</h3><p>ملغاة</p></div></div>
         </div>
 
-        <!-- لوحة الطلبات -->
         <div class="panel active" id="tab-requests">
             <div class="panel-header">
                 <h2><i class="bi bi-people" style="color:var(--gold);"></i> الطلبات</h2>
@@ -226,7 +211,6 @@
             </div>
         </div>
 
-        <!-- لوحة المقالات -->
         <div class="panel" id="tab-articles">
             <div class="panel-header">
                 <h2><i class="bi bi-file-earmark-text" style="color:var(--gold);"></i> المقالات</h2>
@@ -261,7 +245,6 @@
             </div>
         </div>
 
-        <!-- لوحة التقييمات -->
         <div class="panel" id="tab-reviews">
             <div class="panel-header">
                 <h2><i class="bi bi-star" style="color:var(--gold);"></i> التقييمات</h2>
@@ -286,7 +269,6 @@
             </div>
         </div>
 
-        <!-- لوحة الذكاء الاصطناعي -->
         <div class="panel" id="tab-ai">
             <div class="panel-header">
                 <h2><i class="bi bi-cpu" style="color:var(--gold);"></i> توجيه الذكاء الاصطناعي</h2>
@@ -298,7 +280,6 @@
             <button class="btn btn-primary" onclick="AdminModule.saveAI()"><i class="bi bi-save"></i> حفظ</button>
         </div>
 
-        <!-- لوحة المهندس -->
         <div class="panel" id="tab-engineer">
             <div class="panel-header">
                 <h2><i class="bi bi-robot" style="color:var(--gold);"></i> مهندس المنصة</h2>
@@ -313,7 +294,6 @@
             <div id="engineerResponse" style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:8px; white-space:pre-wrap; display:none;"></div>
         </div>
 
-        <!-- لوحة الانتقال للموقع -->
         <div class="panel" id="tab-site">
             <div class="panel-header">
                 <h2><i class="bi bi-globe2" style="color:var(--gold);"></i> الانتقال للموقع</h2>
@@ -328,7 +308,6 @@
         </div>
     </main>
 
-    <!-- نافذة تفاصيل الطلب -->
     <div class="modal-overlay" id="detailsModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -348,18 +327,6 @@
             document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
             if (el) { el.classList.add('active'); }
         }
-
-        window.addEventListener('load', function() {
-            if (typeof AdminModule !== 'undefined' && AdminModule.init) {
-                AdminModule.init();
-            } else {
-                console.warn('⚠️ AdminModule غير موجود');
-                var tbody = document.getElementById('requestsTableBody');
-                if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c;">⚠️ لم يتم تحميل وحدة الإدارة. تأكد من وجود ملف api.js.</td></tr>';
-                }
-            }
-        });
     </script>
 </body>
 </html>
