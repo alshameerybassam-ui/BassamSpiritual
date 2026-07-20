@@ -1,5 +1,5 @@
 /**
- * api.js – النسخة النهائية الكاملة (مودال موحد بدل النوافذ المنبثقة)
+ * api.js – النسخة النهائية مع مودال مخصص للمقالات (يدعم HTML وتنسيق جميل)
  * مركز النور الرباني والنفس الرحماني
  */
 const API_BASE = '/api';
@@ -32,12 +32,10 @@ async function api(method, endpoint, body = null) {
     return data;
 }
 
-// =============== إنشاء المودال الموحد (يحل محل prompt, alert, confirm) ===============
+// =============== المودال الموحد (للتطبيقات العامة) ===============
 function createModal() {
-    // إزالة أي مودال قديم
     const old = document.getElementById('unifiedModal');
     if (old) old.remove();
-
     const overlay = document.createElement('div');
     overlay.id = 'unifiedModal';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -54,15 +52,12 @@ function createModal() {
     closeBtn.onclick = () => overlay.remove();
     header.appendChild(closeBtn);
     box.appendChild(header);
-
     const body = document.createElement('div');
     body.style.cssText = 'padding:20px;';
     box.appendChild(body);
-
     const footer = document.createElement('div');
     footer.style.cssText = 'padding:15px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;';
     box.appendChild(footer);
-
     overlay.appendChild(box);
     document.body.appendChild(overlay);
     return { overlay, title, body, footer, close: () => overlay.remove() };
@@ -122,6 +117,48 @@ function showConfirm(titleText, message) {
             { text: 'إلغاء', style: 'background:#fff;border:1px solid #ddd;', callback: () => resolve(false) },
             { text: 'موافق', style: 'background:#F5B041;color:#0A1628;', callback: () => resolve(true) }
         ]);
+    });
+}
+
+// =============== مودال المقالات (خاص) ===============
+function showArticleModal(titleText, contentHtml) {
+    const old = document.getElementById('articleModalOverlay');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'articleModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:20px;width:100%;max-width:700px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;';
+    const header = document.createElement('div');
+    header.style.cssText = 'background:#0A1628;color:#F5B041;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;';
+    const titleEl = document.createElement('h3');
+    titleEl.style.cssText = 'margin:0;font-size:1.3rem;';
+    titleEl.textContent = titleText;
+    header.appendChild(titleEl);
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer;';
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(closeBtn);
+    box.appendChild(header);
+    const body = document.createElement('div');
+    body.style.cssText = 'padding:25px;overflow-y:auto;flex:1;font-family:Cairo;line-height:1.8;color:#0A1628;';
+    body.innerHTML = contentHtml;
+    box.appendChild(body);
+    const footer = document.createElement('div');
+    footer.style.cssText = 'padding:15px 20px;border-top:1px solid #eee;text-align:left;';
+    const closeBtn2 = document.createElement('button');
+    closeBtn2.textContent = 'إغلاق المقال';
+    closeBtn2.style.cssText = 'padding:10px 25px;border-radius:8px;border:none;background:#F5B041;color:#0A1628;cursor:pointer;font-weight:700;font-family:Cairo;';
+    closeBtn2.onclick = () => overlay.remove();
+    footer.appendChild(closeBtn2);
+    box.appendChild(footer);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    // إغلاق عند النقر على الخلفية
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
     });
 }
 
@@ -437,7 +474,7 @@ const AdminModule = {
     },
     async rejectInitial() {
         const reason = await showPrompt('سبب الرفض', 'أدخل سبب الرفض:');
-        if (reason === null || reason === '') return; // ألغى أو ترك فارغاً
+        if (reason === null || reason === '') return;
         await AdminAPI.rejectRequest(this.currentId, reason);
         showToast('تم الرفض');
         this.loadRequests();
@@ -576,7 +613,7 @@ const AdminModule = {
     }
 };
 
-// =============== HomeModule ===============
+// =============== HomeModule (مع استخدام showArticleModal) ===============
 const HomeModule = {
     articlesCache: [],
     async loadArticles() {
@@ -614,7 +651,8 @@ const HomeModule = {
     openArticle(id) {
         const article = this.articlesCache.find(a => a.id == id);
         if (article) {
-            showAlert(article.title, article.content || article.summary);
+            // استخدام المودال المخصص للمقالات مع دعم HTML
+            showArticleModal(article.title, article.content || article.summary);
         } else {
             showAlert('خطأ', 'المقال غير متوفر حالياً.');
         }
