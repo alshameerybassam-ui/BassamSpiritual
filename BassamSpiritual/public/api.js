@@ -337,11 +337,80 @@ const DashboardModule = {
                 <div class="request-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <strong>${r.serviceType || 'خدمة'}</strong>
+// =============== DashboardModule (مُحدّث مع المراسلات) ===============
+const DashboardModule = {
+    async init() {
+        if (!getToken()) { window.location.href = '/login.html'; return; }
+        try {
+            await AuthAPI.verify();
+            await this.load();
+        } catch (e) {
+            clearSession();
+            window.location.href = '/login.html';
+        }
+    },
+    async load() {
+        try {
+            const data = await UserAPI.getDashboard();
+            const user = data.user;
+            const requests = data.requests || [];
+
+            document.getElementById('welcomeMessage').innerHTML = `مرحباً، <span>${user.full_name || 'مستفيد'}</span>`;
+            document.getElementById('sidebarName').textContent = user.full_name || '—';
+            document.getElementById('sidebarEmail').textContent = user.email || '—';
+            document.getElementById('sidebarPhone').textContent = user.phone || 'غير مقدم';
+
+            document.getElementById('statTotal').textContent = requests.length;
+            document.getElementById('statPending').textContent = requests.filter(r => r.status === 'pending').length;
+            document.getElementById('statCompleted').textContent = requests.filter(r => r.status === 'diagnosed' || r.status === 'completed').length;
+            document.getElementById('statRejected').textContent = requests.filter(r => r.status === 'rejected').length;
+
+            const container = document.getElementById('requestsContainer');
+            if (!requests.length) {
+                container.innerHTML = '<p style="text-align:center; color:#888;">لا توجد طلبات حتى الآن.</p>';
+                return;
+            }
+
+            const badgeClass = {
+                'pending': 'badge-pending',
+                'accepted_waiting_payment': 'badge-processing',
+                'payment_submitted': 'badge-processing',
+                'processing': 'badge-processing',
+                'diagnosed': 'badge-completed',
+                'completed': 'badge-completed',
+                'rejected': 'badge-rejected',
+                'payment_rejected': 'badge-rejected'
+            };
+            const statusText = {
+                'pending': 'قيد الانتظار',
+                'accepted_waiting_payment': 'بانتظار الدفع',
+                'payment_submitted': 'تم تقديم الدفع',
+                'processing': 'قيد المعالجة',
+                'diagnosed': 'تم التشخيص',
+                'completed': 'مكتمل',
+                'rejected': 'مرفوض',
+                'payment_rejected': 'دفع مرفوض'
+            };
+
+            container.innerHTML = requests.map(r => {
+                let actionsHtml = '';
+                if (r.status === 'accepted_waiting_payment') {
+                    actionsHtml += `<button class="btn-primary" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.showPaymentForm(${r.id})">💳 تقديم الدفع</button>`;
+                }
+                if (r.status === 'diagnosed' || r.status === 'completed') {
+                    actionsHtml += `<button class="btn-primary" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewDiagnosis(${r.id})">📋 عرض التشخيص</button>`;
+                }
+                // زر المراسلات يظهر دائماً (حتى قبل القبول) ليشعر المستفيد بالاطمئنان
+                actionsHtml += `<button class="btn-outline" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewMessages(${r.id})">💬 المراسلات</button>`;
+                return `
+                <div class="request-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <strong>${r.serviceType || 'خدمة'}</strong>
                         <span class="badge-status ${badgeClass[r.status] || 'badge-pending'}">${statusText[r.status] || r.status}</span>
                     </div>
                     <p style="font-size:0.85rem; color:#666; margin:8px 0;">${(r.description || '').substring(0, 80)}...</p>
                     <small style="color:#999;">${new Date(r.createdAt).toLocaleDateString('ar-EG')}</small>
-                    ${actionsHtml}
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">${actionsHtml}</div>
                 </div>`;
             }).join('');
 
@@ -367,8 +436,42 @@ const DashboardModule = {
             const req = await UserAPI.getRequest(requestId);
             await showAlert('التشخيص', `🩺 التشخيص:\n${req.initial_diagnosis || 'لا يوجد'}\n\n📋 الخطة العلاجية:\n${req.treatment_plan || 'لا توجد'}`);
         } catch (e) { showToast(e.message, 'error'); }
+    },
+    // -------- المراسلات (جديد) --------
+    async viewMessages(requestId) {
+        try {
+            const res = await UserAPI.getMessages(requestId);
+            const messages = res.messages || [];
+            let html = `<div style="max-height:300px; overflow-y:auto; margin-bottom:15px;">`;
+            if (messages.length === 0) {
+                html += '<p style="color:#888; text-align:center;">لا توجد رسائل بعد. يمكنك بدء المحادثة.</p>';
+            } else {
+                messages.forEach(m => {
+                    const isMe = m.senderRole === 'user';
+                    html += `<div style="background:${isMe ? '#FFFBF0' : '#F8FAFC'}; border-right:4px solid ${isMe ? '#F5B041' : '#1B4D3D'}; padding:10px; margin-bottom:8px; border-radius:8px;">
+                        <strong>${isMe ? 'أنت' : (m.senderName || 'الشيخ')}</strong>
+                        <p style="margin:4px 0; white-space:pre-wrap;">${m.messageText}</p>
+                        <small style="color:#999;">${new Date(m.createdAt).toLocaleString('ar-EG')}</small>
+                    </div>`;
+                });
+            }
+            html += `</div>
+            <textarea id="userReplyMessage" placeholder="اكتب ردك..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; font-family:Cairo; min-height:60px;"></textarea>`;
+
+            showModal('💬 المراسلات', html, [
+                { text: 'إرسال', style: 'background:#F5B041;color:#0A1628;', callback: async () => {
+                    const text = document.getElementById('userReplyMessage')?.value.trim();
+                    if (!text) return showToast('اكتب رسالة', 'error');
+                    await UserAPI.sendMessage(requestId, text);
+                    showToast('✅ تم الإرسال');
+                    this.viewMessages(requestId); // تحديث النافذة
+                }},
+                { text: 'إغلاق', style: 'background:#fff;border:1px solid #ddd;', callback: () => {} }
+            ]);
+        } catch (e) { showToast(e.message, 'error'); }
     }
 };
+
 
 // =============== AdminModule ===============
 const AdminModule = {
