@@ -66,7 +66,128 @@
         .article-scroll-card p { font-size: 0.9rem; color: #4A5A6A; line-height: 1.6; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .article-scroll-card .article-date { font-size: 0.8rem; color: #94A3B8; }
         .article-scroll-card .read-more { display: inline-block; margin-top: 10px; color: #F5B041; font-weight: 600; font-size: 0.85rem; }
-        @media (max-width: 768px) { .hero-section { padding: 30px 15px 25px; border-radius: 20px; } .hero-section h1 { font-size: 1.8rem !important; } .article-scroll-card { flex: 0 0 260px; } }
+        
+        .chat-window-m {
+            position: fixed;
+            bottom: 105px;
+            left: 25px;
+            width: 360px;
+            max-width: calc(100vw - 50px);
+            height: 500px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(10, 22, 40, 0.08);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 101;
+            animation: slideUp 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .chat-header-m {
+            background: linear-gradient(135deg, #0A1628 0%, #1B2A3D 100%);
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #F5B041;
+        }
+        .chat-body-m {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fcfbf9;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-message-m {
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .chat-message-m.bot {
+            background-color: #f1f2f6;
+            color: #2c3e50;
+            align-self: flex-start;
+            border-bottom-right-radius: 3px;
+        }
+        .chat-message-m.user {
+            background-color: #F5B041;
+            color: #0A1628;
+            align-self: flex-end;
+            border-bottom-left-radius: 3px;
+            font-weight: 600;
+        }
+        .chat-footer-m {
+            padding: 12px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input-m {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 30px;
+            outline: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .chat-input-m:focus { border-color: #F5B041; box-shadow: 0 0 0 3px rgba(245, 176, 65, 0.15); }
+        .chat-send-btn-m {
+            background: linear-gradient(135deg, #F5B041, #E67E22);
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            color: #0A1628;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(245, 176, 65, 0.3);
+            transition: 0.3s;
+        }
+        .chat-send-btn-m:hover { transform: scale(1.05); }
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .quick-reply-btn {
+            background: #fff;
+            border: 1px solid #F5B041;
+            color: #F5B041;
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Cairo';
+            white-space: nowrap;
+        }
+        .quick-reply-btn:hover {
+            background: #F5B041;
+            color: #0A1628;
+        }
+        @media (max-width: 768px) {
+            .hero-section { padding: 30px 15px 25px; border-radius: 20px; }
+            .hero-section h1 { font-size: 1.8rem !important; }
+            .article-scroll-card { flex: 0 0 260px; }
+            .chat-window-m { width: 300px; }
+        }
     </style>
 </head>
 <body>
@@ -163,11 +284,33 @@
 
     <div id="chatWindowNew" class="chat-window-m" style="display: none;">
         <div class="chat-header-m">
-            <div style="display:flex; align-items:center; gap:10px;"><i class="bi bi-robot" style="color:#F5B041; font-size:20px;"></i><div><span style="font-weight:700;">المستشار الروحاني الذكي</span><span style="font-size:11px; color:#F5B041;">مستعد لخدمتك</span></div></div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="bi bi-robot" style="color:#F5B041; font-size:20px;"></i>
+                <div>
+                    <span style="font-weight:700;">المستشار الروحاني الذكي</span>
+                    <span style="font-size:11px; color:#F5B041;">مستعد لخدمتك</span>
+                </div>
+            </div>
             <button onclick="toggleChatNew()" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer;">&times;</button>
         </div>
-        <div class="chat-body-m" id="chatBodyNew"><div class="chat-message-m bot">السلام عليكم ورحمة الله وبركاته 🌙<br>أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك الروحية.<br><strong>هل يمكنك إخباري بما تشعر به؟</strong></div></div>
-        <div class="chat-footer-m"><input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك..." onkeypress="if(event.key==='Enter') sendNewMessage()"><button onclick="sendNewMessage()" class="chat-send-btn-m"><i class="bi bi-send-fill"></i></button></div>
+        <div class="chat-body-m" id="chatBodyNew">
+            <div class="chat-message-m bot">
+                السلام عليكم ورحمة الله وبركاته 🌙<br>
+                أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك الروحية.<br>
+                <strong>كيف يمكنني مساعدتك اليوم؟</strong>
+            </div>
+            <div class="quick-replies" id="quickReplies">
+                <button class="quick-reply-btn" onclick="sendQuickReply('أعاني من أعراض العين والحسد')">🧿 العين والحسد</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('أشعر بضيق وهم شديد')">😔 ضيق وهم</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('أحتاج رقية شرعية')">📿 رقية شرعية</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('عندي مشكلة في الزواج')">💍 تأخر زواج</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('أريد تفسير رؤيا')">🌙 تفسير رؤيا</button>
+            </div>
+        </div>
+        <div class="chat-footer-m">
+            <input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك..." onkeypress="if(event.key==='Enter') sendNewMessage()">
+            <button onclick="sendNewMessage()" class="chat-send-btn-m"><i class="bi bi-send-fill"></i></button>
+        </div>
     </div>
 
     <footer class="footer-new">
@@ -180,5 +323,12 @@
     </footer>
 
     <script src="api.js"></script>
+    <script>
+        // إرسال رد سريع
+        function sendQuickReply(text) {
+            document.getElementById('chatInputNew').value = text;
+            sendNewMessage();
+        }
+    </script>
 </body>
 </html>
