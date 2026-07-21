@@ -2,111 +2,198 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>اختبار شامل | مركز النور الرباني</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; background: #f4f6f9; padding: 20px; color: #0A1628; }
-        .container { max-width: 700px; margin: auto; background: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-top: 6px solid #F5B041; }
+        .container { max-width: 750px; margin: auto; background: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-top: 6px solid #F5B041; }
         h1 { text-align: center; color: #0A1628; }
-        .test-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fff; }
-        .test-item h3 { margin: 0 0 8px 0; font-size: 1.1rem; }
-        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; margin-right: 10px; }
-        .ok { background: #D1FAE5; color: #065F46; }
-        .error { background: #FEE2E2; color: #991B1B; }
-        .info { background: #DBEAFE; color: #1E40AF; }
-        .response { background: #f8fafc; padding: 12px; border-radius: 8px; white-space: pre-wrap; font-size: 0.85rem; margin-top: 10px; max-height: 200px; overflow-y: auto; direction: ltr; }
-        button { background: #F5B041; color: #0A1628; border: none; padding: 12px 25px; border-radius: 40px; font-weight: 700; font-size: 1rem; cursor: pointer; margin: 10px 0; }
-        .summary { text-align: center; font-size: 1.2rem; margin-bottom: 20px; }
+        .section { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+        .section h3 { margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: 'Cairo'; margin-bottom: 10px; box-sizing: border-box; }
+        button { background: #F5B041; color: #0A1628; border: none; padding: 12px 25px; border-radius: 40px; font-weight: 700; cursor: pointer; font-family: 'Cairo'; font-size: 1rem; }
+        button.secondary { background: #E2E8F0; color: #0A1628; }
+        .messages-box { background: #f8fafc; border-radius: 12px; padding: 15px; max-height: 350px; overflow-y: auto; margin-bottom: 15px; }
+        .msg { margin-bottom: 12px; padding: 10px 14px; border-radius: 12px; max-width: 80%; }
+        .msg.admin { background: #FFFBF0; border-right: 4px solid #F5B041; margin-left: auto; text-align: right; }
+        .msg.user { background: #F8FAFC; border-right: 4px solid #1B4D3D; margin-right: auto; text-align: left; }
+        .msg strong { display: block; margin-bottom: 4px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .status { padding: 10px; border-radius: 8px; margin: 10px 0; display: none; font-weight: 600; }
+        .test-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 اختبار شامل للمنصة</h1>
-        <p style="text-align:center; color:#666;">سيتم اختبار جميع خدمات الخادم وقاعدة البيانات تلقائياً</p>
-        <button onclick="runAllTests()">▶️ بدء الاختبار الشامل</button>
-        <div id="results"></div>
-        <div id="summary" class="summary"></div>
+        <h1>🧪 اختبار شامل للمنصة</h1>
+        <p style="text-align:center; color:#666;">اختبار API + المراسلات بين الشيخ والمستفيد</p>
+
+        <div class="section">
+            <h3>⚙️ اختبار الخدمات الأساسية</h3>
+            <div class="test-buttons">
+                <button onclick="testEndpoint('/articles', 'GET')">📄 المقالات</button>
+                <button onclick="testEndpoint('/reviews', 'GET')">⭐ التقييمات</button>
+                <button onclick="testEndpoint('/ai-chat', 'POST', { message: 'عين' })">🤖 الذكاء الاصطناعي</button>
+                <button onclick="testEndpoint('/auth/login', 'POST', { email: 'alshameerybassam@gmail.com', password: 'bassam112358112358' })">🔑 تسجيل دخول المدير</button>
+                <button onclick="testAuthVerify()">✅ التحقق من الجلسة</button>
+                <button onclick="testDashboard()">📊 لوحة المستفيد</button>
+            </div>
+            <div id="apiStatus" class="status"></div>
+        </div>
+
+        <div class="section">
+            <h3>💬 اختبار المراسلات (الشيخ ↔ المستفيد)</h3>
+            <div class="grid-2">
+                <div>
+                    <label>رقم الطلب (requestId)</label>
+                    <input type="number" id="requestId" placeholder="مثال: 1">
+                </div>
+                <div>
+                    <label>Token الجلسة</label>
+                    <input type="text" id="authToken" placeholder="يؤخذ تلقائياً من localStorage">
+                    <small style="color:#666;">أدخل token يدوياً أو سجّل الدخول أولاً.</small>
+                </div>
+            </div>
+            <button onclick="loadMessages()">📥 تحميل الرسائل</button>
+            <div id="msgStatus" class="status"></div>
+            <div class="messages-box" id="messagesContainer">الرجاء إدخال رقم الطلب وتحميل الرسائل.</div>
+            <div class="grid-2">
+                <div>
+                    <h4>📨 إرسال كـ "الشيخ"</h4>
+                    <textarea id="adminMsg" placeholder="رسالة من الشيخ..."></textarea>
+                    <button onclick="sendAs('admin')" style="width:100%;">إرسال (شيخ)</button>
+                </div>
+                <div>
+                    <h4>📨 إرسال كـ "المستفيد"</h4>
+                    <textarea id="userMsg" placeholder="رسالة من المستفيد..."></textarea>
+                    <button onclick="sendAs('user')" style="width:100%;">إرسال (مستفيد)</button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <script src="api.js"></script>
     <script>
         const BASE = '/api';
-        const token = localStorage.getItem('bassam_auth_token') || '';
 
-        function getHeaders() {
-            const h = { 'Content-Type': 'application/json' };
-            if (token) h['Authorization'] = `Bearer ${token}`;
-            return h;
+        // --- دوال مساعدة للاختبار ---
+        function showApiStatus(msg, isError = false) {
+            const s = document.getElementById('apiStatus');
+            s.style.display = 'block';
+            s.style.background = isError ? '#FEE2E2' : '#D1FAE5';
+            s.style.color = isError ? '#991B1B' : '#065F46';
+            s.textContent = msg;
         }
 
-        async function testEndpoint(name, method, url, body = null, auth = true) {
-            const container = document.getElementById('results');
-            const div = document.createElement('div');
-            div.className = 'test-item';
-            div.innerHTML = `<h3>${name} ... ⏳ جارٍ</h3>`;
-            container.prepend(div);
+        function showMsgStatus(msg, isError = false) {
+            const s = document.getElementById('msgStatus');
+            s.style.display = 'block';
+            s.style.background = isError ? '#FEE2E2' : '#D1FAE5';
+            s.style.color = isError ? '#991B1B' : '#065F46';
+            s.textContent = msg;
+        }
+
+        async function testEndpoint(path, method, body = null) {
+            showApiStatus('⏳ جاري الاختبار...');
             try {
-                const opts = { method, headers: getHeaders() };
+                const opts = { method, headers: { 'Content-Type': 'application/json' } };
+                const token = getToken();
+                if (token) opts.headers['Authorization'] = `Bearer ${token}`;
                 if (body) opts.body = JSON.stringify(body);
-                const res = await fetch(BASE + url, opts);
-                const data = await res.json().catch(() => ({ raw: 'استجابة غير JSON' }));
-                if (!res.ok) {
-                    div.innerHTML = `<h3>${name} <span class="status error">فشل (${res.status})</span></h3>
-                    <div class="response">${JSON.stringify(data, null, 2)}</div>`;
-                    return { ok: false, status: res.status, data };
-                } else {
-                    div.innerHTML = `<h3>${name} <span class="status ok">✅ ناجح</span></h3>
-                    <div class="response">${JSON.stringify(data, null, 2).substring(0, 500)}</div>`;
-                    return { ok: true, status: res.status, data };
-                }
-            } catch (err) {
-                div.innerHTML = `<h3>${name} <span class="status error">خطأ شبكة</span></h3>
-                <div class="response">${err.message}</div>`;
-                return { ok: false, error: err.message };
+                const res = await fetch(BASE + path, opts);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+                showApiStatus(`✅ ${method} ${path}: ${res.status} - ${JSON.stringify(data).substring(0, 100)}`);
+            } catch(e) {
+                showApiStatus(`❌ ${method} ${path}: ${e.message}`, true);
             }
         }
 
-        async function runAllTests() {
-            document.getElementById('results').innerHTML = '';
-            document.getElementById('summary').innerHTML = '';
-
-            const tests = [
-                { name: 'GET /articles (عام)', method: 'GET', url: '/articles', auth: false },
-                { name: 'GET /reviews (عام)', method: 'GET', url: '/reviews', auth: false },
-                { name: 'POST /ai-chat', method: 'POST', url: '/ai-chat', body: { message: 'عين' }, auth: false },
-                { name: 'POST /auth/login (اختبار مدير)', method: 'POST', url: '/auth/login', body: { email: 'alshameerybassam@gmail.com', password: 'bassam112358112358' }, auth: false },
-            ];
-
-            // محاولة استخدام token الموجود إذا كان المستخدم مسجلاً دخول
-            if (token) {
-                tests.push({ name: 'GET /auth/verify (جلسة)', method: 'GET', url: '/auth/verify' });
-                tests.push({ name: 'GET /dashboard/me (لوحة المستفيد)', method: 'GET', url: '/dashboard/me' });
-            } else {
-                tests.push({ name: 'تنبيه: لم يتم العثور على جلسة، يرجى تسجيل الدخول أولاً لاختبار لوحة المستفيد', method: null });
-            }
-
-            let okCount = 0, failCount = 0;
-            for (const t of tests) {
-                if (!t.method) {
-                    const container = document.getElementById('results');
-                    const div = document.createElement('div');
-                    div.className = 'test-item';
-                    div.innerHTML = `<h3><span class="status info">تنبيه</span> ${t.name}</h3>`;
-                    container.prepend(div);
-                    continue;
-                }
-                const result = await testEndpoint(t.name, t.method, t.url, t.body, t.auth !== false);
-                if (result.ok) okCount++; else failCount++;
-            }
-
-            document.getElementById('summary').innerHTML = `
-                <p>✅ ناجح: ${okCount} | ❌ فشل: ${failCount}</p>
-                ${failCount === 0 ? '<p style="color:#065F46;">🎉 جميع الاختبارات ناجحة! قاعدة البيانات والخدمات تعمل بكفاءة.</p>' : '<p style="color:#991B1B;">⚠️ توجد أخطاء. أرسل التفاصيل إلى الدعم مع وصف الحالة.</p>'}
-            `;
+        async function testAuthVerify() {
+            if (!getToken()) return showApiStatus('❌ لا يوجد token. سجل الدخول أولاً.', true);
+            await testEndpoint('/auth/verify', 'GET');
         }
 
-        // تشغيل أولي عند تحميل الصفحة بعد 1 ثانية
-        setTimeout(runAllTests, 1000);
+        async function testDashboard() {
+            if (!getToken()) return showApiStatus('❌ لا يوجد token.', true);
+            await testEndpoint('/dashboard/me', 'GET');
+        }
+
+        // --- المراسلات ---
+        function getCurrentToken() {
+            return document.getElementById('authToken').value.trim() || getToken();
+        }
+
+        async function loadMessages() {
+            const requestId = document.getElementById('requestId').value.trim();
+            const token = getCurrentToken();
+            if (!requestId) return showMsgStatus('يرجى إدخال رقم الطلب', true);
+            if (!token) return showMsgStatus('يرجى تسجيل الدخول أو لصق token', true);
+            showMsgStatus('⏳ جاري التحميل...');
+            try {
+                const res = await fetch(`${BASE}/requests/${requestId}/messages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                renderMessages(data.messages || []);
+                showMsgStatus('✅ تم التحميل');
+            } catch(e) {
+                showMsgStatus('❌ ' + e.message, true);
+            }
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            if (!messages.length) {
+                container.innerHTML = '<p style="color:#888;">لا توجد رسائل بعد.</p>';
+                return;
+            }
+            container.innerHTML = messages.map(m => {
+                const role = m.senderRole === 'admin' ? 'admin' : 'user';
+                const name = m.senderRole === 'admin' ? 'الشيخ' : 'المستفيد';
+                return `<div class="msg ${role}">
+                    <strong>${name} (${new Date(m.createdAt).toLocaleString('ar-EG')})</strong>
+                    <p>${m.messageText}</p>
+                </div>`;
+            }).join('');
+        }
+
+        async function sendAs(role) {
+            const requestId = document.getElementById('requestId').value.trim();
+            const token = getCurrentToken();
+            const textArea = role === 'admin' ? document.getElementById('adminMsg') : document.getElementById('userMsg');
+            const messageText = textArea.value.trim();
+            if (!requestId) return showMsgStatus('أدخل رقم الطلب', true);
+            if (!messageText) return showMsgStatus('اكتب رسالة', true);
+            if (!token) return showMsgStatus('تحتاج Token', true);
+            showMsgStatus('⏳ جاري الإرسال...');
+            try {
+                const res = await fetch(`${BASE}/requests/${requestId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ messageText })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                textArea.value = '';
+                showMsgStatus('✅ تم الإرسال');
+                loadMessages();
+            } catch(e) {
+                showMsgStatus('❌ ' + e.message, true);
+            }
+        }
+
+        // تحميل تلقائي للـ token من localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const tok = getToken();
+            if (tok) document.getElementById('authToken').value = tok;
+        });
     </script>
 </body>
 </html>
