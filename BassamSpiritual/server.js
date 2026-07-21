@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ====================== إعداد قاعدة البيانات ======================
+// ====================== إعداد الجداول (إذا لم تكن موجودة) ======================
 const initializeDatabase = async () => {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS users (
@@ -86,12 +86,12 @@ const initializeDatabase = async () => {
         if (parseInt(aiCount.rows[0].count) === 0) {
             await pool.query(`INSERT INTO ai_config (instructions) VALUES ($1)`, ['أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام.']);
         }
-        console.log("✅ تم فحص/بناء الجداول.");
-    } catch (err) { console.error("❌ خطأ التهيئة:", err.message); }
+        console.log("✅ تم فحص الجداول.");
+    } catch (err) { console.error("❌ خطأ تهيئة الجداول:", err.message); }
 };
 initializeDatabase();
 
-// ====================== إنشاء المدير ======================
+// ====================== إنشاء المدير تلقائياً ======================
 (async function initAdmin() {
     try {
         const adminEmail = 'alshameerybassam@gmail.com';
@@ -99,6 +99,7 @@ initializeDatabase();
         if (adminCheck.rows.length === 0) {
             const hashedPassword = bcrypt.hashSync('bassam112358112358', 8);
             await pool.query(`INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)`, ['الشيخ بسام', adminEmail, hashedPassword, 'admin']);
+            console.log('✅ تم إنشاء حساب المدير.');
         }
     } catch (err) { console.error('❌ خطأ إنشاء المدير:', err.message); }
 })();
@@ -136,9 +137,9 @@ app.post('/api/auth/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'البريد وكلمة المرور مطلوبان.' });
     try {
         const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [email]);
-        if (result.rows.length === 0 || !bcrypt.compareSync(password, result.rows[0].password))
-            return res.status(400).json({ error: 'بيانات خاطئة.' });
+        if (result.rows.length === 0) return res.status(400).json({ error: 'بيانات خاطئة.' });
         const user = result.rows[0];
+        if (!bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'بيانات خاطئة.' });
         const token = jwt.sign({ id: user.id, email: user.email, role: user.role, full_name: user.full_name }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ success: true, token, user: { full_name: user.full_name, email: user.email, role: user.role } });
     } catch (e) { console.error('❌ دخول:', e.message); res.status(500).json({ error: 'حدث خطأ أثناء تسجيل الدخول.' }); }
@@ -225,9 +226,7 @@ const fallbackReplies = [
 app.post('/api/ai-chat', async (req, res) => {
     const msg = req.body.message?.trim() || '';
     if (!msg) return res.json({ success: true, reply: 'تفضل، أنا بانتظار استفسارك.' });
-    
     const lowerMsg = msg.toLowerCase();
-    
     for (let item of aiKnowledge) {
         for (let kw of item.keywords) {
             if (lowerMsg.includes(kw)) {
@@ -236,11 +235,7 @@ app.post('/api/ai-chat', async (req, res) => {
             }
         }
     }
-    
-    if (lowerMsg.length < 15) {
-        return res.json({ success: true, reply: 'أرجو أن تعطيني تفاصيل أكثر عن حالتك حتى أستطيع مساعدتك بدقة.' });
-    }
-    
+    if (lowerMsg.length < 15) return res.json({ success: true, reply: 'أرجو أن تعطيني تفاصيل أكثر عن حالتك حتى أستطيع مساعدتك بدقة.' });
     const reply = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
     res.json({ success: true, reply });
 });
@@ -449,4 +444,8 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-app.listen(PORT, () => console.log(`🚀 السيرفر يعمل على ${PORT}`));
+// ====================== تشغيل الخادم ======================
+app.listen(PORT, () => console.log(`🚀 السيرفر يعمل على ${PORT}`)).on('error', (err) => {
+    console.error('❌ فشل تشغيل الخادم:', err.message);
+    process.exit(1);
+});
