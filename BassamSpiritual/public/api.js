@@ -1,5 +1,5 @@
 /**
- * api.js – النسخة النهائية مع مودال مخصص للمقالات (يدعم HTML وتنسيق جميل)
+ * api.js – النسخة النهائية الكاملة (جميع الدوال بدون اختصار)
  * مركز النور الرباني والنفس الرحماني
  */
 const API_BASE = '/api';
@@ -32,7 +32,7 @@ async function api(method, endpoint, body = null) {
     return data;
 }
 
-// =============== المودال الموحد (للتطبيقات العامة) ===============
+// =============== المودال الموحد ===============
 function createModal() {
     const old = document.getElementById('unifiedModal');
     if (old) old.remove();
@@ -120,11 +120,9 @@ function showConfirm(titleText, message) {
     });
 }
 
-// =============== مودال المقالات (خاص) ===============
 function showArticleModal(titleText, contentHtml) {
     const old = document.getElementById('articleModalOverlay');
     if (old) old.remove();
-
     const overlay = document.createElement('div');
     overlay.id = 'articleModalOverlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -156,7 +154,6 @@ function showArticleModal(titleText, contentHtml) {
     box.appendChild(footer);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
-    // إغلاق عند النقر على الخلفية
     overlay.addEventListener('click', function(e) {
         if (e.target === overlay) overlay.remove();
     });
@@ -270,74 +267,7 @@ function renderDesktopTable(tableBodyId, items, columns, rowActions) {
     }).join('');
 }
 
-// =============== DashboardModule ===============
-const DashboardModule = {
-    async init() {
-        if (!getToken()) { window.location.href = '/login.html'; return; }
-        try {
-            await AuthAPI.verify();
-            await this.load();
-        } catch (e) {
-            clearSession();
-            window.location.href = '/login.html';
-        }
-    },
-    async load() {
-        try {
-            const data = await UserAPI.getDashboard();
-            const user = data.user;
-            const requests = data.requests || [];
-
-            document.getElementById('welcomeMessage').innerHTML = `مرحباً، <span>${user.full_name || 'مستفيد'}</span>`;
-            document.getElementById('sidebarName').textContent = user.full_name || '—';
-            document.getElementById('sidebarEmail').textContent = user.email || '—';
-            document.getElementById('sidebarPhone').textContent = user.phone || 'غير مقدم';
-
-            document.getElementById('statTotal').textContent = requests.length;
-            document.getElementById('statPending').textContent = requests.filter(r => r.status === 'pending').length;
-            document.getElementById('statCompleted').textContent = requests.filter(r => r.status === 'diagnosed' || r.status === 'completed').length;
-            document.getElementById('statRejected').textContent = requests.filter(r => r.status === 'rejected').length;
-
-            const container = document.getElementById('requestsContainer');
-            if (!requests.length) {
-                container.innerHTML = '<p style="text-align:center; color:#888;">لا توجد طلبات حتى الآن.</p>';
-                return;
-            }
-
-            const badgeClass = {
-                'pending': 'badge-pending',
-                'accepted_waiting_payment': 'badge-processing',
-                'payment_submitted': 'badge-processing',
-                'processing': 'badge-processing',
-                'diagnosed': 'badge-completed',
-                'completed': 'badge-completed',
-                'rejected': 'badge-rejected',
-                'payment_rejected': 'badge-rejected'
-            };
-            const statusText = {
-                'pending': 'قيد الانتظار',
-                'accepted_waiting_payment': 'بانتظار الدفع',
-                'payment_submitted': 'تم تقديم الدفع',
-                'processing': 'قيد المعالجة',
-                'diagnosed': 'تم التشخيص',
-                'completed': 'مكتمل',
-                'rejected': 'مرفوض',
-                'payment_rejected': 'دفع مرفوض'
-            };
-
-            container.innerHTML = requests.map(r => {
-                let actionsHtml = '';
-                if (r.status === 'accepted_waiting_payment') {
-                    actionsHtml = `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.8rem;" onclick="DashboardModule.showPaymentForm(${r.id})">💳 تقديم الدفع</button>`;
-                }
-                if (r.status === 'diagnosed' || r.status === 'completed') {
-                    actionsHtml = `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.8rem;" onclick="DashboardModule.viewDiagnosis(${r.id})">📋 عرض التشخيص</button>`;
-                }
-                return `
-                <div class="request-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                        <strong>${r.serviceType || 'خدمة'}</strong>
-// =============== DashboardModule (مُحدّث مع المراسلات) ===============
+// =============== DashboardModule (مع المراسلات) ===============
 const DashboardModule = {
     async init() {
         if (!getToken()) { window.location.href = '/login.html'; return; }
@@ -400,7 +330,6 @@ const DashboardModule = {
                 if (r.status === 'diagnosed' || r.status === 'completed') {
                     actionsHtml += `<button class="btn-primary" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewDiagnosis(${r.id})">📋 عرض التشخيص</button>`;
                 }
-                // زر المراسلات يظهر دائماً (حتى قبل القبول) ليشعر المستفيد بالاطمئنان
                 actionsHtml += `<button class="btn-outline" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewMessages(${r.id})">💬 المراسلات</button>`;
                 return `
                 <div class="request-card">
@@ -437,7 +366,6 @@ const DashboardModule = {
             await showAlert('التشخيص', `🩺 التشخيص:\n${req.initial_diagnosis || 'لا يوجد'}\n\n📋 الخطة العلاجية:\n${req.treatment_plan || 'لا توجد'}`);
         } catch (e) { showToast(e.message, 'error'); }
     },
-    // -------- المراسلات (جديد) --------
     async viewMessages(requestId) {
         try {
             const res = await UserAPI.getMessages(requestId);
@@ -464,7 +392,7 @@ const DashboardModule = {
                     if (!text) return showToast('اكتب رسالة', 'error');
                     await UserAPI.sendMessage(requestId, text);
                     showToast('✅ تم الإرسال');
-                    this.viewMessages(requestId); // تحديث النافذة
+                    this.viewMessages(requestId);
                 }},
                 { text: 'إغلاق', style: 'background:#fff;border:1px solid #ddd;', callback: () => {} }
             ]);
@@ -472,8 +400,7 @@ const DashboardModule = {
     }
 };
 
-
-// =============== AdminModule ===============
+// =============== AdminModule (كامل) ===============
 const AdminModule = {
     currentId: null,
     async init() {
@@ -716,7 +643,7 @@ const AdminModule = {
     }
 };
 
-// =============== HomeModule (مع استخدام showArticleModal) ===============
+// =============== HomeModule (كامل) ===============
 const HomeModule = {
     articlesCache: [],
     async loadArticles() {
@@ -754,7 +681,6 @@ const HomeModule = {
     openArticle(id) {
         const article = this.articlesCache.find(a => a.id == id);
         if (article) {
-            // استخدام المودال المخصص للمقالات مع دعم HTML
             showArticleModal(article.title, article.content || article.summary);
         } else {
             showAlert('خطأ', 'المقال غير متوفر حالياً.');
@@ -815,6 +741,7 @@ const HomeModule = {
 function closeModal() { document.getElementById('detailsModal').classList.remove('show'); }
 function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
 
+// =============== تصدير للـ window ===============
 window.getToken = getToken;
 window.getUser = getUser;
 window.clearSession = clearSession;
@@ -828,6 +755,7 @@ window.DashboardModule = DashboardModule;
 window.AdminModule = AdminModule;
 window.HomeModule = HomeModule;
 
+// =============== تشغيل تلقائي ===============
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('admin')) AdminModule.init();
     else if (window.location.pathname.includes('dashboard')) DashboardModule.init();
