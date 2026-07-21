@@ -367,36 +367,115 @@ const DashboardModule = {
         } catch (e) { showToast(e.message, 'error'); }
     },
     async viewMessages(requestId) {
+    // إزالة أي مودال سابق
+    const oldModal = document.getElementById('userMessagesModal');
+    if (oldModal) oldModal.remove();
+
+    // إنشاء المودال الخاص بالمحادثة
+    const overlay = document.createElement('div');
+    overlay.id = 'userMessagesModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:20px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;';
+
+    // الهيدر
+    const header = document.createElement('div');
+    header.style.cssText = 'background:#0A1628;color:#F5B041;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;';
+    header.innerHTML = `<h3 style="margin:0;font-size:1.1rem;">💬 المراسلات</h3>`;
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer;';
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(closeBtn);
+    box.appendChild(header);
+
+    // الجسم
+    const body = document.createElement('div');
+    body.style.cssText = 'padding:20px;flex:1;overflow-y:auto;';
+    
+    // رسالة تحميل مؤقتة
+    body.innerHTML = '<p style="text-align:center;color:#888;">⏳ جاري تحميل الرسائل...</p>';
+    box.appendChild(body);
+
+    // الفوتر (سيتم بناؤه لاحقاً)
+    const footer = document.createElement('div');
+    footer.style.cssText = 'padding:15px 20px;border-top:1px solid #eee;display:flex;gap:10px;';
+    box.appendChild(footer);
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    // إغلاق عند النقر خارج الصندوق
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+
+    // دالة داخلية لتحديث محتوى المحادثة
+    const refreshMessages = async () => {
         try {
             const res = await UserAPI.getMessages(requestId);
             const messages = res.messages || [];
-            let html = `<div style="max-height:300px; overflow-y:auto; margin-bottom:15px;">`;
+            let html = '';
             if (messages.length === 0) {
-                html += '<p style="color:#888; text-align:center;">لا توجد رسائل بعد. يمكنك بدء المحادثة.</p>';
+                html = '<p style="color:#888; text-align:center;">لا توجد رسائل بعد.</p>';
             } else {
                 messages.forEach(m => {
                     const isMe = m.senderRole === 'user';
-                    html += `<div style="background:${isMe ? '#FFFBF0' : '#F8FAFC'}; border-right:4px solid ${isMe ? '#F5B041' : '#1B4D3D'}; padding:10px; margin-bottom:8px; border-radius:8px;">
-                        <strong>${isMe ? 'أنت' : (m.senderName || 'الشيخ')}</strong>
-                        <p style="margin:4px 0; white-space:pre-wrap;">${m.messageText}</p>
+                    html += `<div style="background:${isMe ? '#FFFBF0' : '#F8FAFC'}; border-right:4px solid ${isMe ? '#F5B041' : '#1B4D3D'}; padding:12px; margin-bottom:10px; border-radius:10px;">
+                        <strong style="color:${isMe ? '#E67E22' : '#0A1628'};">${isMe ? 'أنت' : (m.senderName || 'الشيخ')}</strong>
+                        <p style="margin:6px 0; white-space:pre-wrap;">${m.messageText}</p>
                         <small style="color:#999;">${new Date(m.createdAt).toLocaleString('ar-EG')}</small>
                     </div>`;
                 });
             }
-            html += `</div>
-            <textarea id="userReplyMessage" placeholder="اكتب ردك..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; font-family:Cairo; min-height:60px;"></textarea>`;
+            body.innerHTML = html;
+            body.scrollTop = body.scrollHeight;
+        } catch (e) {
+            body.innerHTML = `<p style="color:#e74c3c;text-align:center;">❌ خطأ في التحميل: ${e.message}</p>`;
+        }
+    };
 
-            showModal('💬 المراسلات', html, [
-                { text: 'إرسال', style: 'background:#F5B041;color:#0A1628;', callback: async () => {
-                    const text = document.getElementById('userReplyMessage')?.value.trim();
-                    if (!text) return showToast('اكتب رسالة', 'error');
-                    await UserAPI.sendMessage(requestId, text);
-                    showToast('✅ تم الإرسال');
-                    this.viewMessages(requestId);
-                }},
-                { text: 'إغلاق', style: 'background:#fff;border:1px solid #ddd;', callback: () => {} }
-            ]);
-        } catch (e) { showToast(e.message, 'error'); }
+    // بناء حقل الإرسال في الفوتر
+    const input = document.createElement('textarea');
+    input.placeholder = 'اكتب ردك...';
+    input.style.cssText = 'flex:1;padding:12px;border:2px solid #E2E8F0;border-radius:12px;font-family:Cairo;resize:none;min-height:44px;';
+    input.rows = 1;
+    input.oninput = function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    };
+
+    const sendBtn = document.createElement('button');
+    sendBtn.textContent = 'إرسال';
+    sendBtn.style.cssText = 'padding:12px 20px;background:#F5B041;color:#0A1628;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:Cairo;align-self:flex-end;';
+    sendBtn.onclick = async () => {
+        const text = input.value.trim();
+        if (!text) {
+            showToast('اكتب رسالة', 'error');
+            return;
+        }
+        sendBtn.disabled = true;
+        sendBtn.textContent = '...';
+        try {
+            await UserAPI.sendMessage(requestId, text);
+            input.value = '';
+            input.style.height = 'auto';
+            await refreshMessages();
+            showToast('✅ تم الإرسال');
+        } catch (e) {
+            showToast(e.message, 'error');
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'إرسال';
+        }
+    };
+
+    footer.appendChild(input);
+    footer.appendChild(sendBtn);
+
+    // تحميل الرسائل أول مرة
+    await refreshMessages();
     }
 };
 
