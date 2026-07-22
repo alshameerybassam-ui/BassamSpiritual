@@ -10,6 +10,8 @@ await pool.query(`CREATE TABLE IF NOT EXISTS articles(id SERIAL PRIMARY KEY,titl
 await pool.query(`CREATE TABLE IF NOT EXISTS reviews(id SERIAL PRIMARY KEY,userid INTEGER REFERENCES users(id),fullname VARCHAR(255),comment TEXT,rating INTEGER DEFAULT 5,isapproved BOOLEAN DEFAULT FALSE,createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,updatedat TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
 await pool.query(`CREATE TABLE IF NOT EXISTS ai_config(id SERIAL PRIMARY KEY,instructions TEXT)`);
 const c=await pool.query(`SELECT COUNT(*) FROM ai_config`);if(parseInt(c.rows[0].count)===0)await pool.query(`INSERT INTO ai_config(instructions) VALUES($1)`,['أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني.']);
+await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS chat_closed BOOLEAN DEFAULT FALSE`);
+await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);  
 console.log('✅ جداول جاهزة');
 }catch(e){console.error('❌ تهيئة:',e.message)}}; initDB();
 
