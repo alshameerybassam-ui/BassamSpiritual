@@ -135,16 +135,38 @@
             gap: 10px;
             align-items: center;
         }
-        .chat-input-m {
+        /* حقل الإدخال مع الميكروفون بداخله */
+        .chat-input-wrapper {
+            position: relative;
             flex: 1;
+            display: flex;
+            align-items: center;
+        }
+        .chat-input-m {
+            width: 100%;
             border: 1px solid #e2e8f0;
-            padding: 10px 35px 10px 15px;
+            padding: 10px 40px 10px 15px;
             border-radius: 30px;
             outline: none;
             font-size: 14px;
             transition: 0.3s;
+            font-family: 'Cairo';
         }
         .chat-input-m:focus { border-color: #F5B041; box-shadow: 0 0 0 3px rgba(245, 176, 65, 0.15); }
+        .chat-mic-btn {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #64748B;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            transition: 0.3s;
+        }
+        .chat-mic-btn:hover { color: #F5B041; }
         .chat-send-btn-m {
             background: linear-gradient(135deg, #F5B041, #E67E22);
             border: none;
@@ -159,6 +181,7 @@
             font-size: 16px;
             box-shadow: 0 4px 10px rgba(245, 176, 65, 0.3);
             transition: 0.3s;
+            flex-shrink: 0;
         }
         .chat-send-btn-m:hover { transform: scale(1.05); }
         .quick-replies {
@@ -183,20 +206,6 @@
             background: #F5B041;
             color: #0A1628;
         }
-        
-        /* ميكروفون الدردشة */
-        .mic-btn-chat {
-            background: none;
-            border: none;
-            color: #64748B;
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 5px;
-            transition: 0.3s;
-        }
-        .mic-btn-chat:hover { color: #F5B041; }
-        .mic-btn-chat.recording { color: #e74c3c; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         @media (max-width: 768px) {
             .hero-section { padding: 30px 15px 25px; border-radius: 20px; }
@@ -310,7 +319,7 @@
         <div class="chat-body-m" id="chatBodyNew">
             <div class="chat-message-m bot">
                 السلام عليكم ورحمة الله وبركاته 🌙<br>
-                أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك الروحية.<br>
+                أنا مستشارك ومساعدك الذكي هنا للإجابة على استفساراتك الروحانية.<br>
                 <strong>كيف يمكنني مساعدتك اليوم؟</strong>
             </div>
             <div class="quick-replies" id="quickReplies">
@@ -319,11 +328,17 @@
                 <button class="quick-reply-btn" onclick="sendQuickReply('أحتاج رقية شرعية')">📿 رقية شرعية</button>
                 <button class="quick-reply-btn" onclick="sendQuickReply('عندي مشكلة في الزواج')">💍 تأخر زواج</button>
                 <button class="quick-reply-btn" onclick="sendQuickReply('أريد تفسير رؤيا')">🌙 تفسير رؤيا</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('أحتاج محبة بين زوجين')">❤️ محبة بين زوجين</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('أريد استشارة نفسية')">🧠 هندسة نفسية</button>
             </div>
         </div>
         <div class="chat-footer-m">
-            <button type="button" class="mic-btn-chat" id="chatMicBtn" title="تحدث"><i class="bi bi-mic"></i></button>
-            <input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك..." onkeypress="if(event.key==='Enter') sendNewMessage()">
+            <div class="chat-input-wrapper">
+                <input type="text" id="chatInputNew" class="chat-input-m" placeholder="اكتب مشكلتك..." onkeypress="if(event.key==='Enter') sendNewMessage()">
+                <button type="button" class="chat-mic-btn" id="chatMicBtn" title="تحدث">
+                    <i class="bi bi-mic-fill"></i>
+                </button>
+            </div>
             <button onclick="sendNewMessage()" class="chat-send-btn-m"><i class="bi bi-send-fill"></i></button>
         </div>
     </div>
