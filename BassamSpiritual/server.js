@@ -24,74 +24,52 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ====================== إعداد الجداول (إذا لم تكن موجودة) ======================
+// ====================== إعداد قاعدة البيانات ======================
 const initializeDatabase = async () => {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            full_name VARCHAR(255),
-            email VARCHAR(255) UNIQUE,
-            password VARCHAR(255),
-            phone VARCHAR(50),
-            role VARCHAR(50) DEFAULT 'user'
+            id SERIAL PRIMARY KEY, full_name VARCHAR(255), email VARCHAR(255) UNIQUE,
+            password VARCHAR(255), phone VARCHAR(50), role VARCHAR(50) DEFAULT 'user'
         )`);
         await pool.query(`CREATE TABLE IF NOT EXISTS requests (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES users(id),
-            fullname VARCHAR(255),
-            email VARCHAR(255),
-            userphone VARCHAR(50),
-            servicetype VARCHAR(255),
-            description TEXT,
-            status VARCHAR(50) DEFAULT 'pending',
-            createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            paymentmethod VARCHAR(100),
-            payment_sender_name VARCHAR(255),
-            payment_transfer_number VARCHAR(100),
-            payment_rejection_reason TEXT,
-            initial_diagnosis TEXT,
-            treatment_plan TEXT
+            id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id),
+            fullname VARCHAR(255), email VARCHAR(255), userphone VARCHAR(50),
+            servicetype VARCHAR(255), description TEXT, status VARCHAR(50) DEFAULT 'pending',
+            createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP, paymentmethod VARCHAR(100),
+            payment_sender_name VARCHAR(255), payment_transfer_number VARCHAR(100),
+            payment_rejection_reason TEXT, initial_diagnosis TEXT, treatment_plan TEXT,
+            chat_closed BOOLEAN DEFAULT FALSE,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
         await pool.query(`CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY,
-            requestid INTEGER REFERENCES requests(id),
-            senderid INTEGER,
-            sendername VARCHAR(255),
-            senderrole VARCHAR(50),
-            messagetext TEXT,
-            createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id SERIAL PRIMARY KEY, requestid INTEGER REFERENCES requests(id),
+            senderid INTEGER, sendername VARCHAR(255), senderrole VARCHAR(50),
+            messagetext TEXT, createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
         await pool.query(`CREATE TABLE IF NOT EXISTS articles (
-            id SERIAL PRIMARY KEY,
-            title VARCHAR(255),
-            summary TEXT,
-            content TEXT,
-            icon VARCHAR(100),
-            createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id SERIAL PRIMARY KEY, title VARCHAR(255), summary TEXT,
+            content TEXT, icon VARCHAR(100), createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updatedat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
         await pool.query(`CREATE TABLE IF NOT EXISTS reviews (
-            id SERIAL PRIMARY KEY,
-            userid INTEGER REFERENCES users(id),
-            fullname VARCHAR(255),
-            comment TEXT,
-            rating INTEGER DEFAULT 5,
-            isapproved BOOLEAN DEFAULT FALSE,
-            createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id SERIAL PRIMARY KEY, userid INTEGER REFERENCES users(id),
+            fullname VARCHAR(255), comment TEXT, rating INTEGER DEFAULT 5,
+            isapproved BOOLEAN DEFAULT FALSE, createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updatedat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
         await pool.query(`CREATE TABLE IF NOT EXISTS ai_config (
-            id SERIAL PRIMARY KEY,
-            instructions TEXT
+            id SERIAL PRIMARY KEY, instructions TEXT
         )`);
         const aiCount = await pool.query(`SELECT COUNT(*) FROM ai_config`);
         if (parseInt(aiCount.rows[0].count) === 0) {
             await pool.query(`INSERT INTO ai_config (instructions) VALUES ($1)`, ['أنت مستشار فقهي وروحاني معتمد في مركز النور الرباني التابع للشيخ بسام.']);
         }
-        console.log("✅ تم فحص الجداول.");
-    } catch (err) { console.error("❌ خطأ تهيئة الجداول:", err.message); }
+        console.log("✅ تم فحص/بناء جميع الجداول.");
+    } catch (err) { console.error("❌ خطأ التهيئة:", err.message); }
 };
 initializeDatabase();
 
-// ====================== إنشاء المدير تلقائياً ======================
+// ====================== إنشاء المدير ======================
 (async function initAdmin() {
     try {
         const adminEmail = 'alshameerybassam@gmail.com';
@@ -99,7 +77,6 @@ initializeDatabase();
         if (adminCheck.rows.length === 0) {
             const hashedPassword = bcrypt.hashSync('bassam112358112358', 8);
             await pool.query(`INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)`, ['الشيخ بسام', adminEmail, hashedPassword, 'admin']);
-            console.log('✅ تم إنشاء حساب المدير.');
         }
     } catch (err) { console.error('❌ خطأ إنشاء المدير:', err.message); }
 })();
@@ -110,10 +87,8 @@ const authenticateToken = (req, res, next) => {
     if (!authHeader) return res.status(401).json({ error: 'غير مصرح' });
     const token = authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'غير مصرح' });
-    try {
-        req.user = jwt.verify(token, JWT_SECRET);
-        next();
-    } catch (err) { return res.status(403).json({ error: 'جلسة منتهية' }); }
+    try { req.user = jwt.verify(token, JWT_SECRET); next(); }
+    catch (err) { return res.status(403).json({ error: 'جلسة منتهية' }); }
 };
 const requireAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'للإدارة فقط' });
@@ -131,20 +106,18 @@ app.post('/api/auth/register', async (req, res) => {
         res.json({ success: true });
     } catch (e) { console.error('❌ تسجيل:', e.message); res.status(500).json({ error: 'حدث خطأ أثناء التسجيل.' }); }
 });
-
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'البريد وكلمة المرور مطلوبان.' });
     try {
         const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [email]);
-        if (result.rows.length === 0) return res.status(400).json({ error: 'بيانات خاطئة.' });
+        if (result.rows.length === 0 || !bcrypt.compareSync(password, result.rows[0].password))
+            return res.status(400).json({ error: 'بيانات خاطئة.' });
         const user = result.rows[0];
-        if (!bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'بيانات خاطئة.' });
         const token = jwt.sign({ id: user.id, email: user.email, role: user.role, full_name: user.full_name }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ success: true, token, user: { full_name: user.full_name, email: user.email, role: user.role } });
     } catch (e) { console.error('❌ دخول:', e.message); res.status(500).json({ error: 'حدث خطأ أثناء تسجيل الدخول.' }); }
 });
-
 app.get('/api/auth/verify', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query(`SELECT id, full_name, email, role FROM users WHERE id = $1`, [req.user.id]);
@@ -152,7 +125,6 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
         res.json({ success: true, user: result.rows[0] });
     } catch (e) { res.status(500).json({ error: 'خطأ في التحقق.' }); }
 });
-
 app.post('/api/auth/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني.' });
@@ -162,7 +134,6 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     console.log(`🔗 رابط التعيين: https://bassam-spiritual-center.onrender.com/reset-password?token=${resetToken}`);
     res.json({ success: true, message: 'تم إرسال الرابط.', resetLink: `https://bassam-spiritual-center.onrender.com/reset-password?token=${resetToken}` });
 });
-
 app.post('/api/auth/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) return res.status(400).json({ error: 'بيانات ناقصة.' });
@@ -173,12 +144,36 @@ app.post('/api/auth/reset-password', async (req, res) => {
         res.json({ success: true, message: 'تم التغيير.' });
     } catch (e) { res.status(400).json({ error: 'رمز غير صالح.' }); }
 });
-
 app.get('/reset-password', (req, res) => {
     res.send(`<!DOCTYPE html><html lang="ar"><head><meta charset="UTF-8"><title>إعادة تعيين</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Cairo';background:#F4F6F9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}.box{background:#fff;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.1);max-width:440px;width:100%;padding:40px 30px;border-top:6px solid #F5B041;text-align:center}.box input{width:100%;padding:12px;border:2px solid #E2E8F0;border-radius:12px;margin-bottom:15px;font-family:'Cairo'}.box button{width:100%;padding:14px;background:linear-gradient(135deg,#F5B041,#E67E22);color:#0A1628;border:none;border-radius:12px;font-weight:800;cursor:pointer}.msg{background:#27ae60;color:#fff;padding:15px;border-radius:12px;margin-bottom:15px;display:none}</style></head><body><div class="box"><h2 style="color:#0A1628">إعادة تعيين كلمة المرور</h2><div class="msg" id="msg"></div><form id="f"><input type="password" id="p" placeholder="كلمة المرور الجديدة" required minlength="6"><button type="submit">تغيير</button></form></div><script>const t=new URLSearchParams(location.search).get('token');if(!t){document.getElementById('msg').style.display='block';document.getElementById('msg').style.background='#e74c3c';document.getElementById('msg').textContent='رابط غير صالح.';document.getElementById('f').style.display='none'}document.getElementById('f').addEventListener('submit',async e=>{e.preventDefault();const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t,newPassword:document.getElementById('p').value})});const d=await r.json();const m=document.getElementById('msg');m.style.display='block';if(d.success){m.style.background='#27ae60';m.textContent='✅ تم التغيير.';setTimeout(()=>location.href='/login.html',2000)}else{m.style.background='#e74c3c';m.textContent='❌ '+(d.error||'خطأ')}})</script></body></html>`);
 });
 
-// ====================== المساعد الذكي المطور ======================
+// ====================== الإشعارات (نظام Polling) ======================
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+        let notifications = [];
+        if (role === 'admin') {
+            const pending = await pool.query(`SELECT COUNT(*) FROM requests WHERE status='pending'`);
+            const paymentSubmitted = await pool.query(`SELECT COUNT(*) FROM requests WHERE status='payment_submitted'`);
+            const newMsgs = await pool.query(`SELECT COUNT(*) FROM messages WHERE senderrole='user' AND requestid IN (SELECT id FROM requests WHERE status != 'closed')`);
+            notifications.push({ type: 'pending_requests', count: parseInt(pending.rows[0].count) });
+            notifications.push({ type: 'payment_submitted', count: parseInt(paymentSubmitted.rows[0].count) });
+            notifications.push({ type: 'new_messages_admin', count: parseInt(newMsgs.rows[0].count) });
+        } else {
+            const accepted = await pool.query(`SELECT COUNT(*) FROM requests WHERE user_id=$1 AND status='accepted_waiting_payment'`, [userId]);
+            const diagnosed = await pool.query(`SELECT COUNT(*) FROM requests WHERE user_id=$1 AND status='diagnosed'`, [userId]);
+            const newMessages = await pool.query(`SELECT COUNT(*) FROM messages WHERE requestid IN (SELECT id FROM requests WHERE user_id=$1) AND senderrole='admin'`, [userId]);
+            notifications.push({ type: 'accepted_waiting_payment', count: parseInt(accepted.rows[0].count) });
+            notifications.push({ type: 'diagnosed', count: parseInt(diagnosed.rows[0].count) });
+            notifications.push({ type: 'new_messages', count: parseInt(newMessages.rows[0].count) });
+        }
+        res.json({ success: true, notifications });
+    } catch (e) { console.error('❌ إشعارات:', e.message); res.status(500).json({ error: 'خطأ في الإشعارات.' }); }
+});
+
+// ====================== المساعد الذكي ======================
 const aiKnowledge = [
     { keywords: ['عين', 'حسد', 'نظرة', 'حاسد', 'عاين', 'معيون'], replies: [
         '🕌 **العين حق** كما قال النبي ﷺ. أنصحك بقراءة **الفاتحة والمعوذتين وآية الكرسي** صباحاً ومساءً، مع الرقية الشرعية على ماء وشربه يومياً. 📿',
@@ -222,7 +217,6 @@ const fallbackReplies = [
     '📿 أنا هنا لخدمتك. تحدث معي بكل راحة، فكل ما تقوله في أمان تام. هل تعاني من أعراض معينة؟',
     '💡 يمكنني مساعدتك في أمور العين والحسد والسحر والمس والضيق. فقط ابدأ بكتابة ما تشعر به.'
 ];
-
 app.post('/api/ai-chat', async (req, res) => {
     const msg = req.body.message?.trim() || '';
     if (!msg) return res.json({ success: true, reply: 'تفضل، أنا بانتظار استفسارك.' });
@@ -238,12 +232,11 @@ app.post('/api/ai-chat', async (req, res) => {
     if (lowerMsg.length < 15) return res.json({ success: true, reply: 'أرجو أن تعطيني تفاصيل أكثر عن حالتك حتى أستطيع مساعدتك بدقة.' });
     const reply = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
     res.json({ success: true, reply });
-});
 
-// ====================== لوحة المستفيد ======================
+    // ====================== لوحة المستفيد ======================
 app.get('/api/dashboard/me', authenticateToken, async (req, res) => {
     try {
-        const requests = await pool.query(`SELECT id, user_id, fullname AS "fullName", email, userphone AS "userPhone", servicetype AS "serviceType", description, status, createdat AS "createdAt", paymentmethod AS "paymentMethod", payment_sender_name, payment_transfer_number, payment_rejection_reason, initial_diagnosis, treatment_plan FROM requests WHERE user_id = $1 ORDER BY createdat DESC`, [req.user.id]);
+        const requests = await pool.query(`SELECT id, user_id, fullname AS "fullName", email, userphone AS "userPhone", servicetype AS "serviceType", description, status, createdat AS "createdAt", paymentmethod AS "paymentMethod", payment_sender_name, payment_transfer_number, payment_rejection_reason, initial_diagnosis, treatment_plan, chat_closed FROM requests WHERE user_id = $1 ORDER BY createdat DESC`, [req.user.id]);
         const user = await pool.query(`SELECT full_name, email, phone FROM users WHERE id = $1`, [req.user.id]);
         res.json({ success: true, user: user.rows[0], requests: requests.rows });
     } catch (e) { console.error('❌ لوحة المستفيد:', e.message); res.status(500).json({ error: 'حدث خطأ في تحميل البيانات.' }); }
@@ -266,14 +259,14 @@ app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/dashboard/request/:id', authenticateToken, async (req, res) => {
-    const result = await pool.query(`SELECT id, user_id, fullname AS "fullName", email, userphone AS "userPhone", servicetype AS "serviceType", description, status, createdat AS "createdAt", paymentmethod AS "paymentMethod", payment_sender_name, payment_transfer_number, payment_rejection_reason, initial_diagnosis, treatment_plan FROM requests WHERE id = $1`, [req.params.id]);
+    const result = await pool.query(`SELECT id, user_id, fullname AS "fullName", email, userphone AS "userPhone", servicetype AS "serviceType", description, status, createdat AS "createdAt", paymentmethod AS "paymentMethod", payment_sender_name, payment_transfer_number, payment_rejection_reason, initial_diagnosis, treatment_plan, chat_closed FROM requests WHERE id = $1`, [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'غير موجود.' });
     res.json(result.rows[0]);
 });
 
 app.put('/api/dashboard/request/:id/submit-payment', authenticateToken, async (req, res) => {
     const { paymentMethod, paymentSenderName, paymentTransferNumber } = req.body;
-    await pool.query(`UPDATE requests SET paymentmethod=$1, payment_sender_name=$2, payment_transfer_number=$3, status='payment_submitted' WHERE id=$4`, [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id]);
+    await pool.query(`UPDATE requests SET paymentmethod=$1, payment_sender_name=$2, payment_transfer_number=$3, status='payment_submitted', last_updated=CURRENT_TIMESTAMP WHERE id=$4`, [paymentMethod, paymentSenderName, paymentTransferNumber, req.params.id]);
     res.json({ success: true });
 });
 
@@ -286,27 +279,27 @@ app.post('/api/dashboard/reviews', authenticateToken, async (req, res) => {
 
 // ====================== لوحة المدير ======================
 app.get('/api/admin/requests', authenticateToken, requireAdmin, async (req, res) => {
-    const result = await pool.query(`SELECT id, user_id, fullname AS "fullName", email, userphone AS "userPhone", servicetype AS "serviceType", description, status, createdat AS "createdAt", paymentmethod AS "paymentMethod", payment_sender_name, payment_transfer_number, payment_rejection_reason, initial_diagnosis, treatment_plan FROM requests ORDER BY createdat DESC`);
+    const result = await pool.query(`SELECT id, user_id, fullname AS "fullName", email, userphone AS "userPhone", servicetype AS "serviceType", description, status, createdat AS "createdAt", paymentmethod AS "paymentMethod", payment_sender_name, payment_transfer_number, payment_rejection_reason, initial_diagnosis, treatment_plan, chat_closed FROM requests ORDER BY createdat DESC`);
     res.json(result.rows);
 });
 
 app.put('/api/admin/requests/:id/accept-initial', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE requests SET status = 'accepted_waiting_payment' WHERE id = $1`, [req.params.id]);
+    await pool.query(`UPDATE requests SET status = 'accepted_waiting_payment', last_updated=CURRENT_TIMESTAMP WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
 
 app.put('/api/admin/requests/:id/reject-initial', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE requests SET status = 'rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
+    await pool.query(`UPDATE requests SET status = 'rejected', payment_rejection_reason = $1, last_updated=CURRENT_TIMESTAMP WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
     res.json({ success: true });
 });
 
 app.put('/api/admin/requests/:id/approve-payment', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE requests SET status = 'processing' WHERE id = $1`, [req.params.id]);
+    await pool.query(`UPDATE requests SET status = 'processing', last_updated=CURRENT_TIMESTAMP WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
 
 app.put('/api/admin/requests/:id/reject-payment', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1 WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
+    await pool.query(`UPDATE requests SET status = 'payment_rejected', payment_rejection_reason = $1, last_updated=CURRENT_TIMESTAMP WHERE id = $2`, [req.body.reason || 'بدون سبب', req.params.id]);
     res.json({ success: true });
 });
 
@@ -314,7 +307,7 @@ app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, asy
     try {
         const { initial_diagnosis, treatment_plan } = req.body;
         const requestId = req.params.id;
-        await pool.query(`UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed' WHERE id = $3`, [initial_diagnosis, treatment_plan, requestId]);
+        await pool.query(`UPDATE requests SET initial_diagnosis = $1, treatment_plan = $2, status = 'diagnosed', last_updated = CURRENT_TIMESTAMP WHERE id = $3`, [initial_diagnosis, treatment_plan, requestId]);
         const reqData = await pool.query(`SELECT fullname FROM requests WHERE id = $1`, [requestId]);
         if (reqData.rows.length > 0) {
             const messageText = `📋 **تم تشخيص حالتك**\n\n🩺 التشخيص:\n${initial_diagnosis || 'لا يوجد'}\n\n📝 الخطة العلاجية:\n${treatment_plan || 'لا توجد'}`;
@@ -324,6 +317,26 @@ app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, asy
     } catch (error) { console.error('❌ تشخيص:', error.message); res.status(500).json({ success: false, error: 'خطأ في التشخيص.' }); }
 });
 
+app.put('/api/admin/requests/:id/update-field', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { field, value } = req.body;
+        if (!field || !['initial_diagnosis', 'treatment_plan'].includes(field)) return res.status(400).json({ error: 'حقل غير صالح.' });
+        await pool.query(`UPDATE requests SET ${field} = $1, last_updated = CURRENT_TIMESTAMP WHERE id = $2`, [value, req.params.id]);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'خطأ في التحديث.' }); }
+});
+
+app.put('/api/admin/requests/:id/toggle-chat', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const requestId = req.params.id;
+        const current = await pool.query(`SELECT chat_closed FROM requests WHERE id = $1`, [requestId]);
+        if (current.rows.length === 0) return res.status(404).json({ error: 'طلب غير موجود.' });
+        const newState = !current.rows[0].chat_closed;
+        await pool.query(`UPDATE requests SET chat_closed = $1, last_updated = CURRENT_TIMESTAMP WHERE id = $2`, [newState, requestId]);
+        res.json({ success: true, chat_closed: newState });
+    } catch (e) { res.status(500).json({ error: 'خطأ في تغيير حالة المحادثة.' }); }
+});
+
 // ====================== المراسلات ======================
 app.get('/api/requests/:id/messages', authenticateToken, async (req, res) => {
     const result = await pool.query(`SELECT id, requestid AS "requestId", senderid AS "senderId", sendername AS "senderName", senderrole AS "senderRole", messagetext AS "messageText", createdat AS "createdAt" FROM messages WHERE requestid = $1 ORDER BY createdat ASC`, [req.params.id]);
@@ -331,9 +344,18 @@ app.get('/api/requests/:id/messages', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/requests/:id/messages', authenticateToken, async (req, res) => {
-    const { messageText } = req.body;
-    await pool.query(`INSERT INTO messages (requestid, senderid, sendername, senderrole, messagetext) VALUES ($1, $2, $3, $4, $5)`, [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]);
-    res.json({ success: true });
+    try {
+        const { messageText } = req.body;
+        if (req.user.role === 'user') {
+            const reqCheck = await pool.query(`SELECT chat_closed FROM requests WHERE id = $1`, [req.params.id]);
+            if (reqCheck.rows.length > 0 && reqCheck.rows[0].chat_closed) {
+                return res.status(403).json({ error: 'المحادثة مغلقة حالياً من قبل الإدارة.' });
+            }
+        }
+        await pool.query(`INSERT INTO messages (requestid, senderid, sendername, senderrole, messagetext) VALUES ($1, $2, $3, $4, $5)`, [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]);
+        await pool.query(`UPDATE requests SET last_updated = CURRENT_TIMESTAMP WHERE id = $1`, [req.params.id]);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'خطأ في إرسال الرسالة.' }); }
 });
 
 // ====================== المقالات ======================
@@ -350,7 +372,7 @@ app.post('/api/admin/articles', authenticateToken, requireAdmin, async (req, res
 
 app.put('/api/admin/articles/:id', authenticateToken, requireAdmin, async (req, res) => {
     const { title, summary, content } = req.body;
-    await pool.query(`UPDATE articles SET title=$1, summary=$2, content=$3 WHERE id=$4`, [title, summary, content, req.params.id]);
+    await pool.query(`UPDATE articles SET title=$1, summary=$2, content=$3, updatedat=CURRENT_TIMESTAMP WHERE id=$4`, [title, summary, content, req.params.id]);
     res.json({ success: true });
 });
 
@@ -370,9 +392,20 @@ app.get('/api/admin/reviews', authenticateToken, requireAdmin, async (req, res) 
     res.json({ success: true, reviews: result.rows });
 });
 
+app.post('/api/admin/reviews', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { fullName, comment, rating, isApproved } = req.body;
+        await pool.query(`INSERT INTO reviews (userid, fullname, comment, rating, isapproved) VALUES ($1, $2, $3, $4, $5)`, [req.user.id, fullName || 'مستفيد', comment, rating || 5, isApproved || false]);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'خطأ في إضافة التقييم.' }); }
+});
+
 app.put('/api/admin/reviews/:id', authenticateToken, requireAdmin, async (req, res) => {
-    await pool.query(`UPDATE reviews SET isapproved = $1 WHERE id = $2`, [req.body.isApproved, req.params.id]);
-    res.json({ success: true });
+    try {
+        const { fullName, comment, rating, isApproved } = req.body;
+        await pool.query(`UPDATE reviews SET fullname=$1, comment=$2, rating=$3, isapproved=$4, updatedat=CURRENT_TIMESTAMP WHERE id=$5`, [fullName, comment, rating, isApproved, req.params.id]);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'خطأ في تعديل التقييم.' }); }
 });
 
 app.delete('/api/admin/reviews/:id', authenticateToken, requireAdmin, async (req, res) => {
@@ -448,4 +481,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => console.log(`🚀 السيرفر يعمل على ${PORT}`)).on('error', (err) => {
     console.error('❌ فشل تشغيل الخادم:', err.message);
     process.exit(1);
+});
 });
