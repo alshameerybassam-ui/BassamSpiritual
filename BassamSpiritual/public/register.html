@@ -60,7 +60,6 @@
         }
         .input-wrapper input:focus { border-color: #F5B041; outline: none; box-shadow: 0 0 0 4px rgba(245, 176, 65, 0.15); }
 
-        /* أيقونة العين */
         .toggle-password-btn {
             position: absolute;
             left: 14px;
@@ -77,8 +76,8 @@
         }
         .toggle-password-btn:hover { color: #F5B041; }
 
-        /* الميكروفون */
-        .mic-btn {
+        /* ميكروفون تلقائي */
+        .mic-btn-auto {
             position: absolute;
             left: 14px;
             top: 50%;
@@ -92,9 +91,7 @@
             line-height: 1;
             z-index: 2;
         }
-        .mic-btn:hover { color: #F5B041; }
-        .mic-btn.recording { color: #e74c3c; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .mic-btn-auto:hover { color: #F5B041; }
         
         .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; }
         .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; margin-top: 3px; accent-color: #F5B041; cursor: pointer; }
@@ -140,18 +137,13 @@
         </div>
 
         <form id="registerForm">
-            <!-- الاسم الرباعي مع ميكروفون -->
             <div class="form-group">
                 <label>الاسم الرباعي <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
                     <i class="bi bi-person input-icon"></i>
                     <input type="text" id="fullName" placeholder="مثال: بسام محمد هزاع الشميري" required>
-                    <button type="button" class="mic-btn" id="nameMicBtn" title="تحدث بالاسم">
-                        <i class="bi bi-mic"></i>
-                    </button>
                 </div>
             </div>
-            <!-- البريد الإلكتروني -->
             <div class="form-group">
                 <label>البريد الإلكتروني <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
@@ -159,7 +151,6 @@
                     <input type="email" id="email" placeholder="example@email.com" required>
                 </div>
             </div>
-            <!-- رقم الهاتف -->
             <div class="form-group">
                 <label>رقم الهاتف (واتساب) <span class="optional">(اختياري)</span></label>
                 <div class="input-wrapper">
@@ -167,7 +158,6 @@
                     <input type="text" id="phone" placeholder="مثال: 777941366">
                 </div>
             </div>
-            <!-- كلمة المرور مع أيقونة العين -->
             <div class="form-group">
                 <label>كلمة المرور <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
@@ -178,7 +168,6 @@
                     </button>
                 </div>
             </div>
-            <!-- تأكيد كلمة المرور مع أيقونة العين -->
             <div class="form-group">
                 <label>تأكيد كلمة المرور <span style="color:#e74c3c;">*</span></label>
                 <div class="input-wrapper">
@@ -206,16 +195,8 @@
         </div>
     </div>
 
+    <script src="api.js"></script>
     <script>
-        function showToast(msg, type='success') {
-            const n = document.getElementById('notification');
-            if(!n) return;
-            n.textContent = msg;
-            n.className = `notification ${type} show`;
-            setTimeout(() => n.classList.remove('show'), 5000);
-        }
-
-        // --- دالة مساعدة لأزرار إظهار/إخفاء كلمة المرور ---
         function setupTogglePassword(btnId, inputId) {
             const btn = document.getElementById(btnId);
             const input = document.getElementById(inputId);
@@ -234,43 +215,14 @@
         setupTogglePassword('togglePasswordBtn1', 'password');
         setupTogglePassword('togglePasswordBtn2', 'confirmPassword');
 
-        // --- دالة الميكروفون العامة ---
-        function setupMic(btnId, inputId) {
-            const btn = document.getElementById(btnId);
-            const input = document.getElementById(inputId);
-            if (!btn || !input) return;
-            btn.addEventListener('click', function() {
-                if (!('webkitSpeechRecognition' in window)) {
-                    return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
-                }
-                const recognition = new webkitSpeechRecognition();
-                recognition.lang = 'ar-SA';
-                recognition.continuous = false;
-                recognition.interimResults = false;
+        // إضافة أزرار الميكروفون التلقائية على جميع الحقول النصية
+        setTimeout(() => {
+            addMicButton(document.getElementById('fullName'));
+            addMicButton(document.getElementById('email'));
+            addMicButton(document.getElementById('phone'));
+            // كلمات المرور لا نضيف لها ميكروفون غالباً، لكن يمكن إضافته
+        }, 300);
 
-                const icon = btn.querySelector('i');
-                btn.classList.add('recording');
-                icon.className = 'bi bi-mic-fill';
-
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript;
-                    input.value = transcript;
-                    btn.classList.remove('recording');
-                    icon.className = 'bi bi-mic';
-                };
-
-                recognition.onerror = function() {
-                    btn.classList.remove('recording');
-                    icon.className = 'bi bi-mic';
-                    showToast('❌ فشل التعرف على الصوت.', 'error');
-                };
-
-                recognition.start();
-            });
-        }
-        setupMic('nameMicBtn', 'fullName');
-
-        // --- تسجيل الحساب ---
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fullName = document.getElementById('fullName').value.trim();
@@ -291,24 +243,13 @@
             btn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-rotate"></i> جاري إنشاء الحساب...';
 
             try {
-                const regRes = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullName, email, password, phone })
-                });
-                const regData = await regRes.json();
-                if (!regData.success) throw new Error(regData.error || 'فشل التسجيل');
+                const regRes = await AuthAPI.register(fullName, email, password, phone);
+                if (!regRes.success) throw new Error(regRes.error || 'فشل التسجيل');
 
-                const loginRes = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const loginData = await loginRes.json();
-                
-                if (loginData.success) {
-                    localStorage.setItem('bassam_auth_token', loginData.token.trim());
-                    localStorage.setItem('bassam_user', JSON.stringify(loginData.user));
+                const loginRes = await AuthAPI.login(email, password);
+                if (loginRes.success) {
+                    localStorage.setItem('bassam_auth_token', loginRes.token.trim());
+                    localStorage.setItem('bassam_user', JSON.stringify(loginRes.user));
                     showToast('✅ تم إنشاء الحساب وتفعيله بنجاح! جاري التوجيه...', 'success');
                     setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
                 } else {
