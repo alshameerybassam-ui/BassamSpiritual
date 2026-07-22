@@ -1,5 +1,5 @@
 /**
- * api.js – النسخة النهائية الكاملة (جميع الدوال بدون اختصار)
+ * api.js – النسخة النهائية الكاملة (جميع الميزات الجديدة)
  * مركز النور الرباني والنفس الرحماني
  */
 const API_BASE = '/api';
@@ -30,6 +30,66 @@ async function api(method, endpoint, body = null) {
     if (res.status === 401) { clearSession(); window.location.href = '/login.html'; throw new Error('انتهت الجلسة'); }
     if (!res.ok) throw new Error(data.error || 'خطأ في الاتصال');
     return data;
+}
+
+// =============== أداة تحويل الصوت إلى نص (Web Speech API) ===============
+function startSpeechRecognition(inputElement, btnElement) {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
+        return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    const icon = btnElement.querySelector('i');
+    btnElement.classList.add('recording');
+    if (icon) icon.className = 'bi bi-mic-fill';
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        if (inputElement.tagName === 'TEXTAREA' || inputElement.tagName === 'INPUT') {
+            inputElement.value += (inputElement.value ? ' ' : '') + transcript;
+        } else if (inputElement.isContentEditable) {
+            inputElement.innerHTML += (inputElement.innerHTML ? ' ' : '') + transcript;
+        }
+        inputElement.focus();
+        btnElement.classList.remove('recording');
+        if (icon) icon.className = 'bi bi-mic';
+    };
+
+    recognition.onerror = function() {
+        btnElement.classList.remove('recording');
+        if (icon) icon.className = 'bi bi-mic';
+        showToast('❌ فشل التعرف على الصوت.', 'error');
+    };
+
+    recognition.start();
+}
+
+// =============== إنشاء أيقونة ميكروفون بجانب أي حقل ===============
+function addMicButton(targetElement) {
+    if (!targetElement) return;
+    // تجنب الإضافة المكررة
+    if (targetElement.parentNode.querySelector('.mic-btn-auto')) return;
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;display:inline-block;width:100%;';
+    targetElement.parentNode.insertBefore(wrapper, targetElement);
+    wrapper.appendChild(targetElement);
+    
+    const micBtn = document.createElement('button');
+    micBtn.type = 'button';
+    micBtn.className = 'mic-btn-auto';
+    micBtn.style.cssText = 'position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;z-index:2;';
+    micBtn.innerHTML = '<i class="bi bi-mic"></i>';
+    micBtn.title = 'تحدث';
+    micBtn.onclick = function() {
+        startSpeechRecognition(targetElement, micBtn);
+    };
+    wrapper.appendChild(micBtn);
 }
 
 // =============== المودال الموحد ===============
@@ -176,7 +236,8 @@ const UserAPI = {
         api('PUT', `/dashboard/request/${id}/submit-payment`, { paymentMethod, paymentSenderName, paymentTransferNumber }),
     getMessages: (id) => api('GET', `/requests/${id}/messages`),
     sendMessage: (id, text) => api('POST', `/requests/${id}/messages`, { messageText: text }),
-    submitReview: (comment, rating) => api('POST', '/dashboard/reviews', { comment, rating })
+    submitReview: (comment, rating) => api('POST', '/dashboard/reviews', { comment, rating }),
+    getNotifications: () => api('GET', '/notifications')
 };
 
 const AdminAPI = {
@@ -186,6 +247,8 @@ const AdminAPI = {
     approvePayment: (id) => api('PUT', `/admin/requests/${id}/approve-payment`),
     rejectPayment: (id, reason) => api('PUT', `/admin/requests/${id}/reject-payment`, { reason }),
     diagnose: (id, diagnosis, plan) => api('PUT', `/admin/requests/${id}/diagnose`, { initial_diagnosis: diagnosis, treatment_plan: plan }),
+    updateField: (id, field, value) => api('PUT', `/admin/requests/${id}/update-field`, { field, value }),
+    toggleChat: (id) => api('PUT', `/admin/requests/${id}/toggle-chat`),
     getMessages: (id) => api('GET', `/requests/${id}/messages`),
     sendMessage: (id, text) => api('POST', `/requests/${id}/messages`, { messageText: text }),
     getArticles: () => api('GET', '/articles'),
@@ -193,11 +256,14 @@ const AdminAPI = {
     updateArticle: (id, title, summary, content) => api('PUT', `/admin/articles/${id}`, { title, summary, content }),
     deleteArticle: (id) => api('DELETE', `/admin/articles/${id}`),
     getReviews: () => api('GET', '/admin/reviews'),
+    createReview: (fullName, comment, rating, isApproved) => api('POST', '/admin/reviews', { fullName, comment, rating, isApproved }),
+    updateReview: (id, fullName, comment, rating, isApproved) => api('PUT', `/admin/reviews/${id}`, { fullName, comment, rating, isApproved }),
     approveReview: (id, approved) => api('PUT', `/admin/reviews/${id}`, { isApproved: approved }),
     deleteReview: (id) => api('DELETE', `/admin/reviews/${id}`),
     getAIInstructions: () => api('GET', '/admin/ai-instructions'),
     saveAIInstructions: (instructions) => api('PUT', '/admin/ai-instructions', { instructions }),
-    sendEngineerCommand: (command) => api('POST', '/admin/engineer-command', { command })
+    sendEngineerCommand: (command) => api('POST', '/admin/engineer-command', { command }),
+    getNotifications: () => api('GET', '/notifications')
 };
 
 // =============== دوال عرض البطاقات والجدول ===============
@@ -267,13 +333,15 @@ function renderDesktopTable(tableBodyId, items, columns, rowActions) {
     }).join('');
 }
 
-// =============== DashboardModule (مع المراسلات) ===============
+
+// =============== DashboardModule (مع الإشعارات والمحادثة المغلقة والميكروفون) ===============
 const DashboardModule = {
     async init() {
         if (!getToken()) { window.location.href = '/login.html'; return; }
         try {
             await AuthAPI.verify();
             await this.load();
+            this.startNotifications();
         } catch (e) {
             clearSession();
             window.location.href = '/login.html';
@@ -330,7 +398,11 @@ const DashboardModule = {
                 if (r.status === 'diagnosed' || r.status === 'completed') {
                     actionsHtml += `<button class="btn-primary" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewDiagnosis(${r.id})">📋 عرض التشخيص</button>`;
                 }
-                actionsHtml += `<button class="btn-outline" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewMessages(${r.id})">💬 المراسلات</button>`;
+                if (!r.chat_closed) {
+                    actionsHtml += `<button class="btn-outline" style="margin-top:4px; padding:5px 10px; font-size:0.8rem;" onclick="DashboardModule.viewMessages(${r.id})">💬 المراسلات</button>`;
+                } else {
+                    actionsHtml += `<span style="font-size:0.7rem; color:#999;">🔒 المحادثة مغلقة</span>`;
+                }
                 return `
                 <div class="request-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -366,120 +438,140 @@ const DashboardModule = {
             await showAlert('التشخيص', `🩺 التشخيص:\n${req.initial_diagnosis || 'لا يوجد'}\n\n📋 الخطة العلاجية:\n${req.treatment_plan || 'لا توجد'}`);
         } catch (e) { showToast(e.message, 'error'); }
     },
+    // -------- المراسلات (مودال مستقل مع ميكروفون) --------
     async viewMessages(requestId) {
-    // إزالة أي مودال سابق
-    const oldModal = document.getElementById('userMessagesModal');
-    if (oldModal) oldModal.remove();
+        const oldModal = document.getElementById('userMessagesModal');
+        if (oldModal) oldModal.remove();
 
-    // إنشاء المودال الخاص بالمحادثة
-    const overlay = document.createElement('div');
-    overlay.id = 'userMessagesModal';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        const overlay = document.createElement('div');
+        overlay.id = 'userMessagesModal';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
 
-    const box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:20px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;';
+        const box = document.createElement('div');
+        box.style.cssText = 'background:#fff;border-radius:20px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden;';
 
-    // الهيدر
-    const header = document.createElement('div');
-    header.style.cssText = 'background:#0A1628;color:#F5B041;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;';
-    header.innerHTML = `<h3 style="margin:0;font-size:1.1rem;">💬 المراسلات</h3>`;
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer;';
-    closeBtn.onclick = () => overlay.remove();
-    header.appendChild(closeBtn);
-    box.appendChild(header);
+        const header = document.createElement('div');
+        header.style.cssText = 'background:#0A1628;color:#F5B041;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = `<h3 style="margin:0;font-size:1.1rem;">💬 المراسلات</h3>`;
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer;';
+        closeBtn.onclick = () => overlay.remove();
+        header.appendChild(closeBtn);
+        box.appendChild(header);
 
-    // الجسم
-    const body = document.createElement('div');
-    body.style.cssText = 'padding:20px;flex:1;overflow-y:auto;';
-    
-    // رسالة تحميل مؤقتة
-    body.innerHTML = '<p style="text-align:center;color:#888;">⏳ جاري تحميل الرسائل...</p>';
-    box.appendChild(body);
+        const body = document.createElement('div');
+        body.style.cssText = 'padding:20px;flex:1;overflow-y:auto;';
+        body.innerHTML = '<p style="text-align:center;color:#888;">⏳ جاري تحميل الرسائل...</p>';
+        box.appendChild(body);
 
-    // الفوتر (سيتم بناؤه لاحقاً)
-    const footer = document.createElement('div');
-    footer.style.cssText = 'padding:15px 20px;border-top:1px solid #eee;display:flex;gap:10px;';
-    box.appendChild(footer);
+        const footer = document.createElement('div');
+        footer.style.cssText = 'padding:15px 20px;border-top:1px solid #eee;display:flex;gap:10px;';
+        box.appendChild(footer);
 
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
 
-    // إغلاق عند النقر خارج الصندوق
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) overlay.remove();
-    });
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
 
-    // دالة داخلية لتحديث محتوى المحادثة
-    const refreshMessages = async () => {
-        try {
-            const res = await UserAPI.getMessages(requestId);
-            const messages = res.messages || [];
-            let html = '';
-            if (messages.length === 0) {
-                html = '<p style="color:#888; text-align:center;">لا توجد رسائل بعد.</p>';
-            } else {
-                messages.forEach(m => {
-                    const isMe = m.senderRole === 'user';
-                    html += `<div style="background:${isMe ? '#FFFBF0' : '#F8FAFC'}; border-right:4px solid ${isMe ? '#F5B041' : '#1B4D3D'}; padding:12px; margin-bottom:10px; border-radius:10px;">
-                        <strong style="color:${isMe ? '#E67E22' : '#0A1628'};">${isMe ? 'أنت' : (m.senderName || 'الشيخ')}</strong>
-                        <p style="margin:6px 0; white-space:pre-wrap;">${m.messageText}</p>
-                        <small style="color:#999;">${new Date(m.createdAt).toLocaleString('ar-EG')}</small>
-                    </div>`;
-                });
+        const refreshMessages = async () => {
+            try {
+                const res = await UserAPI.getMessages(requestId);
+                const messages = res.messages || [];
+                let html = '';
+                if (messages.length === 0) {
+                    html = '<p style="color:#888; text-align:center;">لا توجد رسائل بعد.</p>';
+                } else {
+                    messages.forEach(m => {
+                        const isMe = m.senderRole === 'user';
+                        html += `<div style="background:${isMe ? '#FFFBF0' : '#F8FAFC'}; border-right:4px solid ${isMe ? '#F5B041' : '#1B4D3D'}; padding:12px; margin-bottom:10px; border-radius:10px;">
+                            <strong style="color:${isMe ? '#E67E22' : '#0A1628'};">${isMe ? 'أنت' : (m.senderName || 'الشيخ')}</strong>
+                            <p style="margin:6px 0; white-space:pre-wrap;">${m.messageText}</p>
+                            <small style="color:#999;">${new Date(m.createdAt).toLocaleString('ar-EG')}</small>
+                        </div>`;
+                    });
+                }
+                body.innerHTML = html;
+                body.scrollTop = body.scrollHeight;
+            } catch (e) {
+                body.innerHTML = `<p style="color:#e74c3c;text-align:center;">❌ خطأ في التحميل: ${e.message}</p>`;
             }
-            body.innerHTML = html;
-            body.scrollTop = body.scrollHeight;
-        } catch (e) {
-            body.innerHTML = `<p style="color:#e74c3c;text-align:center;">❌ خطأ في التحميل: ${e.message}</p>`;
-        }
-    };
+        };
 
-    // بناء حقل الإرسال في الفوتر
-    const input = document.createElement('textarea');
-    input.placeholder = 'اكتب ردك...';
-    input.style.cssText = 'flex:1;padding:12px;border:2px solid #E2E8F0;border-radius:12px;font-family:Cairo;resize:none;min-height:44px;';
-    input.rows = 1;
-    input.oninput = function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    };
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'flex:1;position:relative;';
+        const input = document.createElement('textarea');
+        input.placeholder = 'اكتب ردك...';
+        input.style.cssText = 'width:100%;padding:12px 40px 12px 12px;border:2px solid #E2E8F0;border-radius:12px;font-family:Cairo;resize:none;min-height:44px;';
+        input.rows = 1;
+        input.oninput = function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        };
+        wrapper.appendChild(input);
+        addMicButtonToWrapper(wrapper, input);
 
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'إرسال';
-    sendBtn.style.cssText = 'padding:12px 20px;background:#F5B041;color:#0A1628;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:Cairo;align-self:flex-end;';
-    sendBtn.onclick = async () => {
-        const text = input.value.trim();
-        if (!text) {
-            showToast('اكتب رسالة', 'error');
-            return;
-        }
-        sendBtn.disabled = true;
-        sendBtn.textContent = '...';
-        try {
-            await UserAPI.sendMessage(requestId, text);
-            input.value = '';
-            input.style.height = 'auto';
-            await refreshMessages();
-            showToast('✅ تم الإرسال');
-        } catch (e) {
-            showToast(e.message, 'error');
-        } finally {
-            sendBtn.disabled = false;
-            sendBtn.textContent = 'إرسال';
-        }
-    };
+        const sendBtn = document.createElement('button');
+        sendBtn.textContent = 'إرسال';
+        sendBtn.style.cssText = 'padding:12px 20px;background:#F5B041;color:#0A1628;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:Cairo;align-self:flex-end;';
+        sendBtn.onclick = async () => {
+            const text = input.value.trim();
+            if (!text) {
+                showToast('اكتب رسالة', 'error');
+                return;
+            }
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+            try {
+                await UserAPI.sendMessage(requestId, text);
+                input.value = '';
+                input.style.height = 'auto';
+                await refreshMessages();
+                showToast('✅ تم الإرسال');
+            } catch (e) {
+                showToast(e.message, 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'إرسال';
+            }
+        };
 
-    footer.appendChild(input);
-    footer.appendChild(sendBtn);
+        footer.appendChild(wrapper);
+        footer.appendChild(sendBtn);
 
-    // تحميل الرسائل أول مرة
-    await refreshMessages();
+        await refreshMessages();
+    },
+    async startNotifications() {
+        setInterval(async () => {
+            try {
+                const data = await UserAPI.getNotifications();
+                const total = data.notifications.reduce((sum, n) => sum + n.count, 0);
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.textContent = total;
+                    badge.style.display = total > 0 ? 'inline' : 'none';
+                }
+            } catch (e) {}
+        }, 15000);
     }
 };
 
-// =============== AdminModule (كامل) ===============
+// دالة مساعدة لإضافة ميكروفون داخل wrapper (للاستخدام في المودال)
+function addMicButtonToWrapper(wrapper, inputElement) {
+    const micBtn = document.createElement('button');
+    micBtn.type = 'button';
+    micBtn.style.cssText = 'position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;z-index:2;';
+    micBtn.innerHTML = '<i class="bi bi-mic"></i>';
+    micBtn.title = 'تحدث';
+    micBtn.onclick = function() {
+        startSpeechRecognition(inputElement, micBtn);
+    };
+    wrapper.appendChild(micBtn);
+}
+
+// =============== AdminModule (مع الميزات الجديدة كاملة) ===============
 const AdminModule = {
     currentId: null,
     async init() {
@@ -496,6 +588,7 @@ const AdminModule = {
         this.loadArticles();
         this.loadReviews();
         this.loadAI();
+        this.startNotifications();
     },
 
     async loadRequests() {
@@ -558,20 +651,54 @@ const AdminModule = {
             if (req.status === 'accepted_waiting_payment') {
                 html += `<p style="color:#F59E0B;">⏳ في انتظار تأكيد الدفع من المستفيد.</p>`;
             }
-            if (req.status === 'diagnosed' || req.status === 'processing') {
-                html += `<div style="background:#f0f7f4; padding:15px; border-radius:8px; margin:15px 0;">
-                    <p><strong>🩺 التشخيص:</strong></p><p>${req.initial_diagnosis || 'لم يتم بعد'}</p>
-                    ${req.treatment_plan ? `<p><strong>📋 الخطة العلاجية:</strong></p><p>${req.treatment_plan}</p>` : ''}
-                </div>`;
-            }
-            html += `<textarea id="diag" placeholder="التشخيص..." style="width:100%; margin-bottom:8px; padding:10px; border-radius:8px; border:1px solid #ddd;">${req.initial_diagnosis || ''}</textarea>
-                <textarea id="plan" placeholder="الخطة العلاجية..." style="width:100%; margin-bottom:8px; padding:10px; border-radius:8px; border:1px solid #ddd;">${req.treatment_plan || ''}</textarea>
-                <button class="btn btn-primary" onclick="AdminModule.saveDiagnosis()" style="width:100%; padding:10px;">💾 حفظ التشخيص والعلاج</button>
-                <hr>
-                <button class="btn btn-outline" onclick="AdminModule.viewMessages('${id}')" style="width:100%; margin-top:10px;">💬 عرض المحادثة</button>`;
+            
+            // التشخيص (قابل للتحرير)
+            html += `<div style="margin:15px 0;">
+                <label><strong>🩺 التشخيص:</strong></label>
+                <textarea id="diag" placeholder="اكتب التشخيص..." style="width:100%; margin:5px 0; padding:10px; border-radius:8px; border:1px solid #ddd;">${req.initial_diagnosis || ''}</textarea>
+                <button class="btn btn-sm btn-outline" onclick="AdminModule.saveField('initial_diagnosis', document.getElementById('diag').value)">💾 حفظ التشخيص فقط</button>
+            </div>`;
+            
+            // الوصفة العلاجية (قابلة للتحرير)
+            html += `<div style="margin:15px 0;">
+                <label><strong>📝 الخطة العلاجية:</strong></label>
+                <textarea id="plan" placeholder="اكتب الخطة العلاجية..." style="width:100%; margin:5px 0; padding:10px; border-radius:8px; border:1px solid #ddd;">${req.treatment_plan || ''}</textarea>
+                <button class="btn btn-sm btn-outline" onclick="AdminModule.saveField('treatment_plan', document.getElementById('plan').value)">💾 حفظ الوصفة فقط</button>
+            </div>`;
+
+            // زر حفظ الكل
+            html += `<button class="btn btn-primary" onclick="AdminModule.saveDiagnosis()" style="width:100%; padding:10px;">💾 حفظ التشخيص والعلاج معاً</button>`;
+            
+            // التحكم بالمحادثة
+            html += `<hr><div style="display:flex; justify-content:space-between; align-items:center; margin:10px 0;">
+                <strong>💬 المراسلات</strong>
+                <button class="btn btn-sm ${req.chat_closed ? 'btn-success' : 'btn-danger'}" onclick="AdminModule.toggleChat('${id}')">
+                    ${req.chat_closed ? '🔓 فتح المحادثة' : '🔒 إغلاق المحادثة'}
+                </button>
+            </div>`;
+            html += `<button class="btn btn-outline" onclick="AdminModule.viewMessages('${id}')" style="width:100%; margin-top:10px;">💬 عرض المحادثة</button>`;
 
             modal.innerHTML = html;
             document.getElementById('detailsModal').classList.add('show');
+        } catch (e) { showToast(e.message, 'error'); }
+    },
+
+    async saveField(field, value) {
+        if (!value.trim()) return showToast('لا يمكن حفظ قيمة فارغة.', 'error');
+        try {
+            await AdminAPI.updateField(this.currentId, field, value);
+            showToast('✅ تم الحفظ');
+            // تحديث البيانات في النافذة دون إغلاقها
+            const updatedReq = await UserAPI.getRequest(this.currentId);
+            document.getElementById(field).value = updatedReq[field] || '';
+        } catch (e) { showToast(e.message, 'error'); }
+    },
+
+    async toggleChat(requestId) {
+        try {
+            const res = await AdminAPI.toggleChat(requestId);
+            showToast(res.chat_closed ? '🔒 تم إغلاق المحادثة' : '🔓 تم فتح المحادثة');
+            this.select(requestId);
         } catch (e) { showToast(e.message, 'error'); }
     },
 
@@ -606,9 +733,9 @@ const AdminModule = {
     async saveDiagnosis() {
         const d = document.getElementById('diag')?.value.trim();
         const p = document.getElementById('plan')?.value.trim();
-        if (!d) return showToast('اكتب التشخيص.', 'error');
-        await AdminAPI.diagnose(this.currentId, d, p);
-        showToast('✅ تم التشخيص');
+        if (!d && !p) return showToast('اكتب التشخيص أو الوصفة.', 'error');
+        await AdminAPI.diagnose(this.currentId, d || '', p || '');
+        showToast('✅ تم الحفظ');
         this.loadRequests();
         document.getElementById('detailsModal').classList.remove('show');
     },
@@ -626,9 +753,22 @@ const AdminModule = {
             </div>`;
         });
         html += `</div>
-        <textarea id="adminReplyMessage" placeholder="اكتب ردك..." style="width:100%; margin:10px 0; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
+        <div style="position:relative; margin:10px 0;">
+            <textarea id="adminReplyMessage" placeholder="اكتب ردك..." style="width:100%; padding:10px 35px 10px 10px; border-radius:8px; border:1px solid #ddd;"></textarea>
+            <button type="button" id="adminMicBtn" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;z-index:2;"><i class="bi bi-mic"></i></button>
+        </div>
         <button class="btn btn-primary" onclick="AdminModule.sendReply('${id}')">إرسال</button>`;
         container.innerHTML = html;
+        // ربط الميكروفون
+        setTimeout(() => {
+            const textarea = document.getElementById('adminReplyMessage');
+            const micBtn = document.getElementById('adminMicBtn');
+            if (textarea && micBtn) {
+                micBtn.onclick = function() {
+                    startSpeechRecognition(textarea, micBtn);
+                };
+            }
+        }, 100);
     },
     async sendReply(id) {
         const text = document.getElementById('adminReplyMessage')?.value.trim();
@@ -646,11 +786,25 @@ const AdminModule = {
                 { key: 'createdAt', label: 'التاريخ' }
             ];
             renderDesktopTable('articlesTableBodyDesktop', arts, columns, [
+                { html: 'تعديل', class: 'btn-outline', onclick: 'AdminModule.editArticle(\'{id}\')' },
                 { html: 'حذف', class: 'btn-danger', onclick: 'AdminModule.deleteArticle(\'{id}\')' }
             ]);
             renderMobileCards('articlesMobileCards', arts, columns, [
+                { html: '✏️', class: 'btn-outline', onclick: 'AdminModule.editArticle(\'{id}\')' },
                 { html: '🗑️', class: 'btn-danger', onclick: 'AdminModule.deleteArticle(\'{id}\')' }
             ]);
+        } catch (e) {}
+    },
+    async editArticle(id) {
+        try {
+            const articles = await AdminAPI.getArticles();
+            const article = articles.find(a => a.id == id);
+            if (!article) return;
+            document.getElementById('editArticleId').value = article.id;
+            document.getElementById('artTitle').value = article.title;
+            document.getElementById('artSummary').value = article.summary;
+            document.getElementById('articleContentEditor').innerHTML = article.content;
+            document.getElementById('articleFormBox').style.display = 'block';
         } catch (e) {}
     },
     async deleteArticle(id) {
@@ -660,7 +814,13 @@ const AdminModule = {
         this.loadArticles();
         showToast('تم الحذف');
     },
-    showArticleForm() { document.getElementById('articleFormBox').style.display = 'block'; },
+    showArticleForm() {
+        document.getElementById('editArticleId').value = '';
+        document.getElementById('artTitle').value = '';
+        document.getElementById('artSummary').value = '';
+        document.getElementById('articleContentEditor').innerHTML = '';
+        document.getElementById('articleFormBox').style.display = 'block';
+    },
     async saveArticle(e) {
         e.preventDefault();
         const id = document.getElementById('editArticleId').value;
@@ -685,13 +845,31 @@ const AdminModule = {
                 { key: 'isApproved', label: 'الحالة', type: 'badge', badgeMap: { true: 'success', false: 'warning' } }
             ];
             renderDesktopTable('reviewsTableBodyDesktop', reviews, columns, [
+                { html: '<i class="bi bi-pencil"></i>', class: 'btn-outline', onclick: 'AdminModule.editReview(\'{id}\')' },
                 { html: '<i class="bi bi-check"></i>', class: 'btn-success', onclick: 'AdminModule.approveReview(\'{id}\', true)' },
                 { html: '<i class="bi bi-trash"></i>', class: 'btn-danger', onclick: 'AdminModule.deleteReview(\'{id}\')' }
             ]);
             renderMobileCards('reviewsMobileCards', reviews, columns, [
+                { html: '✏️', class: 'btn-outline', onclick: 'AdminModule.editReview(\'{id}\')' },
                 { html: '✅', class: 'btn-success', onclick: 'AdminModule.approveReview(\'{id}\', true)' },
                 { html: '🗑️', class: 'btn-danger', onclick: 'AdminModule.deleteReview(\'{id}\')' }
             ]);
+        } catch (e) {}
+    },
+    async editReview(id) {
+        try {
+            const res = await AdminAPI.getReviews();
+            const review = res.reviews.find(r => r.id == id);
+            if (!review) return;
+            const fullName = await showPrompt('اسم المستفيد', 'أدخل الاسم:', review.fullName);
+            if (fullName === null) return;
+            const comment = await showPrompt('التعليق', 'أدخل التعليق:', review.comment);
+            if (comment === null) return;
+            const rating = await showPrompt('التقييم (1-5)', 'أدخل التقييم:', review.rating);
+            if (rating === null) return;
+            await AdminAPI.updateReview(id, fullName, comment, parseInt(rating), review.isApproved);
+            this.loadReviews();
+            showToast('تم تعديل التقييم');
         } catch (e) {}
     },
     async approveReview(id, approved) { await AdminAPI.approveReview(id, approved); this.loadReviews(); },
@@ -701,6 +879,21 @@ const AdminModule = {
         await AdminAPI.deleteReview(id);
         this.loadReviews();
         showToast('تم الحذف');
+    },
+    showReviewForm() {
+        document.getElementById('reviewFormBox').style.display = 'block';
+    },
+    async saveNewReview(e) {
+        e.preventDefault();
+        const fullName = document.getElementById('reviewFullName').value.trim();
+        const comment = document.getElementById('reviewComment').value.trim();
+        const rating = parseInt(document.getElementById('reviewRating').value);
+        const isApproved = document.getElementById('reviewIsApproved').checked;
+        if (!fullName || !comment) return showToast('الاسم والتعليق مطلوبان.', 'error');
+        await AdminAPI.createReview(fullName, comment, rating, isApproved);
+        showToast('تم إضافة التقييم');
+        document.getElementById('reviewFormBox').style.display = 'none';
+        this.loadReviews();
     },
 
     async loadAI() {
@@ -719,10 +912,23 @@ const AdminModule = {
         const res = await AdminAPI.sendEngineerCommand(cmd);
         document.getElementById('engineerResponse').style.display = 'block';
         document.getElementById('engineerResponse').textContent = res.reply || 'تم';
+    },
+    async startNotifications() {
+        setInterval(async () => {
+            try {
+                const data = await AdminAPI.getNotifications();
+                const total = data.notifications.reduce((sum, n) => sum + n.count, 0);
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.textContent = total;
+                    badge.style.display = total > 0 ? 'inline' : 'none';
+                }
+            } catch (e) {}
+        }, 15000);
     }
 };
 
-// =============== HomeModule (كامل) ===============
+// =============== HomeModule (عداد تفاعلي مع Intersection Observer) ===============
 const HomeModule = {
     articlesCache: [],
     async loadArticles() {
@@ -767,20 +973,29 @@ const HomeModule = {
     },
     startCounters() {
         const counters = document.querySelectorAll('.counter-number');
-        counters.forEach(counter => {
-            const target = +counter.getAttribute('data-target');
-            const updateCounter = () => {
-                const current = +counter.innerText;
-                const increment = target / 100;
-                if (current < target) {
-                    counter.innerText = Math.ceil(current + increment);
-                    setTimeout(updateCounter, 20);
-                } else {
-                    counter.innerText = target;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target;
+                    const target = +counter.getAttribute('data-target');
+                    const duration = 2000;
+                    const step = target / (duration / 16);
+                    let current = 0;
+                    const updateCounter = () => {
+                        current += step;
+                        if (current < target) {
+                            counter.innerText = Math.ceil(current);
+                            requestAnimationFrame(updateCounter);
+                        } else {
+                            counter.innerText = target;
+                        }
+                    };
+                    updateCounter();
+                    observer.unobserve(counter);
                 }
-            };
-            updateCounter();
-        });
+            });
+        }, { threshold: 0.5 });
+        counters.forEach(counter => observer.observe(counter));
     },
     initChat() {
         window.toggleChatNew = function () {
@@ -827,6 +1042,8 @@ window.clearSession = clearSession;
 window.isAdmin = isAdmin;
 window.api = api;
 window.showToast = showToast;
+window.startSpeechRecognition = startSpeechRecognition;
+window.addMicButton = addMicButton;
 window.AuthAPI = AuthAPI;
 window.UserAPI = UserAPI;
 window.AdminAPI = AdminAPI;
@@ -839,4 +1056,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('admin')) AdminModule.init();
     else if (window.location.pathname.includes('dashboard')) DashboardModule.init();
     else if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) HomeModule.init();
+    
+    // إضافة أيقونات الميكروفون لجميع حقول textarea الموجودة في الصفحة
+    setTimeout(() => {
+        document.querySelectorAll('textarea, input[type="text"], input[type="email"]').forEach(el => {
+            if (el.closest('#userMessagesModal') || el.closest('#unifiedModal')) return; // نتجنب المودالات لأن لها معالجة خاصة
+            addMicButton(el);
+        });
+    }, 500);
 });
