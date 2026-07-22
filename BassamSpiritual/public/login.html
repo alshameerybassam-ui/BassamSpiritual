@@ -63,7 +63,8 @@
         }
         .toggle-password-btn:hover { color: #F5B041; }
 
-        .mic-btn {
+        /* ميكروفون تلقائي (من api.js) سيضاف آلياً، لكن نخصص مساحة */
+        .mic-btn-auto {
             position: absolute;
             left: 14px;
             top: 50%;
@@ -77,9 +78,7 @@
             line-height: 1;
             z-index: 2;
         }
-        .mic-btn:hover { color: #F5B041; }
-        .mic-btn.recording { color: #e74c3c; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .mic-btn-auto:hover { color: #F5B041; }
 
         .btn-submit {
             width: 100%; padding: 14px; background: linear-gradient(135deg, #F5B041, #E67E22);
@@ -137,9 +136,6 @@
                 <div class="input-wrapper">
                     <i class="bi bi-envelope input-icon"></i>
                     <input type="email" id="loginEmail" placeholder="example@email.com" required>
-                    <button type="button" class="mic-btn" id="emailMicBtn" title="تحدث بالبريد الإلكتروني">
-                        <i class="bi bi-mic"></i>
-                    </button>
                 </div>
             </div>
             <div class="form-group">
@@ -171,6 +167,7 @@
 
     <script src="api.js"></script>
     <script>
+        // أيقونة العين
         document.getElementById('togglePasswordBtn').addEventListener('click', function() {
             const passwordInput = document.getElementById('loginPassword');
             const icon = this.querySelector('i');
@@ -183,31 +180,12 @@
             }
         });
 
-        document.getElementById('emailMicBtn').addEventListener('click', function() {
-            if (!('webkitSpeechRecognition' in window)) {
-                return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
-            }
-            const recognition = new webkitSpeechRecognition();
-            recognition.lang = 'ar-SA';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            const btn = this;
-            const icon = btn.querySelector('i');
-            btn.classList.add('recording');
-            icon.className = 'bi bi-mic-fill';
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('loginEmail').value = transcript.replace(/\s/g, '').toLowerCase() + '@gmail.com';
-                btn.classList.remove('recording');
-                icon.className = 'bi bi-mic';
-            };
-            recognition.onerror = function() {
-                btn.classList.remove('recording');
-                icon.className = 'bi bi-mic';
-                showToast('❌ فشل التعرف على الصوت.', 'error');
-            };
-            recognition.start();
-        });
+        // إضافة أزرار الميكروفون التلقائية
+        setTimeout(() => {
+            addMicButton(document.getElementById('loginEmail'));
+            // بالنسبة لكلمة المرور، نضيف الميكروفون أيضاً ولكن الأفضل عدم التحدث بكلمة المرور، لكن سنضيفه للتوحيد
+            addMicButton(document.getElementById('loginPassword'));
+        }, 300);
 
         async function forgotPassword() {
             const email = document.getElementById('loginEmail').value.trim();
