@@ -45,9 +45,32 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            position: relative;
         }
         .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; }
         .dashboard-header h1 span { color: var(--gold); }
+        
+        /* أيقونة الإشعارات */
+        .notif-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-right: 15px;
+        }
+        .notif-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background: #e74c3c;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: none;
+        }
+
         .btn-outline-light {
             background: transparent;
             color: #fff;
@@ -161,10 +184,12 @@
         }
         .modal-close:hover { color: #e74c3c; transform: rotate(90deg); }
 
+        /* ميكروفون داخل المودال */
+        .textarea-wrapper { position: relative; }
         .mic-btn {
             position: absolute;
-            left: 10px;
-            bottom: 10px;
+            left: 8px;
+            bottom: 8px;
             background: #f1f5f9;
             border: none;
             border-radius: 20px;
@@ -180,7 +205,6 @@
         .mic-btn:hover { background: #e2e8f0; color: #F5B041; }
         .mic-btn.recording { color: #e74c3c; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .textarea-wrapper { position: relative; }
         
         .notification {
             position: fixed;
@@ -214,9 +238,15 @@
 
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <div>
-                <h1 id="welcomeMessage">مرحباً، <span>مستفيد النور</span></h1>
-                <p style="opacity:0.8; margin-top:5px;"><i class="bi bi-shield-fill-check" style="color:var(--gold);"></i> جلسة آمنة ومشفرة بخصوصية تامة</p>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="notif-icon" onclick="DashboardModule.load()">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notif-badge" id="notificationBadge">0</span>
+                </div>
+                <div>
+                    <h1 id="welcomeMessage">مرحباً، <span>مستفيد النور</span></h1>
+                    <p style="opacity:0.8; margin-top:5px;"><i class="bi bi-shield-fill-check" style="color:var(--gold);"></i> جلسة آمنة ومشفرة بخصوصية تامة</p>
+                </div>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <a href="/" class="btn-outline-light"><i class="bi bi-house"></i> العودة للمركز</a>
@@ -277,6 +307,7 @@
         </div>
     </div>
 
+    <!-- نافذة تقديم طلب جديد (مع ميكروفون) -->
     <div id="newRequestModal" class="modal-overlay">
         <div class="modal-box">
             <button class="modal-close" onclick="closeNewRequestModal()">&times;</button>
@@ -311,31 +342,9 @@
             document.getElementById('newRequestModal').classList.remove('show');
         }
 
+        // الميكروفون في نافذة تقديم الطلب (نستخدم الدالة العامة من api.js)
         document.getElementById('descMicBtn').addEventListener('click', function() {
-            if (!('webkitSpeechRecognition' in window)) {
-                return showToast('⚠️ متصفحك لا يدعم الإملاء الصوتي.', 'error');
-            }
-            const recognition = new webkitSpeechRecognition();
-            recognition.lang = 'ar-SA';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            const btn = this;
-            const icon = btn.querySelector('i');
-            btn.classList.add('recording');
-            icon.className = 'bi bi-mic-fill';
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                const textarea = document.getElementById('reqDescription');
-                textarea.value += (textarea.value ? ' ' : '') + transcript;
-                btn.classList.remove('recording');
-                icon.className = 'bi bi-mic';
-            };
-            recognition.onerror = function() {
-                btn.classList.remove('recording');
-                icon.className = 'bi bi-mic';
-                showToast('❌ فشل التعرف على الصوت.', 'error');
-            };
-            recognition.start();
+            startSpeechRecognition(document.getElementById('reqDescription'), this);
         });
 
         async function submitNewRequest(e) {
