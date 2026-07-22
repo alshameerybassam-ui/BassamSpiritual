@@ -949,20 +949,28 @@ const HomeModule = {
         } catch (e) { console.error(e); }
     },
     async loadReviews() {
-        try {
-            const res = await fetch('/api/reviews');
-            const reviews = await res.json();
-            const container = document.getElementById('testimonialsContainer');
-            if (!container) return;
-            if (!reviews.length) { container.innerHTML = '<p style="text-align:center;">لا توجد تقييمات.</p>'; return; }
-            container.innerHTML = reviews.map(r => `
-                <div class="testimonial-card">
-                    <div class="testimonial-rating">${'⭐'.repeat(r.rating || 5)}</div>
-                    <p class="testimonial-text">${r.comment}</p>
-                    <div class="testimonial-author">— ${r.fullName || 'مستفيد'}</div>
-                </div>`).join('');
-        } catch (e) {}
-    },
+    try {
+        const res = await fetch('/api/reviews');
+        const reviews = await res.json();
+        const container = document.getElementById('testimonialsContainer');
+        if (!container) return;
+        if (!reviews.length) {
+            container.innerHTML = '<p style="text-align:center; padding:20px;">لا توجد تقييمات بعد.</p>';
+            return;
+        }
+        container.innerHTML = reviews.map(r => `
+            <div class="article-scroll-card" style="cursor:default; border-right: 4px solid #1B4D3D;">
+                <div class="article-icon" style="color:#1B4D3D;">⭐</div>
+                <h3>${r.fullName || 'مستفيد'}</h3>
+                <p>"${r.comment}"</p>
+                <div class="article-date" style="margin-top:8px;">${new Date(r.createdAt).toLocaleDateString('ar-EG')}</div>
+                <div style="color:#F5B041; margin-top:5px;">${'⭐'.repeat(r.rating || 5)}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('خطأ في تحميل التقييمات:', e);
+    }
+}
     openArticle(id) {
         const article = this.articlesCache.find(a => a.id == id);
         if (article) {
