@@ -1,5 +1,5 @@
 /**
- * api.js – النسخة النهائية الكاملة (جميع الميزات)
+ * api.js – النسخة النهائية الكاملة (جميع الميزات + الإشعارات الفورية)
  * مركز النور الرباني والنفس الرحماني
  */
 const API_BASE = '/api';
@@ -681,6 +681,41 @@ const HomeModule = {
     init() { this.loadArticles(); this.loadReviews(); this.startCounters(); this.initChat(); }
 };
 
+// =============== طلب إذن الإشعارات وتسجيل التوكن (Firebase Cloud Messaging) ===============
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+        await registerFCMToken();
+    } else if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') await registerFCMToken();
+    }
+}
+
+async function registerFCMToken() {
+    try {
+        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+        const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+        
+        const firebaseApp = initializeApp({
+            apiKey: "AIzaSyC6fxUO1S-bXV8FtJmS9wyK_gVAuuFQK_c",
+            authDomain: "noor-rabbani.firebaseapp.com",
+            projectId: "noor-rabbani",
+            storageBucket: "noor-rabbani.firebasestorage.app",
+            messagingSenderId: "33651574429",
+            appId: "1:33651574429:web:2aaab752ec8358a0f53674"
+        });
+        const messaging = getMessaging(firebaseApp);
+        const currentToken = await getToken(messaging, { vapidKey: 'BEcxAVMxdhZXer_98sJZ8Sooj8BfZ54BXoiuePjxeDFCQ0BnGFLS-OQMi057h1_cqMlNjJW_8lsqWUQzHLQaLvw' }); // ⚠️ استبدل هذا بالمفتاح الحقيقي من Firebase Cloud Messaging
+        if (currentToken) {
+            await api('POST', '/save-fcm-token', { token: currentToken });
+            console.log('✅ FCM Token saved');
+        }
+    } catch (e) {
+        console.warn('فشل تسجيل FCM:', e);
+    }
+}
+
 // =============== دوال عامة ===============
 function closeModal() { document.getElementById('detailsModal').classList.remove('show'); }
 function sendEngineerCommand() { AdminModule.sendEngineerCommand(); }
@@ -704,4 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addMicButton(el);
         });
     }, 500);
+
+    // طلب إذن الإشعارات الفورية
+    requestNotificationPermission();
 });
