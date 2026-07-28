@@ -215,6 +215,21 @@
         }
     </style>
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/alshameerybassam-ui/BassamSpiritual/e8233c0f501e583934c8038b9664fd756dc38924/BassamSpiritual/public/apple-touch-icon.png">
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5B041">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log('Service Worker registered'))
+        .catch(err => console.log('Service Worker error', err));
+    });
+  }
+</script>
 </head>
 <body>
     <div id="notification" class="notification"></div>
