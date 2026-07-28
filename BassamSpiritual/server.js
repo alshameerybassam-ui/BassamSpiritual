@@ -7,6 +7,34 @@ const { Pool } = require('pg');
 const fs = require('fs');
 
 const app = express();
+
+// =============== Firebase Admin (للإشعارات الفورية) ===============
+const admin = require('firebase-admin');
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    console.log('✅ Firebase Admin جاهز');
+  } else {
+    console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT غير موجود في المتغيرات');
+  }
+} catch (e) {
+  console.warn('⚠️ فشل تحميل Firebase Admin:', e.message);
+}
+
+async function sendPushNotification(token, title, body) {
+  if (!admin.apps.length || !token) return;
+  try {
+    await admin.messaging().send({
+      notification: { title, body },
+      token: token
+    });
+    console.log(`✅ إشعار أُرسل إلى: ${token.substring(0, 10)}...`);
+  } catch (e) {
+    console.error('❌ فشل إرسال الإشعار:', e.message);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'BASSAM_SPIRITUAL_SECRET_KEY_2026';
 
@@ -95,6 +123,7 @@ const initializeDatabase = async () => {
         // إضافة الأعمدة الجديدة إذا كانت مفقودة
         await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS chat_closed BOOLEAN DEFAULT FALSE`);
         await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS fcm_token TEXT`);
 
         const aiCount = await pool.query(`SELECT COUNT(*) FROM ai_config`);
         if (parseInt(aiCount.rows[0].count) === 0) {
@@ -241,7 +270,20 @@ app.get('/reset-password', (req, res) => {
     `);
 });
 
-// ====================== الإشعارات ======================
+// ====================== حفظ FCM Token ======================
+app.post('/api/save-fcm-token', authenticateToken, async (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'FCM Token مطلوب' });
+    try {
+        await pool.query(`UPDATE users SET fcm_token = $1 WHERE id = $2`, [token, req.user.id]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('❌ حفظ التوكن:', e.message);
+        res.status(500).json({ error: 'فشل حفظ التوكن' });
+    }
+});
+
+// ====================== الإشعارات (العدادات) ======================
 app.get('/api/notifications', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
@@ -381,6 +423,12 @@ app.post('/api/dashboard/request', authenticateToken, async (req, res) => {
             [req.user.id, user.full_name, user.email, user.phone, serviceType, description]
         );
 
+        // إرسال إشعار للمدير
+        const admins = await pool.query(`SELECT fcm_token FROM users WHERE role = 'admin' AND fcm_token IS NOT NULL`);
+        for (let admin of admins.rows) {
+            await sendPushNotification(admin.fcm_token, 'طلب جديد', `مستفيد جديد: ${user.full_name}`);
+        }
+
         res.json({ success: true, requestId: insertResult.rows[0].id, message: 'تم استلام طلبك بنجاح.' });
     } catch (error) {
         console.error('❌ تقديم طلب:', error.message);
@@ -471,6 +519,15 @@ app.put('/api/admin/requests/:id/diagnose', authenticateToken, requireAdmin, asy
             );
         }
 
+        // إرسال إشعار للمستفيد
+        const userToken = await pool.query(
+            `SELECT u.fcm_token FROM users u JOIN requests r ON r.user_id = u.id WHERE r.id = $1 AND u.fcm_token IS NOT NULL`,
+            [requestId]
+        );
+        if (userToken.rows.length > 0) {
+            await sendPushNotification(userToken.rows[0].fcm_token, 'تم تشخيص حالتك', 'الشيخ بسام أرسل لك التشخيص والعلاج');
+        }
+
         res.json({ success: true, message: 'تم التشخيص.' });
     } catch (error) {
         console.error('❌ تشخيص:', error.message);
@@ -530,6 +587,22 @@ app.post('/api/requests/:id/messages', authenticateToken, async (req, res) => {
             [req.params.id, req.user.id, req.user.full_name, req.user.role, messageText]
         );
         await pool.query(`UPDATE requests SET last_updated=CURRENT_TIMESTAMP WHERE id=$1`, [req.params.id]);
+
+        // إرسال إشعار للطرف الآخر
+        if (req.user.role === 'admin') {
+            const userToken = await pool.query(
+                `SELECT u.fcm_token FROM users u JOIN requests r ON r.user_id = u.id WHERE r.id = $1 AND u.fcm_token IS NOT NULL`,
+                [req.params.id]
+            );
+            if (userToken.rows.length > 0) {
+                await sendPushNotification(userToken.rows[0].fcm_token, 'رسالة جديدة من الشيخ', messageText.substring(0, 100));
+            }
+        } else {
+            const admins = await pool.query(`SELECT fcm_token FROM users WHERE role = 'admin' AND fcm_token IS NOT NULL`);
+            for (let admin of admins.rows) {
+                await sendPushNotification(admin.fcm_token, 'رسالة جديدة من مستفيد', `${req.user.full_name}: ${messageText.substring(0, 80)}`);
+            }
+        }
 
         res.json({ success: true });
     } catch (e) {
