@@ -277,6 +277,12 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (el) el.classList.add('active');
         }
+
+        // تفعيل Service Worker وطلب الإشعارات
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+        requestNotificationPermission();
     </script>
 </body>
 </html>
