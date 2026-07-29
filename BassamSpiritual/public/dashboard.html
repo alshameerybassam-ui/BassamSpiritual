@@ -50,7 +50,6 @@
         .dashboard-header h1 { font-size: 1.8rem; font-weight: 800; }
         .dashboard-header h1 span { color: var(--gold); }
         
-        /* أيقونة الإشعارات */
         .notif-icon {
             position: relative;
             cursor: pointer;
@@ -184,7 +183,6 @@
         }
         .modal-close:hover { color: #e74c3c; transform: rotate(90deg); }
 
-        /* ميكروفون داخل المودال */
         .textarea-wrapper { position: relative; }
         .mic-btn {
             position: absolute;
@@ -231,22 +229,22 @@
             .dashboard-header { flex-direction: column; align-items: flex-start; }
         }
     </style>
-<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/alshameerybassam-ui/BassamSpiritual/e8233c0f501e583934c8038b9664fd756dc38924/BassamSpiritual/public/apple-touch-icon.png">
-<!-- PWA -->
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#F5B041">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => console.log('Service Worker registered'))
-        .catch(err => console.log('Service Worker error', err));
-    });
-  }
-</script>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/alshameerybassam-ui/BassamSpiritual/e8233c0f501e583934c8038b9664fd756dc38924/BassamSpiritual/public/apple-touch-icon.png">
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#F5B041">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker error', err));
+        });
+      }
+    </script>
 </head>
 <body>
 
@@ -358,7 +356,6 @@
             document.getElementById('newRequestModal').classList.remove('show');
         }
 
-        // الميكروفون في نافذة تقديم الطلب (نستخدم الدالة العامة من api.js)
         document.getElementById('descMicBtn').addEventListener('click', function() {
             startSpeechRecognition(document.getElementById('reqDescription'), this);
         });
@@ -388,6 +385,12 @@
                 document.getElementById('reviewForm').reset();
             } catch(err) { showToast(err.message, 'error'); }
         }
+
+        // تفعيل Service Worker وطلب الإشعارات
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+        requestNotificationPermission();
     </script>
 </body>
 </html>
