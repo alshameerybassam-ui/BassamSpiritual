@@ -1,0 +1,15 @@
+<!doctype html><html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>جلسة النور الرباني</title><link rel="stylesheet" href="/v2.css"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"></head>
+<body>
+<div class="topbar"><div><span class="eyebrow">الجلسة</span><h1 id="title">...</h1><p id="time"></p></div><a href="/sessions.html" class="btn ghost">الجلسات</a></div>
+<main class="content-v2">
+  <div class="card-v2" id="state">جاري تحميل الجلسة...</div>
+  <div class="card-v2" id="player" style="display:none"></div>
+</main>
+<script>
+const id=new URLSearchParams(location.search).get('id');
+async function load(){const r=await fetch('/api/v2/sessions');const d=await r.json();const s=(d.sessions||[]).find(x=>String(x.id)===String(id));if(!s){state.textContent='الجلسة غير موجودة';return}
+title.textContent=s.title;time.textContent=new Date(s.startsAt).toLocaleString('ar');state.innerHTML=`<p>${esc(s.description||'')}</p><p class="muted">النمط: ${s.mode==='live'?'مباشرة':s.mode==='recorded'?'مسجلة':'مباشرة ثم مسجلة'}</p>${s.liveUrl?`<a class="btn primary" target="_blank" href="${escAttr(s.liveUrl)}">الدخول إلى الجلسة المباشرة</a>`:''}${s.recordingUrl?`<a class="btn" target="_blank" href="${escAttr(s.recordingUrl)}">مشاهدة التسجيل</a>`:''}`;if(s.recordingUrl){player.style.display='block';player.innerHTML=`<video controls playsinline style="width:100%;max-height:560px;border-radius:16px" src="${escAttr(s.recordingUrl)}"></video>`}}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function escAttr(s){return esc(s)}load();
+</script></body></html>

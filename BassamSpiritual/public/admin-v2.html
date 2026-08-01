@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>مركز القيادة | النور الرباني</title>
+  <link rel="stylesheet" href="/v2.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="admin-v2">
+  <header class="topbar">
+    <div>
+      <span class="eyebrow">مركز القيادة</span>
+      <h1>النور الرباني</h1>
+      <p>إدارة المنصة دون لمس الكود</p>
+    </div>
+    <div class="top-actions">
+      <a href="/" class="btn ghost">الموقع</a>
+      <button id="logoutBtn" class="btn danger">خروج</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar-v2">
+      <button class="nav-btn active" data-section="overview"><i class="bi bi-speedometer2"></i> نظرة عامة</button>
+      <button class="nav-btn" data-section="requests"><i class="bi bi-inboxes"></i> الطلبات</button>
+      <button class="nav-btn" data-section="services"><i class="bi bi-grid"></i> الخدمات</button>
+      <button class="nav-btn" data-section="sessions"><i class="bi bi-broadcast"></i> الجلسات</button>
+      <button class="nav-btn" data-section="articles"><i class="bi bi-journal-text"></i> المقالات</button>
+      <button class="nav-btn" data-section="reviews"><i class="bi bi-stars"></i> الآراء</button>
+      <button class="nav-btn" data-section="appearance"><i class="bi bi-palette"></i> المظهر</button>
+      <button class="nav-btn" data-section="audit"><i class="bi bi-shield-check"></i> سجل الأمان</button>
+    </aside>
+
+    <main class="content-v2">
+      <section id="section-overview" class="panel-v2 active">
+        <div class="section-head"><div><span class="eyebrow">اليوم</span><h2>مركز القيادة</h2></div><button class="btn" onclick="V2.loadSummary()">تحديث</button></div>
+        <div id="summaryGrid" class="stats-grid-v2"></div>
+        <div class="card-v2">
+          <h3>صحة المنصة</h3>
+          <div id="healthBox" class="health-grid"></div>
+        </div>
+      </section>
+
+      <section id="section-requests" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">المستفيدون</span><h2>الطلبات الحالية</h2></div><button class="btn" onclick="V2.loadRequests()">تحديث</button></div>
+        <div id="requestsBox"></div>
+        <div id="requestDetail" class="card-v2 hidden"></div>
+      </section>
+
+      <section id="section-services" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">الخدمات</span><h2>خدمات المركز</h2></div><button class="btn primary" onclick="V2.showServiceForm()">خدمة جديدة</button></div>
+        <div id="servicesBox"></div>
+      </section>
+
+      <section id="section-sessions" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">المحتوى المباشر</span><h2>الجلسات الأسبوعية</h2></div><button class="btn primary" onclick="V2.showSessionForm()">جلسة جديدة</button></div>
+        <div id="sessionsBox"></div>
+      </section>
+
+      <section id="section-articles" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">المحتوى</span><h2>المقالات</h2></div><button class="btn" onclick="V2.loadArticles()">تحديث</button></div>
+        <div id="articlesBox"></div>
+      </section>
+
+      <section id="section-reviews" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">الثقة</span><h2>آراء المستفيدين</h2></div><button class="btn" onclick="V2.loadReviews()">تحديث</button></div>
+        <div id="reviewsBox"></div>
+      </section>
+
+      <section id="section-appearance" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">الهوية</span><h2>مظهر المنصة</h2></div><button class="btn primary" onclick="V2.saveAppearance()">حفظ</button></div>
+        <div class="form-grid card-v2">
+          <label>اسم الموقع<input id="set_site_name"></label>
+          <label>العنوان الفرعي<input id="set_site_subtitle"></label>
+          <label>العنوان الرئيسي<input id="set_hero_title"></label>
+          <label>وصف الرئيسية<textarea id="set_hero_description"></textarea></label>
+          <label>اللون الأساسي<input id="set_primary_color" type="color"></label>
+          <label>اللون الثانوي<input id="set_secondary_color" type="color"></label>
+          <label>لون الإبراز<input id="set_accent_color" type="color"></label>
+          <label class="check"><input id="set_show_sessions" type="checkbox"> إظهار الجلسات</label>
+          <label class="check"><input id="set_show_articles" type="checkbox"> إظهار المقالات</label>
+          <label class="check"><input id="set_show_reviews" type="checkbox"> إظهار الآراء</label>
+          <label class="check"><input id="set_show_stats" type="checkbox"> إظهار الإحصائيات</label>
+        </div>
+      </section>
+
+      <section id="section-audit" class="panel-v2">
+        <div class="section-head"><div><span class="eyebrow">الحماية</span><h2>سجل العمليات</h2></div><button class="btn" onclick="V2.loadAudit()">تحديث</button></div>
+        <div id="auditBox"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/admin-v2.js"></script>
+</body>
+</html>
